@@ -17,6 +17,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ DynamoDB table with single-table design (PK, SK, GSI1, GSI2)
 - ✅ Lambda functions for vehicles, refills, and expenses (list/create operations)
 - ✅ API Gateway REST API with Lambda integrations
+- ✅ Cognito user pool with email authentication
 
 ### Phase 1 MVP Requirements
 
@@ -24,7 +25,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ DynamoDB table design and creation
 - ✅ Lambda function scaffolding
 - ✅ API Gateway setup
-- [ ] Cognito user pool configuration
+- ✅ Cognito user pool configuration
 - [ ] S3 bucket for user uploads (receipts/photos)
 
 #### Core Features (To Implement)
@@ -43,6 +44,15 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - [ ] Landing page (partially complete)
 
 ## Technology Stack
+
+### Authentication
+- **Service**: Amazon Cognito
+- **User Pool**: Email-based authentication
+- **Sign-in**: Email + password with SRP protocol
+- **Password Policy**: Min 8 chars, uppercase, lowercase, digits required
+- **Token Validity**: Access/ID tokens 60 min, refresh tokens 30 days
+- **Account Recovery**: Email-only password reset
+- **User Attributes**: Email (required), given name, family name (optional)
 
 ### Frontend (Web App)
 - **Framework**: React 18+ with TypeScript
@@ -249,7 +259,7 @@ fuelsync/
 1. ✅ **DynamoDB Setup**: Create table with GSIs
 2. ✅ **Lambda Functions**: Auth, vehicles, refills, expenses CRUD
 3. ✅ **API Gateway**: REST API with Lambda integrations
-4. **Cognito Setup**: User pool and app client configuration
+4. ✅ **Cognito Setup**: User pool and app client configuration
 5. **Frontend Integration**: Connect React app to API
 6. **Basic UI**: Implement vehicle and refill forms
 7. **Simple Analytics**: Display totals and averages

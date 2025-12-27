@@ -10,6 +10,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 export class InfrastructureStack extends cdk.Stack {
@@ -40,6 +41,55 @@ export class InfrastructureStack extends cdk.Stack {
       partitionKey: { name: 'GSI2PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'GSI2SK', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL
+    });
+
+    // Cognito User Pool
+    const userPool = new cognito.UserPool(this, 'FuelSyncUserPool', {
+      userPoolName: 'FuelSyncUserPool',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      selfSignUpEnabled: true,
+      signInAliases: {
+        email: true
+      },
+      autoVerify: {
+        email: true
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true
+        },
+        givenName: {
+          required: false,
+          mutable: true
+        },
+        familyName: {
+          required: false,
+          mutable: true
+        }
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY
+    });
+
+    // User Pool Client
+    const userPoolClient = new cognito.UserPoolClient(this, 'FuelSyncUserPoolClient', {
+      userPool,
+      userPoolClientName: 'FuelSyncWebClient',
+      authFlows: {
+        userPassword: true,
+        userSrp: true
+      },
+      generateSecret: false,
+      accessTokenValidity: cdk.Duration.minutes(60),
+      idTokenValidity: cdk.Duration.minutes(60),
+      refreshTokenValidity: cdk.Duration.days(30)
     });
 
     // Lambda functions
@@ -271,6 +321,14 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.url
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolId', {
+      value: userPool.userPoolId
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
+      value: userPoolClient.userPoolClientId
     });
   }
 }
