@@ -16,13 +16,14 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Basic routing and layout structure
 - ✅ DynamoDB table with single-table design (PK, SK, GSI1, GSI2)
 - ✅ Lambda functions for vehicles, refills, and expenses (list/create operations)
+- ✅ API Gateway REST API with Lambda integrations
 
 ### Phase 1 MVP Requirements
 
 #### Infrastructure Setup (In Progress)
 - ✅ DynamoDB table design and creation
 - ✅ Lambda function scaffolding
-- [ ] API Gateway setup
+- ✅ API Gateway setup
 - [ ] Cognito user pool configuration
 - [ ] S3 bucket for user uploads (receipts/photos)
 
@@ -129,11 +130,33 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
    Attributes: title, type, threshold, currentValue, recurring, status
 ```
 
-## API Structure (To Implement)
+## API Structure (Implemented)
 
-**Base URL**: `https://api.fuelsync.com/v1`
+**Base URL**: `https://<api-id>.execute-api.us-east-1.amazonaws.com/v1`
 
-### Core Endpoints
+### Implemented Endpoints
+```
+Vehicles:
+GET    /vehicles              # List all vehicles (listVehicles Lambda)
+POST   /vehicles              # Create a vehicle (createVehicle Lambda)
+
+Refills:
+GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
+POST   /vehicles/:id/refills  # Create a refill (createRefill Lambda)
+
+Expenses:
+GET    /vehicles/:id/expenses # List expenses for a vehicle (listExpenses Lambda)
+POST   /vehicles/:id/expenses # Create an expense (createExpense Lambda)
+```
+
+### API Gateway Configuration
+- **API Name**: FuelSync API
+- **Stage**: v1
+- **CORS**: Enabled for all origins and methods
+- **Integration**: Lambda proxy integration
+- **Resources**: /vehicles, /vehicles/{id}/refills, /vehicles/{id}/expenses
+
+### To Implement
 ```
 Authentication:
 POST   /auth/register
@@ -145,23 +168,17 @@ Users:
 GET    /users/me
 PUT    /users/me
 
-Vehicles:
-GET    /vehicles
-POST   /vehicles
+Vehicles (additional):
 GET    /vehicles/:id
 PUT    /vehicles/:id
 DELETE /vehicles/:id
 
-Refills:
-GET    /vehicles/:id/refills
-POST   /vehicles/:id/refills
+Refills (additional):
 GET    /vehicles/:id/refills/:refillId
 PUT    /vehicles/:id/refills/:refillId
 DELETE /vehicles/:id/refills/:refillId
 
-Expenses:
-GET    /vehicles/:id/expenses
-POST   /vehicles/:id/expenses
+Expenses (additional):
 GET    /vehicles/:id/expenses/:expenseId
 PUT    /vehicles/:id/expenses/:expenseId
 DELETE /vehicles/:id/expenses/:expenseId
@@ -231,7 +248,7 @@ fuelsync/
 ### Immediate Next Steps
 1. ✅ **DynamoDB Setup**: Create table with GSIs
 2. ✅ **Lambda Functions**: Auth, vehicles, refills, expenses CRUD
-3. **API Gateway**: REST API with Lambda integrations
+3. ✅ **API Gateway**: REST API with Lambda integrations
 4. **Cognito Setup**: User pool and app client configuration
 5. **Frontend Integration**: Connect React app to API
 6. **Basic UI**: Implement vehicle and refill forms
@@ -274,7 +291,7 @@ fuelsync/
 ## Deployment
 - **Landing**: S3 + CloudFront (fuelsync.vberkoz.com)
 - **App**: S3 + CloudFront (app.fuelsync.vberkoz.com)
-- **API**: API Gateway + Lambda (to be deployed)
+- **API**: API Gateway + Lambda (deployed at /v1 stage)
 - **Database**: DynamoDB FuelSyncTable (deployed)
 - **CI/CD**: GitHub Actions (to be configured)
 
@@ -296,9 +313,23 @@ npx cdk deploy --all --profile basil
 AWS_REGION=us-east-1
 COGNITO_USER_POOL_ID=<to-be-created>
 COGNITO_CLIENT_ID=<to-be-created>
-API_GATEWAY_URL=<to-be-created>
+API_GATEWAY_URL=<from-cdk-output-ApiUrl>
 DYNAMODB_TABLE_NAME=FuelSyncTable
 ```
+
+## API Gateway Details
+- **API Name**: FuelSync API
+- **Stage**: v1
+- **Endpoint Type**: Regional
+- **CORS**: Enabled (all origins, all methods)
+- **Integration Type**: Lambda Proxy
+- **Deployed Endpoints**:
+  - GET /vehicles
+  - POST /vehicles
+  - GET /vehicles/{id}/refills
+  - POST /vehicles/{id}/refills
+  - GET /vehicles/{id}/expenses
+  - POST /vehicles/{id}/expenses
 
 ## Lambda Functions
 

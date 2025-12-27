@@ -9,6 +9,7 @@ import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
 export class InfrastructureStack extends cdk.Stack {
@@ -50,42 +51,72 @@ export class InfrastructureStack extends cdk.Stack {
       entry: '../api/src/handlers/vehicles/list.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     const createVehicle = new nodejs.NodejsFunction(this, 'CreateVehicle', {
       entry: '../api/src/handlers/vehicles/create.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     const listRefills = new nodejs.NodejsFunction(this, 'ListRefills', {
       entry: '../api/src/handlers/refills/list.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     const createRefill = new nodejs.NodejsFunction(this, 'CreateRefill', {
       entry: '../api/src/handlers/refills/create.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     const listExpenses = new nodejs.NodejsFunction(this, 'ListExpenses', {
       entry: '../api/src/handlers/expenses/list.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     const createExpense = new nodejs.NodejsFunction(this, 'CreateExpense', {
       entry: '../api/src/handlers/expenses/create.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
     });
 
     // Grant DynamoDB permissions
@@ -95,6 +126,35 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(createRefill);
     table.grantReadData(listExpenses);
     table.grantWriteData(createExpense);
+
+    // API Gateway
+    const api = new apigateway.RestApi(this, 'FuelSyncApi', {
+      restApiName: 'FuelSync API',
+      description: 'API for FuelSync vehicle expense tracking',
+      deployOptions: {
+        stageName: 'v1'
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS
+      }
+    });
+
+    // /vehicles resource
+    const vehicles = api.root.addResource('vehicles');
+    vehicles.addMethod('GET', new apigateway.LambdaIntegration(listVehicles));
+    vehicles.addMethod('POST', new apigateway.LambdaIntegration(createVehicle));
+
+    // /vehicles/{id}/refills resource
+    const vehicleId = vehicles.addResource('{id}');
+    const refills = vehicleId.addResource('refills');
+    refills.addMethod('GET', new apigateway.LambdaIntegration(listRefills));
+    refills.addMethod('POST', new apigateway.LambdaIntegration(createRefill));
+
+    // /vehicles/{id}/expenses resource
+    const expenses = vehicleId.addResource('expenses');
+    expenses.addMethod('GET', new apigateway.LambdaIntegration(listExpenses));
+    expenses.addMethod('POST', new apigateway.LambdaIntegration(createExpense));
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
@@ -207,6 +267,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'CreateExpenseFunctionArn', {
       value: createExpense.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'ApiUrl', {
+      value: api.url
     });
   }
 }
