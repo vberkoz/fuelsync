@@ -7,6 +7,8 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
 export class InfrastructureStack extends cdk.Stack {
@@ -38,6 +40,61 @@ export class InfrastructureStack extends cdk.Stack {
       sortKey: { name: 'GSI2SK', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL
     });
+
+    // Lambda functions
+    const lambdaEnvironment = {
+      TABLE_NAME: table.tableName
+    };
+
+    const listVehicles = new nodejs.NodejsFunction(this, 'ListVehicles', {
+      entry: '../api/src/handlers/vehicles/list.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    const createVehicle = new nodejs.NodejsFunction(this, 'CreateVehicle', {
+      entry: '../api/src/handlers/vehicles/create.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    const listRefills = new nodejs.NodejsFunction(this, 'ListRefills', {
+      entry: '../api/src/handlers/refills/list.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    const createRefill = new nodejs.NodejsFunction(this, 'CreateRefill', {
+      entry: '../api/src/handlers/refills/create.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    const listExpenses = new nodejs.NodejsFunction(this, 'ListExpenses', {
+      entry: '../api/src/handlers/expenses/list.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    const createExpense = new nodejs.NodejsFunction(this, 'CreateExpense', {
+      entry: '../api/src/handlers/expenses/create.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment
+    });
+
+    // Grant DynamoDB permissions
+    table.grantReadData(listVehicles);
+    table.grantWriteData(createVehicle);
+    table.grantReadData(listRefills);
+    table.grantWriteData(createRefill);
+    table.grantReadData(listExpenses);
+    table.grantWriteData(createExpense);
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
@@ -126,6 +183,30 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'TableArn', {
       value: table.tableArn
+    });
+
+    new cdk.CfnOutput(this, 'ListVehiclesFunctionArn', {
+      value: listVehicles.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'CreateVehicleFunctionArn', {
+      value: createVehicle.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'ListRefillsFunctionArn', {
+      value: listRefills.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'CreateRefillFunctionArn', {
+      value: createRefill.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'ListExpensesFunctionArn', {
+      value: listExpenses.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'CreateExpenseFunctionArn', {
+      value: createExpense.functionArn
     });
   }
 }

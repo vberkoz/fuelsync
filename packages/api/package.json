@@ -1,0 +1,19 @@
+{
+  "name": "@fuelsync/api",
+  "version": "1.0.0",
+  "description": "FuelSync Lambda functions",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20.17.10",
+    "typescript": "^5.7.2"
+  }
+}

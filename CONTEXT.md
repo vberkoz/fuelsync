@@ -15,12 +15,13 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Astro landing page
 - ✅ Basic routing and layout structure
 - ✅ DynamoDB table with single-table design (PK, SK, GSI1, GSI2)
+- ✅ Lambda functions for vehicles, refills, and expenses (list/create operations)
 
 ### Phase 1 MVP Requirements
 
 #### Infrastructure Setup (In Progress)
 - ✅ DynamoDB table design and creation
-- [ ] Lambda function scaffolding
+- ✅ Lambda function scaffolding
 - [ ] API Gateway setup
 - [ ] Cognito user pool configuration
 - [ ] S3 bucket for user uploads (receipts/photos)
@@ -174,7 +175,23 @@ GET    /vehicles/:id/analytics/summary
 ```
 fuelsync/
 ├── packages/
-│   ├── api/                    # Lambda functions (to implement)
+│   ├── api/                    # Lambda functions
+│   │   ├── src/
+│   │   │   ├── handlers/       # Lambda handler functions
+│   │   │   │   ├── vehicles/   # Vehicle CRUD operations
+│   │   │   │   │   ├── list.ts
+│   │   │   │   │   └── create.ts
+│   │   │   │   ├── refills/    # Refill CRUD operations
+│   │   │   │   │   ├── list.ts
+│   │   │   │   │   └── create.ts
+│   │   │   │   └── expenses/   # Expense CRUD operations
+│   │   │   │       ├── list.ts
+│   │   │   │       └── create.ts
+│   │   │   └── utils/          # Shared utilities
+│   │   │       ├── dynamodb.ts # DynamoDB client
+│   │   │       └── response.ts # API response helper
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   ├── app/                    # React web application
 │   │   ├── src/
 │   │   │   ├── components/     # Reusable UI components
@@ -212,10 +229,10 @@ fuelsync/
 ## Development Priorities
 
 ### Immediate Next Steps
-1. **DynamoDB Setup**: Create table with GSIs
-2. **Cognito Setup**: User pool and app client configuration
-3. **Lambda Functions**: Auth, vehicles, refills, expenses CRUD
-4. **API Gateway**: REST API with Lambda integrations
+1. ✅ **DynamoDB Setup**: Create table with GSIs
+2. ✅ **Lambda Functions**: Auth, vehicles, refills, expenses CRUD
+3. **API Gateway**: REST API with Lambda integrations
+4. **Cognito Setup**: User pool and app client configuration
 5. **Frontend Integration**: Connect React app to API
 6. **Basic UI**: Implement vehicle and refill forms
 7. **Simple Analytics**: Display totals and averages
@@ -282,6 +299,32 @@ COGNITO_CLIENT_ID=<to-be-created>
 API_GATEWAY_URL=<to-be-created>
 DYNAMODB_TABLE_NAME=FuelSyncTable
 ```
+
+## Lambda Functions
+
+### Implemented Handlers
+
+**Vehicles**:
+- `listVehicles`: GET /vehicles - List all vehicles for authenticated user
+- `createVehicle`: POST /vehicles - Create new vehicle
+
+**Refills**:
+- `listRefills`: GET /vehicles/:vehicleId/refills - List refills for vehicle
+- `createRefill`: POST /vehicles/:vehicleId/refills - Create new refill entry
+
+**Expenses**:
+- `listExpenses`: GET /vehicles/:vehicleId/expenses - List expenses for vehicle
+- `createExpense`: POST /vehicles/:vehicleId/expenses - Create new expense entry
+
+### Lambda Configuration
+- Runtime: Node.js 20.x
+- Environment: TABLE_NAME=FuelSyncTable
+- Permissions: DynamoDB read/write access via IAM roles
+- Handler pattern: TypeScript with AWS SDK v3
+
+### Shared Utilities
+- `utils/dynamodb.ts`: DynamoDB DocumentClient configuration
+- `utils/response.ts`: Standardized API response formatting with CORS
 
 ## Key Metrics (Phase 1 Targets)
 - Month 3: 500 users
