@@ -26,7 +26,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Lambda function scaffolding
 - ✅ API Gateway setup
 - ✅ Cognito user pool configuration
-- [ ] S3 bucket for user uploads (receipts/photos)
+- ✅ S3 bucket for user uploads (receipts/photos)
 
 #### Core Features (To Implement)
 - [ ] User authentication (email/password)
@@ -70,6 +70,10 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **Database**: DynamoDB (single-table design)
 - **Auth**: Amazon Cognito
 - **Storage**: S3 for receipts and images
+  - **Uploads Bucket**: Encrypted (S3-managed), CORS enabled, lifecycle rules
+  - **Bucket Name**: fuelsync-uploads-{account-id}
+  - **Access**: Private (block all public access)
+  - **Lifecycle**: Transitions to Intelligent-Tiering after 30 days
 - **CDN**: CloudFront
 - **IaC**: AWS CDK with TypeScript
 
@@ -284,6 +288,7 @@ fuelsync/
 - Encryption in transit (TLS 1.3)
 - Input validation and sanitization
 - AWS IAM least privilege principle
+- S3 uploads bucket: Private access, S3-managed encryption, CORS configured
 
 ## Cost Optimization
 - Serverless architecture for auto-scaling

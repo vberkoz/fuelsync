@@ -92,9 +92,30 @@ export class InfrastructureStack extends cdk.Stack {
       refreshTokenValidity: cdk.Duration.days(30)
     });
 
+    // S3 bucket for user uploads (receipts, photos)
+    const uploadsBucket = new s3.Bucket(this, 'UploadsBucket', {
+      bucketName: `fuelsync-uploads-${this.account}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
+        allowedOrigins: ['*'],
+        allowedHeaders: ['*']
+      }],
+      lifecycleRules: [{
+        transitions: [{
+          storageClass: s3.StorageClass.INTELLIGENT_TIERING,
+          transitionAfter: cdk.Duration.days(30)
+        }]
+      }]
+    });
+
     // Lambda functions
     const lambdaEnvironment = {
-      TABLE_NAME: table.tableName
+      TABLE_NAME: table.tableName,
+      UPLOADS_BUCKET_NAME: uploadsBucket.bucketName
     };
 
     const listVehicles = new nodejs.NodejsFunction(this, 'ListVehicles', {
@@ -176,6 +197,18 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(createRefill);
     table.grantReadData(listExpenses);
     table.grantWriteData(createExpense);
+
+    // Grant S3 read permissions to all Lambda functions
+    uploadsBucket.grantRead(listVehicles);
+    uploadsBucket.grantRead(createVehicle);
+    uploadsBucket.grantRead(listRefills);
+    uploadsBucket.grantRead(createRefill);
+    uploadsBucket.grantRead(listExpenses);
+    uploadsBucket.grantRead(createExpense);
+
+    // Grant S3 write permissions to create functions
+    uploadsBucket.grantWrite(createRefill);
+    uploadsBucket.grantWrite(createExpense);
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'FuelSyncApi', {
@@ -329,6 +362,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'UserPoolClientId', {
       value: userPoolClient.userPoolClientId
+    });
+
+    new cdk.CfnOutput(this, 'UploadsBucketName', {
+      value: uploadsBucket.bucketName
     });
   }
 }
