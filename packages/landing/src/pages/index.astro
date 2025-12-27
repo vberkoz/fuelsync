@@ -1,0 +1,146 @@
+---
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import FAQ from '../components/FAQ';
+import MobileNav from '../components/MobileNav';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FuelSync - Your Vehicle's Financial Dashboard</title>
+  <meta name="description" content="Track fuel consumption, maintenance costs, and vehicle expenses with beautiful analytics and insights.">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950">
+  <nav class="flex items-center justify-between px-4 md:px-8 py-6 max-w-7xl mx-auto">
+    <div class="text-blue-500 text-2xl font-bold">
+      <Icon name="squares" class="w-8 h-8" />
+    </div>
+    <div class="hidden md:flex items-center space-x-8 text-gray-300">
+      <a href="#" class="hover:text-white">Features</a>
+      <a href="#" class="hover:text-white">Pricing</a>
+      <a href="#" class="hover:text-white">Docs</a>
+      <a href="#" class="hover:text-white">About</a>
+    </div>
+    <div class="flex items-center space-x-4">
+      <a href="#" class="hidden md:flex text-white hover:text-gray-300 items-center space-x-1">
+        <span>Log in</span>
+        <Icon name="arrow-right" class="w-4 h-4" />
+      </a>
+      <MobileNav client:load />
+    </div>
+  </nav>
+  
+  <main class="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center" style="min-height: calc(100vh - 200px);">
+    <div class="mb-8">
+      <div class="inline-flex items-center space-x-2 bg-slate-800/50 border border-slate-700 rounded-full px-4 py-2 text-sm">
+        <span class="text-gray-400">Now in beta - Track your vehicle expenses effortlessly.</span>
+        <a href="#" class="text-blue-400 hover:text-blue-300 flex items-center space-x-1">
+          <span>Join waitlist</span>
+          <Icon name="arrow-right" class="w-4 h-4" />
+        </a>
+      </div>
+    </div>
+    <section class="text-center mb-12 md:mb-20 px-4">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 md:mb-6 leading-tight">
+        Your Vehicle's<br>Financial Dashboard
+      </h1>
+      <p class="text-base md:text-xl text-gray-400 max-w-3xl mx-auto mb-8 md:mb-10">Track fuel consumption, maintenance costs, and vehicle expenses with beautiful analytics and insights. Understand the true cost of vehicle ownership.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Start Free</button>
+        <button class="w-full sm:w-auto text-white px-6 py-3 rounded-lg font-semibold hover:text-gray-300 transition flex items-center justify-center space-x-2">
+          <span>See how it works</span>
+          <Icon name="arrow-right" class="w-5 h-5" />
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <section class="max-w-7xl mx-auto px-4 py-16 md:py-24">
+    <div class="mb-8 md:mb-12">
+      <p class="text-green-400 text-sm font-semibold mb-2">MVP Features</p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white">Everything you need to track vehicle costs</h2>
+      <p class="text-gray-400 mt-4 max-w-2xl">Start with our core features designed to help you understand and optimize your vehicle expenses from day one.</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="lock-closed" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Secure Authentication</h3>
+        <p class="text-gray-400 text-sm">Sign up with email and password. Your data is protected with industry-standard security.</p>
+      </div>
+
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="cog" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Vehicle Management</h3>
+        <p class="text-gray-400 text-sm">Add, edit, and manage your vehicles. Track make, model, year, and all essential details in one place.</p>
+      </div>
+
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="cloud-arrow-up" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Refill Tracking</h3>
+        <p class="text-gray-400 text-sm">Log every fuel refill with automatic consumption calculations. Track volume, cost, and efficiency.</p>
+      </div>
+
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="server" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Expense Tracking</h3>
+        <p class="text-gray-400 text-sm">Record maintenance, repairs, and other vehicle costs. Categorize and organize all your expenses.</p>
+      </div>
+
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="finger-print" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Simple Statistics</h3>
+        <p class="text-gray-400 text-sm">View totals, averages, and key metrics at a glance. Understand your spending patterns instantly.</p>
+      </div>
+
+      <div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+          <Icon name="arrow-path" class="w-6 h-6 text-blue-400" />
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-2">Basic Charts</h3>
+        <p class="text-gray-400 text-sm">Visualize fuel consumption and costs with beautiful charts. See trends and patterns over time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 py-16 md:py-24">
+    <div class="text-center mb-8 md:mb-12">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+      <p class="text-gray-400">Everything you need to know about FuelSync</p>
+    </div>
+    <FAQ client:load />
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 py-16 md:py-24">
+    <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-slate-700 p-8 md:p-16 text-center">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 md:mb-6">Start tracking your vehicle costs today</h2>
+      <p class="text-base md:text-lg text-gray-400 mb-6 md:mb-8 max-w-2xl mx-auto">Join our beta program and get early access to FuelSync. Track fuel, expenses, and maintenance with beautiful analytics.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button class="w-full sm:w-auto bg-white text-slate-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">Join Beta</button>
+        <button class="w-full sm:w-auto text-white px-6 py-3 rounded-lg font-semibold hover:text-gray-300 transition flex items-center justify-center space-x-2">
+          <span>View Demo</span>
+          <Icon name="arrow-right" class="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center py-8">
+    <p class="text-gray-500 text-sm">&copy; 2025 FuelSync. Built on AWS Serverless.</p>
+  </footer>
+</body>
+</html>
