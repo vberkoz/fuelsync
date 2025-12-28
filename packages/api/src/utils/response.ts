@@ -7,3 +7,8 @@ export const response = (statusCode: number, body: any) => ({
   },
   body: JSON.stringify(body)
 });
+
+export const successResponse = (data: any) => response(200, data);
+
+export const errorResponse = (statusCode: number, message: string) => 
+  response(statusCode, { message });

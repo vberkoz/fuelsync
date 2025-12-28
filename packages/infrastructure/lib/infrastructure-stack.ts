@@ -115,8 +115,69 @@ export class InfrastructureStack extends cdk.Stack {
     // Lambda functions
     const lambdaEnvironment = {
       TABLE_NAME: table.tableName,
-      UPLOADS_BUCKET_NAME: uploadsBucket.bucketName
+      UPLOADS_BUCKET_NAME: uploadsBucket.bucketName,
+      USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
     };
+
+    const registerUser = new nodejs.NodejsFunction(this, 'RegisterUser', {
+      entry: '../api/src/handlers/auth/register.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const loginUser = new nodejs.NodejsFunction(this, 'LoginUser', {
+      entry: '../api/src/handlers/auth/login.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const refreshToken = new nodejs.NodejsFunction(this, 'RefreshToken', {
+      entry: '../api/src/handlers/auth/refresh.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const confirmEmail = new nodejs.NodejsFunction(this, 'ConfirmEmail', {
+      entry: '../api/src/handlers/auth/confirm.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const resendCode = new nodejs.NodejsFunction(this, 'ResendCode', {
+      entry: '../api/src/handlers/auth/resend-code.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
 
     const listVehicles = new nodejs.NodejsFunction(this, 'ListVehicles', {
       entry: '../api/src/handlers/vehicles/list.ts',
@@ -222,6 +283,19 @@ export class InfrastructureStack extends cdk.Stack {
         allowMethods: apigateway.Cors.ALL_METHODS
       }
     });
+
+    // /auth resource
+    const auth = api.root.addResource('auth');
+    const register = auth.addResource('register');
+    register.addMethod('POST', new apigateway.LambdaIntegration(registerUser));
+    const login = auth.addResource('login');
+    login.addMethod('POST', new apigateway.LambdaIntegration(loginUser));
+    const refresh = auth.addResource('refresh');
+    refresh.addMethod('POST', new apigateway.LambdaIntegration(refreshToken));
+    const confirm = auth.addResource('confirm');
+    confirm.addMethod('POST', new apigateway.LambdaIntegration(confirmEmail));
+    const resend = auth.addResource('resend-code');
+    resend.addMethod('POST', new apigateway.LambdaIntegration(resendCode));
 
     // /vehicles resource
     const vehicles = api.root.addResource('vehicles');
@@ -366,6 +440,18 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'UploadsBucketName', {
       value: uploadsBucket.bucketName
+    });
+
+    new cdk.CfnOutput(this, 'RegisterUserFunctionArn', {
+      value: registerUser.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'LoginUserFunctionArn', {
+      value: loginUser.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'RefreshTokenFunctionArn', {
+      value: refreshToken.functionArn
     });
   }
 }

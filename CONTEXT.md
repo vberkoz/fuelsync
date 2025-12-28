@@ -29,7 +29,12 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ S3 bucket for user uploads (receipts/photos)
 
 #### Core Features (To Implement)
-- [ ] User authentication (email/password)
+- ✅ User authentication (email/password)
+  - ✅ POST /auth/register - User registration with email verification
+  - ✅ POST /auth/login - User login with JWT tokens
+  - ✅ POST /auth/refresh - Token refresh
+  - ✅ Login page with dark theme UI
+  - ✅ Register page with dark theme UI
 - [ ] Vehicle management (add, edit, delete)
 - [ ] Refill tracking (CRUD operations)
 - [ ] Basic expense tracking
@@ -150,6 +155,11 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 
 ### Implemented Endpoints
 ```
+Authentication:
+POST   /auth/register         # Register new user (registerUser Lambda)
+POST   /auth/login            # Login user (loginUser Lambda)
+POST   /auth/refresh          # Refresh access token (refreshToken Lambda)
+
 Vehicles:
 GET    /vehicles              # List all vehicles (listVehicles Lambda)
 POST   /vehicles              # Create a vehicle (createVehicle Lambda)
@@ -173,10 +183,7 @@ POST   /vehicles/:id/expenses # Create an expense (createExpense Lambda)
 ### To Implement
 ```
 Authentication:
-POST   /auth/register
-POST   /auth/login
-POST   /auth/logout
-POST   /auth/refresh
+POST   /auth/logout           # Logout user (revoke tokens)
 
 Users:
 GET    /users/me
@@ -209,6 +216,10 @@ fuelsync/
 │   ├── api/                    # Lambda functions
 │   │   ├── src/
 │   │   │   ├── handlers/       # Lambda handler functions
+│   │   │   │   ├── auth/       # Authentication operations
+│   │   │   │   │   ├── register.ts
+│   │   │   │   │   ├── login.ts
+│   │   │   │   │   └── refresh.ts
 │   │   │   │   ├── vehicles/   # Vehicle CRUD operations
 │   │   │   │   │   ├── list.ts
 │   │   │   │   │   └── create.ts
@@ -226,9 +237,15 @@ fuelsync/
 │   ├── app/                    # React web application
 │   │   ├── src/
 │   │   │   ├── components/     # Reusable UI components
-│   │   │   ├── pages/          # Page components (Dashboard, Vehicles, etc.)
+│   │   │   ├── pages/          # Page components
+│   │   │   │   ├── Login.tsx   # Login page
+│   │   │   │   ├── Register.tsx # Register page
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── Vehicles.tsx
+│   │   │   │   └── ...
 │   │   │   ├── App.tsx         # Main app component
 │   │   │   └── main.tsx        # Entry point
+│   │   ├── .env.example        # Environment variables template
 │   │   └── package.json
 │   ├── infrastructure/         # AWS CDK infrastructure
 │   │   ├── lib/
@@ -242,6 +259,8 @@ fuelsync/
 ```
 
 ## Current Pages (Scaffolded)
+- Login (/login) - Dark theme authentication
+- Register (/register) - Dark theme registration
 - Dashboard (/)
 - Vehicles (/vehicles)
 - Refills (/refills)
@@ -264,7 +283,8 @@ fuelsync/
 2. ✅ **Lambda Functions**: Auth, vehicles, refills, expenses CRUD
 3. ✅ **API Gateway**: REST API with Lambda integrations
 4. ✅ **Cognito Setup**: User pool and app client configuration
-5. **Frontend Integration**: Connect React app to API
+5. ✅ **Authentication**: Register, login, and token refresh endpoints
+6. **Frontend Integration**: Connect React app to API
 6. **Basic UI**: Implement vehicle and refill forms
 7. **Simple Analytics**: Display totals and averages
 
