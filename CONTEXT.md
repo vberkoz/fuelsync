@@ -42,7 +42,18 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ PUT /vehicles/:id - Update vehicle
   - ✅ DELETE /vehicles/:id - Delete vehicle
   - ✅ Vehicle management UI with HeadlessUI dialogs (list, add, edit, delete)
-- [ ] Refill tracking (CRUD operations)
+  - ✅ Current vehicle selection with radio buttons
+  - ✅ Current vehicle display in sidebar and mobile header
+  - ✅ Overflow menu for vehicle actions
+- ✅ Refill tracking (CRUD operations)
+  - ✅ GET /vehicles/:id/refills - List all refills
+  - ✅ POST /vehicles/:id/refills - Create a refill
+  - ✅ GET /vehicles/:id/refills/:refillId - Get single refill
+  - ✅ PUT /vehicles/:id/refills/:refillId - Update refill
+  - ✅ DELETE /vehicles/:id/refills/:refillId - Delete refill
+  - ✅ Refill management UI with HeadlessUI dialogs (list, add, edit, delete)
+  - ✅ Current vehicle context with localStorage persistence
+  - ✅ Overflow menu for refill actions
 - [ ] Basic expense tracking
 - [ ] Simple statistics (totals, averages)
 - [ ] Basic charts (fuel consumption, costs)
@@ -69,9 +80,9 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: Headless UI (Dialog), Heroicons
+- **UI Components**: Headless UI (Dialog, Menu), Heroicons
 - **Routing**: React Router v6
-- **State Management**: Zustand
+- **State Management**: Zustand, localStorage for current vehicle
 - **API Client**: TanStack Query (React Query)
 - **Charts**: Chart.js
 
@@ -176,6 +187,9 @@ DELETE /vehicles/:id          # Delete vehicle (deleteVehicle Lambda)
 Refills:
 GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
 POST   /vehicles/:id/refills  # Create a refill (createRefill Lambda)
+GET    /vehicles/:id/refills/:refillId  # Get single refill (getRefill Lambda)
+PUT    /vehicles/:id/refills/:refillId  # Update refill (updateRefill Lambda)
+DELETE /vehicles/:id/refills/:refillId  # Delete refill (deleteRefill Lambda)
 
 Expenses:
 GET    /vehicles/:id/expenses # List expenses for a vehicle (listExpenses Lambda)
@@ -197,11 +211,6 @@ POST   /auth/logout           # Logout user (revoke tokens)
 Users:
 GET    /users/me
 PUT    /users/me
-
-Refills (additional):
-GET    /vehicles/:id/refills/:refillId
-PUT    /vehicles/:id/refills/:refillId
-DELETE /vehicles/:id/refills/:refillId
 
 Expenses (additional):
 GET    /vehicles/:id/expenses/:expenseId
@@ -226,10 +235,16 @@ fuelsync/
 │   │   │   │   │   └── refresh.ts
 │   │   │   │   ├── vehicles/   # Vehicle CRUD operations
 │   │   │   │   │   ├── list.ts
-│   │   │   │   │   └── create.ts
+│   │   │   │   │   ├── create.ts
+│   │   │   │   │   ├── get.ts
+│   │   │   │   │   ├── update.ts
+│   │   │   │   │   └── delete.ts
 │   │   │   │   ├── refills/    # Refill CRUD operations
 │   │   │   │   │   ├── list.ts
-│   │   │   │   │   └── create.ts
+│   │   │   │   │   ├── create.ts
+│   │   │   │   │   ├── get.ts
+│   │   │   │   │   ├── update.ts
+│   │   │   │   │   └── delete.ts
 │   │   │   │   └── expenses/   # Expense CRUD operations
 │   │   │   │       ├── list.ts
 │   │   │   │       └── create.ts
@@ -266,8 +281,21 @@ fuelsync/
 - Login (/login) - Dark theme authentication ✅
 - Register (/register) - Dark theme registration ✅
 - Dashboard (/)
-- Vehicles (/vehicles) - Full CRUD UI ✅
-- Refills (/refills)
+- Vehicles (/vehicles) - Full CRUD UI with current vehicle selection ✅
+- Refills (/refills, /refills/:vehicleId) - Full CRUD UI with current vehicle context ✅
+- Expenses (/expenses)
+- Analytics (/analytics)
+- Reminders (/reminders)
+
+## UI Features
+- ✅ Dark theme with gradient backgrounds
+- ✅ Responsive mobile and desktop layouts
+- ✅ Current vehicle selection with radio buttons
+- ✅ Current vehicle display in sidebar (desktop) and header (mobile)
+- ✅ Overflow menus for item actions (vehicles, refills)
+- ✅ HeadlessUI Dialog for forms
+- ✅ HeadlessUI Menu for overflow actions
+- ✅ Custom radio button styling matching theme colors/refills)
 - Expenses (/expenses)
 - Analytics (/analytics)
 - Reminders (/reminders)

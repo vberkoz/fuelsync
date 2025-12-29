@@ -39,6 +39,13 @@ export default function App() {
             </Layout>
           </ProtectedRoute>
         } />
+        <Route path="/refills/:vehicleId" element={
+          <ProtectedRoute>
+            <Layout>
+              <Refills />
+            </Layout>
+          </ProtectedRoute>
+        } />
         <Route path="/expenses" element={
           <ProtectedRoute>
             <Layout>

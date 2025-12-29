@@ -11,23 +11,29 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const vehicleId = event.pathParameters?.id;
-    if (!vehicleId) {
-      return response(400, { error: 'Vehicle ID required' });
+    const refillId = event.pathParameters?.refillId;
+    
+    if (!vehicleId || !refillId) {
+      return response(400, { error: 'Vehicle ID and Refill ID required' });
     }
 
     const result = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      KeyConditionExpression: 'PK = :pk AND contains(SK, :refillId)',
       ExpressionAttributeValues: {
         ':pk': `VEHICLE#${vehicleId}`,
-        ':sk': 'REFILL#'
+        ':refillId': refillId
       },
-      ScanIndexForward: false
+      Limit: 1
     }));
 
-    return response(200, { refills: result.Items || [] });
+    if (!result.Items || result.Items.length === 0) {
+      return response(404, { error: 'Refill not found' });
+    }
+
+    return response(200, { refill: result.Items[0] });
   } catch (error) {
-    console.error('Error listing refills:', error);
+    console.error('Error getting refill:', error);
     return response(500, { error: 'Internal server error' });
   }
 };

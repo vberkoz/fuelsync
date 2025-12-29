@@ -263,6 +263,42 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getRefill = new nodejs.NodejsFunction(this, 'GetRefill', {
+      entry: '../api/src/handlers/refills/get.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateRefill = new nodejs.NodejsFunction(this, 'UpdateRefill', {
+      entry: '../api/src/handlers/refills/update.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const deleteRefill = new nodejs.NodejsFunction(this, 'DeleteRefill', {
+      entry: '../api/src/handlers/refills/delete.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     const listExpenses = new nodejs.NodejsFunction(this, 'ListExpenses', {
       entry: '../api/src/handlers/expenses/list.ts',
       handler: 'handler',
@@ -295,6 +331,9 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(deleteVehicle);
     table.grantReadData(listRefills);
     table.grantWriteData(createRefill);
+    table.grantReadData(getRefill);
+    table.grantReadWriteData(updateRefill);
+    table.grantWriteData(deleteRefill);
     table.grantReadData(listExpenses);
     table.grantWriteData(createExpense);
 
@@ -356,6 +395,12 @@ export class InfrastructureStack extends cdk.Stack {
     const refills = vehicleId.addResource('refills');
     refills.addMethod('GET', new apigateway.LambdaIntegration(listRefills), { authorizer });
     refills.addMethod('POST', new apigateway.LambdaIntegration(createRefill), { authorizer });
+
+    // /vehicles/{id}/refills/{refillId} resource
+    const refillId = refills.addResource('{refillId}');
+    refillId.addMethod('GET', new apigateway.LambdaIntegration(getRefill), { authorizer });
+    refillId.addMethod('PUT', new apigateway.LambdaIntegration(updateRefill), { authorizer });
+    refillId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteRefill), { authorizer });
 
     // /vehicles/{id}/expenses resource
     const expenses = vehicleId.addResource('expenses');

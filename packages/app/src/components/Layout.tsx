@@ -22,14 +22,53 @@ interface LayoutProps {
   children: React.ReactNode
 }
 
+interface Vehicle {
+  vehicleId: string;
+  make: string;
+  model: string;
+  year: number;
+}
+
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userEmail, setUserEmail] = useState('User')
+  const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null)
   const location = useLocation()
+  const token = localStorage.getItem('idToken')
 
   useEffect(() => {
     setUserEmail(localStorage.getItem('userEmail') || 'User')
   }, [])
+
+  useEffect(() => {
+    const fetchCurrentVehicle = async () => {
+      const vehicleId = localStorage.getItem('currentVehicleId')
+      if (!vehicleId || !token) return
+      
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${vehicleId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setCurrentVehicle(data.vehicle)
+        }
+      } catch (err) {
+        console.error('Failed to fetch current vehicle:', err)
+      }
+    }
+    fetchCurrentVehicle()
+    
+    const handleStorageChange = () => {
+      fetchCurrentVehicle()
+    }
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('currentVehicleChanged', handleStorageChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('currentVehicleChanged', handleStorageChange)
+    }
+  }, [location.pathname, token])
 
   const handleNavClick = () => {
     setSidebarOpen(false)
@@ -49,9 +88,17 @@ export default function Layout({ children }: LayoutProps) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex h-16 items-center justify-between px-6">
-          <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-          </svg>
+          <div className="flex items-center gap-3">
+            <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+            </svg>
+            {currentVehicle && (
+              <div className="text-xs text-slate-400">
+                <div className="font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
+                <div>{currentVehicle.model}</div>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-400 hover:text-white"
@@ -180,7 +227,14 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <span className="text-lg font-semibold text-white">Dashboard</span>
+          {currentVehicle ? (
+            <div className="text-center">
+              <div className="text-sm font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
+              <div className="text-xs text-slate-400">{currentVehicle.model}</div>
+            </div>
+          ) : (
+            <span className="text-lg font-semibold text-white">Dashboard</span>
+          )}
           <ProfileMenu />
         </div>
         {children}

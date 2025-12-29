@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Dialog } from '@headlessui/react';
+import { Dialog, Menu } from '@headlessui/react';
+import { useNavigate } from 'react-router-dom';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 interface Vehicle {
   vehicleId: string;
@@ -11,6 +13,7 @@ interface Vehicle {
 }
 
 export default function Vehicles() {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -19,11 +22,13 @@ export default function Vehicles() {
   const [formData, setFormData] = useState({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentVehicleId, setCurrentVehicleId] = useState<string | null>(null);
 
   const token = localStorage.getItem('idToken');
 
   useEffect(() => {
     console.log('Token:', token ? 'exists' : 'missing');
+    setCurrentVehicleId(localStorage.getItem('currentVehicleId'));
   }, [token]);
 
   const fetchVehicles = async () => {
@@ -134,15 +139,66 @@ export default function Vehicles() {
 
       <div className="grid gap-4">
         {vehicles.map((v) => (
-          <div key={v.vehicleId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-center">
-            <div>
-              <h3 className="text-xl font-bold text-white">{v.year} {v.make} {v.model}</h3>
-              <p className="text-slate-400">{v.licensePlate} • {v.fuelType}</p>
+          <div 
+            key={v.vehicleId} 
+            onClick={() => {
+              localStorage.setItem('currentVehicleId', v.vehicleId);
+              setCurrentVehicleId(v.vehicleId);
+              window.dispatchEvent(new Event('currentVehicleChanged'));
+            }}
+            className={`bg-slate-800 p-6 rounded-lg flex items-start justify-between cursor-pointer hover:bg-slate-750 ${
+            v.vehicleId === currentVehicleId ? 'ring-2 ring-indigo-500' : ''
+          }`}>
+            <div className="flex items-start gap-3">
+              <input
+                type="radio"
+                name="currentVehicle"
+                checked={v.vehicleId === currentVehicleId}
+                onChange={() => {}}
+                className="mt-1 h-5 w-5 text-indigo-500 focus:ring-indigo-500 pointer-events-none"
+              />
+              <div>
+                <h3 className="text-xl font-bold text-white">{v.year} {v.make} {v.model}</h3>
+                <p className="text-slate-400">{v.licensePlate} • {v.fuelType}</p>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleEdit(v)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Edit</button>
-              <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
-            </div>
+            <Menu as="div" className="relative">
+              <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg" onClick={(e) => e.stopPropagation()}>
+                <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+              </Menu.Button>
+              <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={() => navigate(`/refills/${v.vehicleId}`)}
+                      className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}
+                    >
+                      View Refills
+                    </button>
+                  )}
+                </Menu.Item>
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={() => handleEdit(v)}
+                      className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </Menu.Item>
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }}
+                      className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </Menu.Item>
+              </Menu.Items>
+            </Menu>
           </div>
         ))}
         {vehicles.length === 0 && !showForm && (
