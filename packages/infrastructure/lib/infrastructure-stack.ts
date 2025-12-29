@@ -323,6 +323,42 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getExpense = new nodejs.NodejsFunction(this, 'GetExpense', {
+      entry: '../api/src/handlers/expenses/get.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateExpense = new nodejs.NodejsFunction(this, 'UpdateExpense', {
+      entry: '../api/src/handlers/expenses/update.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const deleteExpense = new nodejs.NodejsFunction(this, 'DeleteExpense', {
+      entry: '../api/src/handlers/expenses/delete.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     // Grant DynamoDB permissions
     table.grantReadData(listVehicles);
     table.grantWriteData(createVehicle);
@@ -336,6 +372,9 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(deleteRefill);
     table.grantReadData(listExpenses);
     table.grantWriteData(createExpense);
+    table.grantReadData(getExpense);
+    table.grantReadWriteData(updateExpense);
+    table.grantWriteData(deleteExpense);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -406,6 +445,12 @@ export class InfrastructureStack extends cdk.Stack {
     const expenses = vehicleId.addResource('expenses');
     expenses.addMethod('GET', new apigateway.LambdaIntegration(listExpenses), { authorizer });
     expenses.addMethod('POST', new apigateway.LambdaIntegration(createExpense), { authorizer });
+
+    // /vehicles/{id}/expenses/{expenseId} resource
+    const expenseId = expenses.addResource('{expenseId}');
+    expenseId.addMethod('GET', new apigateway.LambdaIntegration(getExpense), { authorizer });
+    expenseId.addMethod('PUT', new apigateway.LambdaIntegration(updateExpense), { authorizer });
+    expenseId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteExpense), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';

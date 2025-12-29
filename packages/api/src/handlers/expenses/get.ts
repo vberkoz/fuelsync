@@ -11,23 +11,30 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const vehicleId = event.pathParameters?.id;
-    if (!vehicleId) {
-      return response(400, { error: 'Vehicle ID required' });
+    const expenseId = event.pathParameters?.expenseId;
+    if (!vehicleId || !expenseId) {
+      return response(400, { error: 'Vehicle ID and Expense ID required' });
     }
 
     const result = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      FilterExpression: 'expenseId = :expenseId',
       ExpressionAttributeValues: {
         ':pk': `VEHICLE#${vehicleId}`,
-        ':sk': 'EXPENSE#'
+        ':sk': 'EXPENSE#',
+        ':expenseId': expenseId
       },
-      ScanIndexForward: false
+      Limit: 1
     }));
 
-    return response(200, { expenses: result.Items || [] });
+    if (!result.Items || result.Items.length === 0) {
+      return response(404, { error: 'Expense not found' });
+    }
+
+    return response(200, { expense: result.Items[0] });
   } catch (error) {
-    console.error('Error listing expenses:', error);
+    console.error('Error getting expense:', error);
     return response(500, { error: 'Internal server error' });
   }
 };

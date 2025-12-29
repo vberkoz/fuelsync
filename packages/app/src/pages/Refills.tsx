@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, Menu, Listbox } from '@headlessui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -42,6 +42,17 @@ export default function Refills() {
 
   const refills = data?.refills || [];
 
+  const groupedRefills = useMemo(() => {
+    const groups: Record<string, Refill[]> = {};
+    refills.forEach((refill: Refill) => {
+      const date = new Date(refill.createdAt);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!groups[monthKey]) groups[monthKey] = [];
+      groups[monthKey].push(refill);
+    });
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [refills]);
+
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -66,7 +77,7 @@ export default function Refills() {
       }));
       return { previousRefills };
     },
-    onError: (err, newRefill, context) => {
+    onError: (_err, _newRefill, context) => {
       queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
     },
     onSuccess: () => {
@@ -89,7 +100,7 @@ export default function Refills() {
       }));
       return { previousRefills };
     },
-    onError: (err, variables, context) => {
+    onError: (_err, _variables, context) => {
       queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
     },
     onSuccess: () => {
@@ -112,7 +123,7 @@ export default function Refills() {
       }));
       return { previousRefills };
     },
-    onError: (err, refillId, context) => {
+    onError: (_err, _refillId, context) => {
       queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
     },
     onSuccess: () => {
@@ -290,49 +301,114 @@ export default function Refills() {
       )}
 
       {!isLoading && (
-        <div className="grid gap-4">
-          {refills.map((r) => (
-          <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
-            <div>
-              <h3 className="text-xl font-bold text-white">{r.volume}L @ {r.pricePerUnit} {r.currency}/L</h3>
-              <p className="text-slate-400">Odometer: {r.odometer} km • Total: {r.totalCost} {r.currency}</p>
-              <p className="text-slate-500 text-sm">{r.fuelType} {r.station ? `• ${r.station}` : ''}</p>
-            </div>
-            <Menu as="div" className="relative">
-              <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
-              </Menu.Button>
-              <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => handleEdit(r)}
-                      className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}
-                    >
-                      Edit
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }}
-                      className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </Menu.Item>
-              </Menu.Items>
-            </Menu>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            {groupedRefills.map(([month, monthRefills]) => (
+              <div key={month} className="mb-8">
+                <h2 className="text-xl font-semibold text-white mb-4">
+                  {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+                </h2>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="text-left p-4 text-slate-400 font-semibold">Odometer (km)</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Volume (L)</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Price/Unit</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Total</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Fuel Type</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Station</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold">Date</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthRefills.map(r => (
+                      <tr key={r.refillId} className="border-b border-slate-800 hover:bg-slate-800">
+                        <td className="p-4 text-white">{r.odometer}</td>
+                        <td className="p-4 text-white">{r.volume}</td>
+                        <td className="p-4 text-white">{r.pricePerUnit} {r.currency}</td>
+                        <td className="p-4 text-white">{r.totalCost} {r.currency}</td>
+                        <td className="p-4 text-white">{r.fuelType}</td>
+                        <td className="p-4 text-white">{r.station}</td>
+                        <td className="p-4 text-white">{new Date(r.createdAt).toLocaleString()}</td>
+                        <td className="p-4 text-white">
+                          <Menu as="div" className="relative">
+                            <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                              <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                            </Menu.Button>
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>Edit</button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>Delete</button>
+                                )}
+                              </Menu.Item>
+                            </Menu.Items>
+                          </Menu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+            {refills.length === 0 && !showForm && (
+              <div className="text-center py-12 text-slate-400">
+                <p>No refills yet. Add your first refill to get started!</p>
+              </div>
+            )}
           </div>
-        ))}
-          {refills.length === 0 && !showForm && (
-            <div className="text-center py-12 text-slate-400">
-              <p>No refills yet. Add your first refill to get started!</p>
-            </div>
-          )}
-        </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden">
+            {groupedRefills.map(([month, monthRefills]) => (
+              <div key={month} className="mb-8">
+                <h2 className="text-xl font-semibold text-white mb-4">
+                  {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+                </h2>
+                <div className="grid gap-4">
+                  {monthRefills.map((r: Refill) => (
+                    <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{r.volume}L @ {r.pricePerUnit} {r.currency}/L</h3>
+                        <p className="text-slate-400">Odometer: {r.odometer} km • Total: {r.totalCost} {r.currency}</p>
+                        <p className="text-slate-500 text-sm">{r.fuelType} {r.station ? `• ${r.station}` : ''}</p>
+                        {r.createdAt && <p className="text-slate-500 text-sm">{new Date(r.createdAt).toLocaleString()}</p>}
+                      </div>
+                      <Menu as="div" className="relative">
+                        <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                          <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                        </Menu.Button>
+                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                          <Menu.Item>
+                            {({ active }) => (
+                              <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>Edit</button>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>Delete</button>
+                            )}
+                          </Menu.Item>
+                        </Menu.Items>
+                      </Menu>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {refills.length === 0 && !showForm && (
+              <div className="text-center py-12 text-slate-400">
+                <p>No refills yet. Add your first refill to get started!</p>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} className="relative z-50">

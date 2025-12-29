@@ -87,5 +87,40 @@ export const api = {
       if (!res.ok) throw new Error(`Error: ${res.status}`);
       return res.json();
     }
+  },
+  expenses: {
+    list: async (vehicleId: string) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      return res.json();
+    },
+    create: async (vehicleId: string, data: any) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      return res.json();
+    },
+    update: async (vehicleId: string, expenseId: string, data: any) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      return res.json();
+    },
+    delete: async (vehicleId: string, expenseId: string) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      return res.json();
+    }
   }
 };

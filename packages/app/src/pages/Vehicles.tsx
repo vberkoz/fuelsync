@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Dialog, Menu, Listbox, RadioGroup } from '@headlessui/react';
+import { useState, useMemo } from 'react';
+import { Dialog, Menu, Listbox } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useReactTable, getCoreRowModel, createColumnHelper, flexRender } from '@tanstack/react-table';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 
@@ -13,6 +14,7 @@ interface Vehicle {
   year: number;
   licensePlate?: string;
   fuelType?: string;
+  createdAt?: string;
 }
 
 export default function Vehicles() {
@@ -33,6 +35,71 @@ export default function Vehicles() {
 
   const vehicles = data?.vehicles || [];
 
+  const columnHelper = createColumnHelper<Vehicle>();
+  const columns = useMemo(() => [
+    columnHelper.display({
+      id: 'select',
+      cell: ({ row }) => {
+        const checked = currentVehicleId === row.original.vehicleId;
+        return (
+          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+            checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
+          }`} onClick={() => setCurrentVehicle(row.original.vehicleId)}>
+            {checked && <div className="h-2 w-2 rounded-full bg-white" />}
+          </div>
+        );
+      }
+    }),
+    columnHelper.accessor('year', { header: 'Year' }),
+    columnHelper.accessor('make', { header: 'Make' }),
+    columnHelper.accessor('model', { header: 'Model' }),
+    columnHelper.accessor('licensePlate', { header: 'License Plate' }),
+    columnHelper.accessor('fuelType', { header: 'Fuel Type' }),
+    columnHelper.accessor('createdAt', {
+      header: 'Created',
+      cell: (info) => info.getValue() ? new Date(info.getValue()!).toLocaleString() : ''
+    }),
+    columnHelper.display({
+      id: 'actions',
+      cell: ({ row }) => (
+        <Menu as="div" className="relative">
+          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+            <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+          </Menu.Button>
+          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+            <Menu.Item>
+              {({ active }) => (
+                <button onClick={() => navigate(`/refills/${row.original.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
+                  View Refills
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button onClick={() => handleEdit(row.original)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
+                  Edit
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button onClick={() => { setDeleteId(row.original.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
+                  Delete
+                </button>
+              )}
+            </Menu.Item>
+          </Menu.Items>
+        </Menu>
+      )
+    })
+  ], [currentVehicleId, navigate]);
+
+  const table = useReactTable({
+    data: vehicles,
+    columns,
+    getCoreRowModel: getCoreRowModel()
+  });
+
   const createMutation = useMutation({
     mutationFn: api.vehicles.create,
     onMutate: async (newVehicle) => {
@@ -43,7 +110,7 @@ export default function Vehicles() {
       }));
       return { previousVehicles };
     },
-    onError: (err, newVehicle, context) => {
+    onError: (_err, _newVehicle, context) => {
       queryClient.setQueryData(['vehicles'], context?.previousVehicles);
     },
     onSuccess: () => {
@@ -65,7 +132,7 @@ export default function Vehicles() {
       }));
       return { previousVehicles };
     },
-    onError: (err, variables, context) => {
+    onError: (_err, _variables, context) => {
       queryClient.setQueryData(['vehicles'], context?.previousVehicles);
     },
     onSuccess: () => {
@@ -88,7 +155,7 @@ export default function Vehicles() {
       }));
       return { previousVehicles };
     },
-    onError: (err, id, context) => {
+    onError: (_err, _id, context) => {
       queryClient.setQueryData(['vehicles'], context?.previousVehicles);
     },
     onSuccess: () => {
@@ -198,65 +265,89 @@ export default function Vehicles() {
       )}
 
       {!isLoading && (
-        <RadioGroup value={currentVehicleId} onChange={setCurrentVehicle}>
-          <div className="grid gap-4">
-            {vehicles.map((v) => (
-              <RadioGroup.Option key={v.vehicleId} value={v.vehicleId}>
-                {({ checked }) => (
-                  <div className={`bg-slate-800 p-6 rounded-lg flex items-start justify-between cursor-pointer hover:bg-slate-750 ${
-                    checked ? 'ring-2 ring-indigo-500' : ''
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                        checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
-                      }`}>
-                        {checked && <div className="h-2 w-2 rounded-full bg-white" />}
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{v.year} {v.make} {v.model}</h3>
-                        <p className="text-slate-400">{v.licensePlate} • {v.fuelType}</p>
-                      </div>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <table className="w-full">
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id} className="border-b border-slate-700">
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className="text-left p-4 text-slate-400 font-semibold">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="border-b border-slate-800 hover:bg-slate-800">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="p-4 text-white">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {vehicles.length === 0 && !showForm && (
+              <div className="text-center py-12 text-slate-400">
+                <p>No vehicles yet. Add your first vehicle to get started!</p>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden grid gap-4">
+            {vehicles.map((v: Vehicle) => (
+              <div key={v.vehicleId} className={`bg-slate-800 p-6 rounded-lg ${
+                currentVehicleId === v.vehicleId ? 'ring-2 ring-indigo-500' : ''
+              }`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center cursor-pointer ${
+                      currentVehicleId === v.vehicleId ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
+                    }`} onClick={() => setCurrentVehicle(v.vehicleId)}>
+                      {currentVehicleId === v.vehicleId && <div className="h-2 w-2 rounded-full bg-white" />}
                     </div>
-                    <Menu as="div" className="relative">
-                      <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg" onClick={(e) => e.stopPropagation()}>
-                        <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
-                      </Menu.Button>
-                      <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => navigate(`/refills/${v.vehicleId}`)}
-                              className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}
-                            >
-                              View Refills
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => handleEdit(v)}
-                              className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }}
-                              className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{v.year} {v.make} {v.model}</h3>
+                      <p className="text-slate-400">{v.licensePlate} • {v.fuelType}</p>
+                      {v.createdAt && <p className="text-slate-500 text-sm">{new Date(v.createdAt).toLocaleString()}</p>}
+                    </div>
                   </div>
-                )}
-              </RadioGroup.Option>
+                  <Menu as="div" className="relative">
+                    <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                      <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
+                            View Refills
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
+                            Edit
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
+                            Delete
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Menu>
+                </div>
+              </div>
             ))}
             {vehicles.length === 0 && !showForm && (
               <div className="text-center py-12 text-slate-400">
@@ -264,7 +355,7 @@ export default function Vehicles() {
               </div>
             )}
           </div>
-        </RadioGroup>
+        </>
       )}
 
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} className="relative z-50">

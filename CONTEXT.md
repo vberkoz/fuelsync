@@ -54,7 +54,16 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ Refill management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Current vehicle context with localStorage persistence
   - ✅ Overflow menu for refill actions
-- [ ] Basic expense tracking
+- ✅ Basic expense tracking
+  - ✅ GET /vehicles/:id/expenses - List all expenses
+  - ✅ POST /vehicles/:id/expenses - Create an expense
+  - ✅ GET /vehicles/:id/expenses/:expenseId - Get single expense
+  - ✅ PUT /vehicles/:id/expenses/:expenseId - Update expense
+  - ✅ DELETE /vehicles/:id/expenses/:expenseId - Delete expense
+  - ✅ Expense management UI with HeadlessUI dialogs (list, add, edit, delete)
+  - ✅ Category selection with Listbox (Maintenance, Repair, Insurance, etc.)
+  - ✅ Tax deductible checkbox
+  - ✅ Overflow menu for expense actions
 - [ ] Simple statistics (totals, averages)
 - [ ] Basic charts (fuel consumption, costs)
 - [ ] Responsive web application
@@ -80,10 +89,11 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: Headless UI (Dialog, Menu, Listbox, RadioGroup), Heroicons
+- **UI Components**: Headless UI (Dialog, Menu, Listbox), Heroicons
 - **Routing**: React Router v6
 - **State Management**: Zustand (auth, current vehicle), TanStack Query (server state)
 - **API Client**: Centralized API utilities with fetch
+- **Tables**: TanStack Table (responsive tables/cards)
 - **Charts**: Chart.js
 
 ### Backend (AWS Serverless)
@@ -194,6 +204,9 @@ DELETE /vehicles/:id/refills/:refillId  # Delete refill (deleteRefill Lambda)
 Expenses:
 GET    /vehicles/:id/expenses # List expenses for a vehicle (listExpenses Lambda)
 POST   /vehicles/:id/expenses # Create an expense (createExpense Lambda)
+GET    /vehicles/:id/expenses/:expenseId  # Get single expense (getExpense Lambda)
+PUT    /vehicles/:id/expenses/:expenseId  # Update expense (updateExpense Lambda)
+DELETE /vehicles/:id/expenses/:expenseId  # Delete expense (deleteExpense Lambda)
 ```
 
 ### API Gateway Configuration
@@ -211,11 +224,6 @@ POST   /auth/logout           # Logout user (revoke tokens)
 Users:
 GET    /users/me
 PUT    /users/me
-
-Expenses (additional):
-GET    /vehicles/:id/expenses/:expenseId
-PUT    /vehicles/:id/expenses/:expenseId
-DELETE /vehicles/:id/expenses/:expenseId
 
 Analytics:
 GET    /vehicles/:id/analytics/summary
@@ -247,7 +255,10 @@ fuelsync/
 │   │   │   │   │   └── delete.ts
 │   │   │   │   └── expenses/   # Expense CRUD operations
 │   │   │   │       ├── list.ts
-│   │   │   │       └── create.ts
+│   │   │   │       ├── create.ts
+│   │   │   │       ├── get.ts
+│   │   │   │       ├── update.ts
+│   │   │   │       └── delete.ts
 │   │   │   └── utils/          # Shared utilities
 │   │   │       ├── dynamodb.ts # DynamoDB client
 │   │   │       └── response.ts # API response helper
@@ -283,7 +294,7 @@ fuelsync/
 - Dashboard (/)
 - Vehicles (/vehicles) - Full CRUD UI with current vehicle selection ✅
 - Refills (/refills, /refills/:vehicleId) - Full CRUD UI with current vehicle context ✅
-- Expenses (/expenses)
+- Expenses (/expenses, /expenses/:vehicleId) - Full CRUD UI with current vehicle context ✅
 - Analytics (/analytics)
 - Reminders (/reminders)
 
@@ -300,10 +311,10 @@ fuelsync/
 - ✅ Custom radio button styling matching theme colors
 - ✅ Loading states with spinners
 - ✅ TanStack Query for data fetching and caching
+- ✅ TanStack Table for responsive data display (desktop: tables, mobile: cards)
 - ✅ Optimistic UI updates for all mutations
 - ✅ Automatic rollback on errors
-- ✅ Zustand stores for auth and vehicle state management/refills)
-- Expenses (/expenses)
+- ✅ Zustand stores for auth and vehicle state management
 - Analytics (/analytics)
 - Reminders (/reminders)
 
@@ -429,6 +440,9 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 **Expenses**:
 - `listExpenses`: GET /vehicles/:vehicleId/expenses - List expenses for vehicle
 - `createExpense`: POST /vehicles/:vehicleId/expenses - Create new expense entry
+- `getExpense`: GET /vehicles/:vehicleId/expenses/:expenseId - Get single expense by ID
+- `updateExpense`: PUT /vehicles/:vehicleId/expenses/:expenseId - Update existing expense
+- `deleteExpense`: DELETE /vehicles/:vehicleId/expenses/:expenseId - Delete expense
 
 ### Lambda Configuration
 - Runtime: Node.js 20.x
