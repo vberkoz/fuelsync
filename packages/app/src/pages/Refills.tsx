@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Dialog, Menu } from '@headlessui/react';
+import { Dialog, Menu, Listbox } from '@headlessui/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
+import { useVehicleStore } from '../stores/vehicleStore';
 
 interface Refill {
   refillId: string;
@@ -18,16 +21,27 @@ interface Refill {
 export default function Refills() {
   const { vehicleId } = useParams<{ vehicleId: string }>();
   const navigate = useNavigate();
-  const currentVehicleId = vehicleId || localStorage.getItem('currentVehicleId');
+  const queryClient = useQueryClient();
+  const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
+  const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
+  const activeVehicleId = vehicleId || currentVehicleId;
 
   useEffect(() => {
     if (vehicleId) {
-      localStorage.setItem('currentVehicleId', vehicleId);
+      setCurrentVehicle(vehicleId);
     } else if (!currentVehicleId) {
       navigate('/vehicles');
     }
-  }, [vehicleId, currentVehicleId, navigate]);
-  const [refills, setRefills] = useState<Refill[]>([]);
+  }, [vehicleId, currentVehicleId, navigate, setCurrentVehicle]);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['refills', activeVehicleId],
+    queryFn: () => api.refills.list(activeVehicleId!),
+    enabled: !!activeVehicleId
+  });
+
+  const refills = data?.refills || [];
+
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -41,58 +55,92 @@ export default function Refills() {
     fuelType: 'Regular',
     station: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const token = localStorage.getItem('idToken');
-
-  const fetchRefills = async () => {
-    if (!token || !currentVehicleId) {
-      setError('Not authenticated or vehicle not selected');
-      return;
+  const createMutation = useMutation({
+    mutationFn: (data: any) => api.refills.create(activeVehicleId!, data),
+    onMutate: async (newRefill) => {
+      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
+      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
+      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
+        refills: [...(old?.refills || []), { ...newRefill, refillId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }]
+      }));
+      return { previousRefills };
+    },
+    onError: (err, newRefill, context) => {
+      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
+    },
+    onSuccess: () => {
+      setShowForm(false);
+      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
     }
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}/refills`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      const data = await res.json();
-      setRefills(data.refills || []);
-      setError('');
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+  });
 
-  useEffect(() => { fetchRefills(); }, [currentVehicleId]);
+  const updateMutation = useMutation({
+    mutationFn: ({ refillId, data }: { refillId: string; data: any }) => 
+      api.refills.update(activeVehicleId!, refillId, data),
+    onMutate: async ({ refillId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
+      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
+      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
+        refills: old?.refills.map((r: Refill) => r.refillId === refillId ? { ...r, ...data } : r) || []
+      }));
+      return { previousRefills };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
+    },
+    onSuccess: () => {
+      setShowForm(false);
+      setEditingId(null);
+      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (refillId: string) => api.refills.delete(activeVehicleId!, refillId),
+    onMutate: async (refillId) => {
+      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
+      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
+      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
+        refills: old?.refills.filter((r: Refill) => r.refillId !== refillId) || []
+      }));
+      return { previousRefills };
+    },
+    onError: (err, refillId, context) => {
+      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
+    },
+    onSuccess: () => {
+      setShowDeleteDialog(false);
+      setDeleteId(null);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    const refillData = { 
+      odometer: parseFloat(formData.odometer),
+      volume: parseFloat(formData.volume),
+      pricePerUnit: parseFloat(formData.pricePerUnit),
+      totalCost: parseFloat(formData.totalCost),
+      currency: formData.currency,
+      fuelType: formData.fuelType,
+      station: formData.station
+    };
     
-    const url = editingId 
-      ? `${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}/refills/${editingId}`
-      : `${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}/refills`;
-    
-    await fetch(url, {
-      method: editingId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ 
-        odometer: parseFloat(formData.odometer),
-        volume: parseFloat(formData.volume),
-        pricePerUnit: parseFloat(formData.pricePerUnit),
-        totalCost: parseFloat(formData.totalCost),
-        currency: formData.currency,
-        fuelType: formData.fuelType,
-        station: formData.station
-      })
-    });
-    
-    setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' });
-    setShowForm(false);
-    setEditingId(null);
-    setLoading(false);
-    fetchRefills();
+    if (editingId) {
+      updateMutation.mutate({ refillId: editingId, data: refillData });
+    } else {
+      createMutation.mutate(refillData);
+    }
   };
 
   const handleEdit = (refill: Refill) => {
@@ -110,20 +158,14 @@ export default function Refills() {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}/refills/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setShowDeleteDialog(false);
-    setDeleteId(null);
-    fetchRefills();
+    deleteMutation.mutate(id);
   };
 
   return (
     <div className="p-8">
       {error && (
         <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
-          {error}
+          {error instanceof Error ? error.message : 'An error occurred'}
         </div>
       )}
       <div className="flex justify-between items-center mb-6">
@@ -140,7 +182,14 @@ export default function Refills() {
         </button>
       </div>
 
-      {showForm && (
+      {isLoading && (
+        <div className="text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+          <p className="mt-4 text-slate-400">Loading refills...</p>
+        </div>
+      )}
+
+      {!isLoading && showForm && (
         <Dialog open={showForm} onClose={() => { setShowForm(false); setEditingId(null); }} className="relative z-50">
           <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
@@ -187,15 +236,30 @@ export default function Refills() {
                     className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
                   />
                 </div>
-                <select 
-                  value={formData.fuelType} 
-                  onChange={(e) => setFormData({...formData, fuelType: e.target.value})} 
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                >
-                  <option>Regular</option>
-                  <option>Premium</option>
-                  <option>Diesel</option>
-                </select>
+                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center">
+                      <span>{formData.fuelType}</span>
+                      <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                        <Listbox.Option
+                          key={fuel}
+                          value={fuel}
+                          className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                        >
+                          {({ selected }) => (
+                            <div className="flex justify-between items-center">
+                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                              {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                            </div>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
                 <input 
                   type="text" 
                   placeholder="Station (optional)" 
@@ -206,10 +270,10 @@ export default function Refills() {
                 <div className="flex gap-2">
                   <button 
                     type="submit" 
-                    disabled={loading} 
+                    disabled={createMutation.isPending || updateMutation.isPending} 
                     className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
                   >
-                    {loading ? 'Saving...' : editingId ? 'Update' : 'Add'}
+                    {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editingId ? 'Update' : 'Add'}
                   </button>
                   <button 
                     type="button" 
@@ -225,8 +289,9 @@ export default function Refills() {
         </Dialog>
       )}
 
-      <div className="grid gap-4">
-        {refills.map((r) => (
+      {!isLoading && (
+        <div className="grid gap-4">
+          {refills.map((r) => (
           <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
             <div>
               <h3 className="text-xl font-bold text-white">{r.volume}L @ {r.pricePerUnit} {r.currency}/L</h3>
@@ -262,12 +327,13 @@ export default function Refills() {
             </Menu>
           </div>
         ))}
-        {refills.length === 0 && !showForm && (
-          <div className="text-center py-12 text-slate-400">
-            <p>No refills yet. Add your first refill to get started!</p>
-          </div>
-        )}
-      </div>
+          {refills.length === 0 && !showForm && (
+            <div className="text-center py-12 text-slate-400">
+              <p>No refills yet. Add your first refill to get started!</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/50" aria-hidden="true" />

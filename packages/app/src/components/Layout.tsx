@@ -3,6 +3,8 @@ import { useLocation, Link } from 'react-router-dom'
 import { HomeIcon, TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import { Menu, Transition } from '@headlessui/react'
 import ProfileMenu from './ProfileMenu'
+import { useAuthStore } from '../stores/authStore'
+import { useVehicleStore } from '../stores/vehicleStore'
 
 const navigation = [
   { name: 'Dashboard', icon: HomeIcon, href: '/' },
@@ -31,23 +33,22 @@ interface Vehicle {
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [userEmail, setUserEmail] = useState('User')
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null)
   const location = useLocation()
-  const token = localStorage.getItem('idToken')
-
-  useEffect(() => {
-    setUserEmail(localStorage.getItem('userEmail') || 'User')
-  }, [])
+  const userEmail = useAuthStore((state) => state.userEmail)
+  const currentVehicleId = useVehicleStore((state) => state.currentVehicleId)
+  const idToken = useAuthStore((state) => state.idToken)
 
   useEffect(() => {
     const fetchCurrentVehicle = async () => {
-      const vehicleId = localStorage.getItem('currentVehicleId')
-      if (!vehicleId || !token) return
+      if (!currentVehicleId || !idToken) {
+        setCurrentVehicle(null);
+        return;
+      }
       
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${vehicleId}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}`, {
+          headers: { Authorization: `Bearer ${idToken}` }
         })
         if (res.ok) {
           const data = await res.json()
@@ -68,7 +69,7 @@ export default function Layout({ children }: LayoutProps) {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('currentVehicleChanged', handleStorageChange)
     }
-  }, [location.pathname, token])
+  }, [currentVehicleId, idToken])
 
   const handleNavClick = () => {
     setSidebarOpen(false)
@@ -197,9 +198,7 @@ export default function Layout({ children }: LayoutProps) {
                     {({ active }) => (
                       <button
                         onClick={() => {
-                          localStorage.removeItem('accessToken');
-                          localStorage.removeItem('idToken');
-                          localStorage.removeItem('refreshToken');
+                          useAuthStore.getState().clearAuth();
                           window.location.href = '/login';
                         }}
                         className={`${

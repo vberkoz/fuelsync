@@ -80,10 +80,10 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: Headless UI (Dialog, Menu), Heroicons
+- **UI Components**: Headless UI (Dialog, Menu, Listbox, RadioGroup), Heroicons
 - **Routing**: React Router v6
-- **State Management**: Zustand, localStorage for current vehicle
-- **API Client**: TanStack Query (React Query)
+- **State Management**: Zustand (auth, current vehicle), TanStack Query (server state)
+- **API Client**: Centralized API utilities with fetch
 - **Charts**: Chart.js
 
 ### Backend (AWS Serverless)
@@ -290,12 +290,19 @@ fuelsync/
 ## UI Features
 - ✅ Dark theme with gradient backgrounds
 - ✅ Responsive mobile and desktop layouts
-- ✅ Current vehicle selection with radio buttons
+- ✅ Current vehicle selection with RadioGroup
 - ✅ Current vehicle display in sidebar (desktop) and header (mobile)
 - ✅ Overflow menus for item actions (vehicles, refills)
 - ✅ HeadlessUI Dialog for forms
 - ✅ HeadlessUI Menu for overflow actions
-- ✅ Custom radio button styling matching theme colors/refills)
+- ✅ HeadlessUI Listbox for dropdowns (fuel type selection)
+- ✅ HeadlessUI RadioGroup for vehicle selection
+- ✅ Custom radio button styling matching theme colors
+- ✅ Loading states with spinners
+- ✅ TanStack Query for data fetching and caching
+- ✅ Optimistic UI updates for all mutations
+- ✅ Automatic rollback on errors
+- ✅ Zustand stores for auth and vehicle state management/refills)
 - Expenses (/expenses)
 - Analytics (/analytics)
 - Reminders (/reminders)
