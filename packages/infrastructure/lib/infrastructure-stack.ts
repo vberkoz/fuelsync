@@ -203,6 +203,42 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getVehicle = new nodejs.NodejsFunction(this, 'GetVehicle', {
+      entry: '../api/src/handlers/vehicles/get.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateVehicle = new nodejs.NodejsFunction(this, 'UpdateVehicle', {
+      entry: '../api/src/handlers/vehicles/update.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const deleteVehicle = new nodejs.NodejsFunction(this, 'DeleteVehicle', {
+      entry: '../api/src/handlers/vehicles/delete.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     const listRefills = new nodejs.NodejsFunction(this, 'ListRefills', {
       entry: '../api/src/handlers/refills/list.ts',
       handler: 'handler',
@@ -254,6 +290,9 @@ export class InfrastructureStack extends cdk.Stack {
     // Grant DynamoDB permissions
     table.grantReadData(listVehicles);
     table.grantWriteData(createVehicle);
+    table.grantReadData(getVehicle);
+    table.grantReadWriteData(updateVehicle);
+    table.grantWriteData(deleteVehicle);
     table.grantReadData(listRefills);
     table.grantWriteData(createRefill);
     table.grantReadData(listExpenses);
@@ -284,6 +323,11 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    // Cognito Authorizer
+    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
+      cognitoUserPools: [userPool]
+    });
+
     // /auth resource
     const auth = api.root.addResource('auth');
     const register = auth.addResource('register');
@@ -299,19 +343,24 @@ export class InfrastructureStack extends cdk.Stack {
 
     // /vehicles resource
     const vehicles = api.root.addResource('vehicles');
-    vehicles.addMethod('GET', new apigateway.LambdaIntegration(listVehicles));
-    vehicles.addMethod('POST', new apigateway.LambdaIntegration(createVehicle));
+    vehicles.addMethod('GET', new apigateway.LambdaIntegration(listVehicles), { authorizer });
+    vehicles.addMethod('POST', new apigateway.LambdaIntegration(createVehicle), { authorizer });
+
+    // /vehicles/{id} resource
+    const vehicleId = vehicles.addResource('{id}');
+    vehicleId.addMethod('GET', new apigateway.LambdaIntegration(getVehicle), { authorizer });
+    vehicleId.addMethod('PUT', new apigateway.LambdaIntegration(updateVehicle), { authorizer });
+    vehicleId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteVehicle), { authorizer });
 
     // /vehicles/{id}/refills resource
-    const vehicleId = vehicles.addResource('{id}');
     const refills = vehicleId.addResource('refills');
-    refills.addMethod('GET', new apigateway.LambdaIntegration(listRefills));
-    refills.addMethod('POST', new apigateway.LambdaIntegration(createRefill));
+    refills.addMethod('GET', new apigateway.LambdaIntegration(listRefills), { authorizer });
+    refills.addMethod('POST', new apigateway.LambdaIntegration(createRefill), { authorizer });
 
     // /vehicles/{id}/expenses resource
     const expenses = vehicleId.addResource('expenses');
-    expenses.addMethod('GET', new apigateway.LambdaIntegration(listExpenses));
-    expenses.addMethod('POST', new apigateway.LambdaIntegration(createExpense));
+    expenses.addMethod('GET', new apigateway.LambdaIntegration(listExpenses), { authorizer });
+    expenses.addMethod('POST', new apigateway.LambdaIntegration(createExpense), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
@@ -353,11 +402,18 @@ export class InfrastructureStack extends cdk.Stack {
       domainNames: [appDomainName],
       certificate,
       defaultRootObject: 'index.html',
-      errorResponses: [{
-        httpStatus: 404,
-        responseHttpStatus: 200,
-        responsePagePath: '/index.html'
-      }]
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html'
+        },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html'
+        }
+      ]
     });
 
     new route53.ARecord(this, 'LandingRecord', {
@@ -408,6 +464,18 @@ export class InfrastructureStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'CreateVehicleFunctionArn', {
       value: createVehicle.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'GetVehicleFunctionArn', {
+      value: getVehicle.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'UpdateVehicleFunctionArn', {
+      value: updateVehicle.functionArn
+    });
+
+    new cdk.CfnOutput(this, 'DeleteVehicleFunctionArn', {
+      value: deleteVehicle.functionArn
     });
 
     new cdk.CfnOutput(this, 'ListRefillsFunctionArn', {

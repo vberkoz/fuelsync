@@ -35,7 +35,13 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ POST /auth/refresh - Token refresh
   - ✅ Login page with dark theme UI
   - ✅ Register page with dark theme UI
-- [ ] Vehicle management (add, edit, delete)
+- ✅ Vehicle management (add, edit, delete)
+  - ✅ GET /vehicles - List all vehicles
+  - ✅ POST /vehicles - Create a vehicle
+  - ✅ GET /vehicles/:id - Get single vehicle
+  - ✅ PUT /vehicles/:id - Update vehicle
+  - ✅ DELETE /vehicles/:id - Delete vehicle
+  - ✅ Vehicle management UI with HeadlessUI dialogs (list, add, edit, delete)
 - [ ] Refill tracking (CRUD operations)
 - [ ] Basic expense tracking
 - [ ] Simple statistics (totals, averages)
@@ -63,7 +69,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: Headless UI, Heroicons
+- **UI Components**: Headless UI (Dialog), Heroicons
 - **Routing**: React Router v6
 - **State Management**: Zustand
 - **API Client**: TanStack Query (React Query)
@@ -163,6 +169,9 @@ POST   /auth/refresh          # Refresh access token (refreshToken Lambda)
 Vehicles:
 GET    /vehicles              # List all vehicles (listVehicles Lambda)
 POST   /vehicles              # Create a vehicle (createVehicle Lambda)
+GET    /vehicles/:id          # Get single vehicle (getVehicle Lambda)
+PUT    /vehicles/:id          # Update vehicle (updateVehicle Lambda)
+DELETE /vehicles/:id          # Delete vehicle (deleteVehicle Lambda)
 
 Refills:
 GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
@@ -188,11 +197,6 @@ POST   /auth/logout           # Logout user (revoke tokens)
 Users:
 GET    /users/me
 PUT    /users/me
-
-Vehicles (additional):
-GET    /vehicles/:id
-PUT    /vehicles/:id
-DELETE /vehicles/:id
 
 Refills (additional):
 GET    /vehicles/:id/refills/:refillId
@@ -259,10 +263,10 @@ fuelsync/
 ```
 
 ## Current Pages (Scaffolded)
-- Login (/login) - Dark theme authentication
-- Register (/register) - Dark theme registration
+- Login (/login) - Dark theme authentication ✅
+- Register (/register) - Dark theme registration ✅
 - Dashboard (/)
-- Vehicles (/vehicles)
+- Vehicles (/vehicles) - Full CRUD UI ✅
 - Refills (/refills)
 - Expenses (/expenses)
 - Analytics (/analytics)
@@ -359,8 +363,14 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - **CORS**: Enabled (all origins, all methods)
 - **Integration Type**: Lambda Proxy
 - **Deployed Endpoints**:
+  - POST /auth/register
+  - POST /auth/login
+  - POST /auth/refresh
   - GET /vehicles
   - POST /vehicles
+  - GET /vehicles/{id}
+  - PUT /vehicles/{id}
+  - DELETE /vehicles/{id}
   - GET /vehicles/{id}/refills
   - POST /vehicles/{id}/refills
   - GET /vehicles/{id}/expenses
@@ -373,6 +383,9 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 **Vehicles**:
 - `listVehicles`: GET /vehicles - List all vehicles for authenticated user
 - `createVehicle`: POST /vehicles - Create new vehicle
+- `getVehicle`: GET /vehicles/:id - Get single vehicle by ID
+- `updateVehicle`: PUT /vehicles/:id - Update existing vehicle
+- `deleteVehicle`: DELETE /vehicles/:id - Delete vehicle
 
 **Refills**:
 - `listRefills`: GET /vehicles/:vehicleId/refills - List refills for vehicle
