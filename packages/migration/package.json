@@ -1,0 +1,18 @@
+{
+  "name": "migration",
+  "version": "1.0.0",
+  "description": "SQLite to DynamoDB migration tool",
+  "main": "index.js",
+  "scripts": {
+    "migrate": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.958.0",
+    "@aws-sdk/lib-dynamodb": "^3.958.0",
+    "better-sqlite3": "^12.5.0"
+  }
+}

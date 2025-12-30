@@ -15,6 +15,7 @@ interface Refill {
   currency: string;
   fuelType: string;
   station?: string;
+  timestamp?: number;
   createdAt: string;
 }
 
@@ -26,13 +27,18 @@ export default function Refills() {
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
   const activeVehicleId = vehicleId || currentVehicleId;
 
+  const { data: vehiclesData } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: api.vehicles.list
+  });
+
   useEffect(() => {
     if (vehicleId) {
       setCurrentVehicle(vehicleId);
-    } else if (!currentVehicleId) {
-      navigate('/vehicles');
+    } else if (!currentVehicleId && vehiclesData?.vehicles?.length > 0) {
+      setCurrentVehicle(vehiclesData.vehicles[0].vehicleId);
     }
-  }, [vehicleId, currentVehicleId, navigate, setCurrentVehicle]);
+  }, [vehicleId, currentVehicleId, vehiclesData, setCurrentVehicle]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['refills', activeVehicleId],
@@ -45,7 +51,7 @@ export default function Refills() {
   const groupedRefills = useMemo(() => {
     const groups: Record<string, Refill[]> = {};
     refills.forEach((refill: Refill) => {
-      const date = new Date(refill.createdAt);
+      const date = new Date(refill.timestamp || refill.createdAt);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!groups[monthKey]) groups[monthKey] = [];
       groups[monthKey].push(refill);
@@ -331,7 +337,7 @@ export default function Refills() {
                         <td className="p-4 text-white">{r.totalCost} {r.currency}</td>
                         <td className="p-4 text-white">{r.fuelType}</td>
                         <td className="p-4 text-white">{r.station}</td>
-                        <td className="p-4 text-white">{new Date(r.createdAt).toLocaleString()}</td>
+                        <td className="p-4 text-white">{new Date(r.timestamp || r.createdAt).toLocaleString()}</td>
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -378,7 +384,7 @@ export default function Refills() {
                         <h3 className="text-xl font-bold text-white">{r.volume}L @ {r.pricePerUnit} {r.currency}/L</h3>
                         <p className="text-slate-400">Odometer: {r.odometer} km • Total: {r.totalCost} {r.currency}</p>
                         <p className="text-slate-500 text-sm">{r.fuelType} {r.station ? `• ${r.station}` : ''}</p>
-                        {r.createdAt && <p className="text-slate-500 text-sm">{new Date(r.createdAt).toLocaleString()}</p>}
+                        {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm">{new Date(r.timestamp || r.createdAt).toLocaleString()}</p>}
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">

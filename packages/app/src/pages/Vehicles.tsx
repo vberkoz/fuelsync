@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, Menu, Listbox } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -34,6 +34,14 @@ export default function Vehicles() {
   });
 
   const vehicles = data?.vehicles || [];
+
+  useEffect(() => {
+    if (vehicles.length > 0 && !currentVehicleId) {
+      setCurrentVehicle(vehicles[0].vehicleId);
+    } else if (vehicles.length > 0 && currentVehicleId && !vehicles.find(v => v.vehicleId === currentVehicleId)) {
+      setCurrentVehicle(vehicles[0].vehicleId);
+    }
+  }, [vehicles, setCurrentVehicle]);
 
   const columnHelper = createColumnHelper<Vehicle>();
   const columns = useMemo(() => [

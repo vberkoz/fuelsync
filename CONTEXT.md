@@ -43,7 +43,8 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ DELETE /vehicles/:id - Delete vehicle
   - ✅ Vehicle management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Current vehicle selection with radio buttons
-  - ✅ Current vehicle display in sidebar and mobile header
+  - ✅ Current vehicle display in sidebar and mobile header with dropdown selector
+  - ✅ Auto-select first vehicle if none selected
   - ✅ Overflow menu for vehicle actions
 - ✅ Refill tracking (CRUD operations)
   - ✅ GET /vehicles/:id/refills - List all refills
@@ -53,6 +54,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ DELETE /vehicles/:id/refills/:refillId - Delete refill
   - ✅ Refill management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Current vehicle context with localStorage persistence
+  - ✅ Timestamp-based date display from migrated data
   - ✅ Overflow menu for refill actions
 - ✅ Basic expense tracking
   - ✅ GET /vehicles/:id/expenses - List all expenses
@@ -63,6 +65,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ Expense management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Category selection with Listbox (Maintenance, Repair, Insurance, etc.)
   - ✅ Tax deductible checkbox
+  - ✅ Timestamp-based date display from migrated data
   - ✅ Overflow menu for expense actions
 - [ ] Simple statistics (totals, averages)
 - [ ] Basic charts (fuel consumption, costs)
@@ -272,6 +275,8 @@ fuelsync/
 │   │   │   │   ├── Register.tsx # Register page
 │   │   │   │   ├── Dashboard.tsx
 │   │   │   │   ├── Vehicles.tsx
+│   │   │   │   ├── Refills.tsx
+│   │   │   │   ├── Expenses.tsx
 │   │   │   │   └── ...
 │   │   │   ├── App.tsx         # Main app component
 │   │   │   └── main.tsx        # Entry point
@@ -281,8 +286,12 @@ fuelsync/
 │   │   ├── lib/
 │   │   │   └── infrastructure-stack.ts
 │   │   └── package.json
-│   └── landing/                # Astro landing page
-│       └── src/
+│   ├── landing/                # Astro landing page
+│   │   └── src/
+│   └── migration/              # SQLite to DynamoDB migration tool
+│       ├── index.js            # Migration script
+│       ├── cleanup.js          # Cleanup script
+│       └── package.json
 ├── devdocs/                    # Documentation
 │   └── brainstorm.md          # Detailed architecture and planning
 └── README.md
@@ -302,11 +311,12 @@ fuelsync/
 - ✅ Dark theme with gradient backgrounds
 - ✅ Responsive mobile and desktop layouts
 - ✅ Current vehicle selection with RadioGroup
-- ✅ Current vehicle display in sidebar (desktop) and header (mobile)
-- ✅ Overflow menus for item actions (vehicles, refills)
+- ✅ Current vehicle display in sidebar (desktop) and header (mobile) with Listbox dropdown
+- ✅ Auto-select first vehicle if none selected or selected vehicle doesn't exist
+- ✅ Overflow menus for item actions (vehicles, refills, expenses)
 - ✅ HeadlessUI Dialog for forms
 - ✅ HeadlessUI Menu for overflow actions
-- ✅ HeadlessUI Listbox for dropdowns (fuel type selection)
+- ✅ HeadlessUI Listbox for dropdowns (fuel type, vehicle selection)
 - ✅ HeadlessUI RadioGroup for vehicle selection
 - ✅ Custom radio button styling matching theme colors
 - ✅ Loading states with spinners
@@ -315,8 +325,6 @@ fuelsync/
 - ✅ Optimistic UI updates for all mutations
 - ✅ Automatic rollback on errors
 - ✅ Zustand stores for auth and vehicle state management
-- Analytics (/analytics)
-- Reminders (/reminders)
 
 ## US Market Optimization
 - Default units: Miles, Gallons, USD

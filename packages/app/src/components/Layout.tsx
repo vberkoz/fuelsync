@@ -1,10 +1,12 @@
 import { useState, Fragment, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { HomeIcon, TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
-import { Menu, Transition } from '@headlessui/react'
+import { HomeIcon, TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { Menu, Transition, Listbox } from '@headlessui/react'
 import ProfileMenu from './ProfileMenu'
 import { useAuthStore } from '../stores/authStore'
 import { useVehicleStore } from '../stores/vehicleStore'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../lib/api'
 
 const navigation = [
   { name: 'Dashboard', icon: HomeIcon, href: '/' },
@@ -37,39 +39,20 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const userEmail = useAuthStore((state) => state.userEmail)
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId)
+  const setCurrentVehicleId = useVehicleStore((state) => state.setCurrentVehicle)
   const idToken = useAuthStore((state) => state.idToken)
 
+  const { data: vehiclesData } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: api.vehicles.list
+  });
+
+  const vehicles = vehiclesData?.vehicles || [];
+
   useEffect(() => {
-    const fetchCurrentVehicle = async () => {
-      if (!currentVehicleId || !idToken) {
-        setCurrentVehicle(null);
-        return;
-      }
-      
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/vehicles/${currentVehicleId}`, {
-          headers: { Authorization: `Bearer ${idToken}` }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setCurrentVehicle(data.vehicle)
-        }
-      } catch (err) {
-        console.error('Failed to fetch current vehicle:', err)
-      }
-    }
-    fetchCurrentVehicle()
-    
-    const handleStorageChange = () => {
-      fetchCurrentVehicle()
-    }
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('currentVehicleChanged', handleStorageChange)
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('currentVehicleChanged', handleStorageChange)
-    }
-  }, [currentVehicleId, idToken])
+    const vehicle = vehicles.find(v => v.vehicleId === currentVehicleId);
+    setCurrentVehicle(vehicle || null);
+  }, [currentVehicleId, vehicles]);
 
   const handleNavClick = () => {
     setSidebarOpen(false)
@@ -89,17 +72,43 @@ export default function Layout({ children }: LayoutProps) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-            </svg>
-            {currentVehicle && (
-              <div className="text-xs text-slate-400">
-                <div className="font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
-                <div>{currentVehicle.model}</div>
-              </div>
-            )}
-          </div>
+          <Listbox value={currentVehicleId} onChange={setCurrentVehicleId}>
+            <div className="relative flex items-center gap-3 w-full">
+              <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+              </svg>
+              <Listbox.Button className="flex-1 flex items-center justify-between text-left">
+                {currentVehicle ? (
+                  <div className="text-xs text-slate-400">
+                    <div className="font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
+                    <div>{currentVehicle.model}</div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400">Select vehicle</div>
+                )}
+                <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+              </Listbox.Button>
+              <Listbox.Options className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
+                {vehicles.map((v) => (
+                  <Listbox.Option
+                    key={v.vehicleId}
+                    value={v.vehicleId}
+                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
+                  >
+                    {({ selected }) => (
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm">
+                          <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
+                          <div className="text-xs text-slate-400">{v.model}</div>
+                        </div>
+                        {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                      </div>
+                    )}
+                  </Listbox.Option>
+                ))}
+              </Listbox.Options>
+            </div>
+          </Listbox>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-400 hover:text-white"
@@ -226,14 +235,40 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          {currentVehicle ? (
-            <div className="text-center">
-              <div className="text-sm font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
-              <div className="text-xs text-slate-400">{currentVehicle.model}</div>
+          <Listbox value={currentVehicleId} onChange={setCurrentVehicleId}>
+            <div className="relative">
+              <Listbox.Button className="flex items-center gap-2">
+                {currentVehicle ? (
+                  <div className="text-center">
+                    <div className="text-sm font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
+                    <div className="text-xs text-slate-400">{currentVehicle.model}</div>
+                  </div>
+                ) : (
+                  <span className="text-lg font-semibold text-white">Dashboard</span>
+                )}
+                <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+              </Listbox.Button>
+              <Listbox.Options className="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
+                {vehicles.map((v) => (
+                  <Listbox.Option
+                    key={v.vehicleId}
+                    value={v.vehicleId}
+                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
+                  >
+                    {({ selected }) => (
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm">
+                          <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
+                          <div className="text-xs text-slate-400">{v.model}</div>
+                        </div>
+                        {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                      </div>
+                    )}
+                  </Listbox.Option>
+                ))}
+              </Listbox.Options>
             </div>
-          ) : (
-            <span className="text-lg font-semibold text-white">Dashboard</span>
-          )}
+          </Listbox>
           <ProfileMenu />
         </div>
         {children}

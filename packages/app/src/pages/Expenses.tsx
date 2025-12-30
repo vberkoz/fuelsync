@@ -14,6 +14,7 @@ interface Expense {
   odometer?: number;
   description?: string;
   taxDeductible: boolean;
+  timestamp?: number;
   createdAt: string;
 }
 
@@ -36,13 +37,18 @@ export default function Expenses() {
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
   const activeVehicleId = vehicleId || currentVehicleId;
 
+  const { data: vehiclesData } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: api.vehicles.list
+  });
+
   useEffect(() => {
     if (vehicleId) {
       setCurrentVehicle(vehicleId);
-    } else if (!currentVehicleId) {
-      navigate('/vehicles');
+    } else if (!currentVehicleId && vehiclesData?.vehicles?.length > 0) {
+      setCurrentVehicle(vehiclesData.vehicles[0].vehicleId);
     }
-  }, [vehicleId, currentVehicleId, navigate, setCurrentVehicle]);
+  }, [vehicleId, currentVehicleId, vehiclesData, setCurrentVehicle]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['expenses', activeVehicleId],
@@ -55,7 +61,7 @@ export default function Expenses() {
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
     expenses.forEach((expense: Expense) => {
-      const date = new Date(expense.createdAt);
+      const date = new Date(expense.timestamp || expense.createdAt);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!groups[monthKey]) groups[monthKey] = [];
       groups[monthKey].push(expense);
@@ -326,7 +332,7 @@ export default function Expenses() {
                         <td className="p-4 text-white">{e.odometer}</td>
                         <td className="p-4 text-white">{e.description}</td>
                         <td className="p-4 text-white">{e.taxDeductible ? '✓' : ''}</td>
-                        <td className="p-4 text-white">{new Date(e.createdAt).toLocaleString()}</td>
+                        <td className="p-4 text-white">{new Date(e.timestamp || e.createdAt).toLocaleString()}</td>
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -376,7 +382,7 @@ export default function Expenses() {
                           {e.taxDeductible && <span className="ml-2 text-green-400">• Tax Deductible</span>}
                         </p>
                         {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
-                        {e.createdAt && <p className="text-slate-500 text-sm">{new Date(e.createdAt).toLocaleString()}</p>}
+                        {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm">{new Date(e.timestamp || e.createdAt).toLocaleString()}</p>}
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
