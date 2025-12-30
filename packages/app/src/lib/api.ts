@@ -10,21 +10,29 @@ const getAuthHeaders = () => {
   };
 };
 
+const handleResponse = async (res: Response) => {
+  if (res.status === 401) {
+    useAuthStore.getState().clearAuth();
+    window.location.href = '/login';
+    throw new Error('Session expired');
+  }
+  if (!res.ok) throw new Error(`Error: ${res.status}`);
+  return res.json();
+};
+
 export const api = {
   vehicles: {
     list: async () => {
       const res = await fetch(`${API_URL}/vehicles`, {
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     get: async (id: string) => {
       const res = await fetch(`${API_URL}/vehicles/${id}`, {
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     create: async (data: any) => {
       const res = await fetch(`${API_URL}/vehicles`, {
@@ -32,8 +40,7 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     update: async (id: string, data: any) => {
       const res = await fetch(`${API_URL}/vehicles/${id}`, {
@@ -41,25 +48,24 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     delete: async (id: string) => {
       const res = await fetch(`${API_URL}/vehicles/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     }
   },
   refills: {
-    list: async (vehicleId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills`, {
+    list: async (vehicleId: string, nextToken?: string) => {
+      const url = new URL(`${API_URL}/vehicles/${vehicleId}/refills`);
+      if (nextToken) url.searchParams.set('nextToken', nextToken);
+      const res = await fetch(url.toString(), {
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     create: async (vehicleId: string, data: any) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills`, {
@@ -67,8 +73,7 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     update: async (vehicleId: string, refillId: string, data: any) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
@@ -76,25 +81,24 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     delete: async (vehicleId: string, refillId: string) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     }
   },
   expenses: {
-    list: async (vehicleId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
+    list: async (vehicleId: string, nextToken?: string) => {
+      const url = new URL(`${API_URL}/vehicles/${vehicleId}/expenses`);
+      if (nextToken) url.searchParams.set('nextToken', nextToken);
+      const res = await fetch(url.toString(), {
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     create: async (vehicleId: string, data: any) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
@@ -102,8 +106,7 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     update: async (vehicleId: string, expenseId: string, data: any) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
@@ -111,16 +114,14 @@ export const api = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     },
     delete: async (vehicleId: string, expenseId: string) => {
       const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      return res.json();
+      return handleResponse(res);
     }
   }
 };

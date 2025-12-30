@@ -40,7 +40,6 @@ export default function Layout({ children }: LayoutProps) {
   const userEmail = useAuthStore((state) => state.userEmail)
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId)
   const setCurrentVehicleId = useVehicleStore((state) => state.setCurrentVehicle)
-  const idToken = useAuthStore((state) => state.idToken)
 
   const { data: vehiclesData } = useQuery({
     queryKey: ['vehicles'],
@@ -50,7 +49,16 @@ export default function Layout({ children }: LayoutProps) {
   const vehicles = vehiclesData?.vehicles || [];
 
   useEffect(() => {
-    const vehicle = vehicles.find(v => v.vehicleId === currentVehicleId);
+    if (vehicles.length > 0) {
+      const vehicleExists = vehicles.some((v: Vehicle) => v.vehicleId === currentVehicleId);
+      if (!currentVehicleId || !vehicleExists) {
+        setCurrentVehicleId(vehicles[0].vehicleId);
+      }
+    }
+  }, [vehicles, currentVehicleId, setCurrentVehicleId]);
+
+  useEffect(() => {
+    const vehicle = vehicles.find((v: Vehicle) => v.vehicleId === currentVehicleId);
     setCurrentVehicle(vehicle || null);
   }, [currentVehicleId, vehicles]);
 
@@ -72,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex h-16 items-center justify-between px-6">
-          <Listbox value={currentVehicleId} onChange={setCurrentVehicleId}>
+          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
             <div className="relative flex items-center gap-3 w-full">
               <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
@@ -89,7 +97,7 @@ export default function Layout({ children }: LayoutProps) {
                 <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
               </Listbox.Button>
               <Listbox.Options className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
-                {vehicles.map((v) => (
+                {vehicles.map((v: Vehicle) => (
                   <Listbox.Option
                     key={v.vehicleId}
                     value={v.vehicleId}
@@ -235,7 +243,7 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <Listbox value={currentVehicleId} onChange={setCurrentVehicleId}>
+          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
             <div className="relative">
               <Listbox.Button className="flex items-center gap-2">
                 {currentVehicle ? (
@@ -249,7 +257,7 @@ export default function Layout({ children }: LayoutProps) {
                 <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
               </Listbox.Button>
               <Listbox.Options className="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
-                {vehicles.map((v) => (
+                {vehicles.map((v: Vehicle) => (
                   <Listbox.Option
                     key={v.vehicleId}
                     value={v.vehicleId}

@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Dialog, Menu, Listbox } from '@headlessui/react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Dialog, Menu, Listbox, Field, Label } from '@headlessui/react';
+import { useParams } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 
@@ -15,13 +15,13 @@ interface Refill {
   currency: string;
   fuelType: string;
   station?: string;
+  comment?: string;
   timestamp?: number;
   createdAt: string;
 }
 
 export default function Refills() {
   const { vehicleId } = useParams<{ vehicleId: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
@@ -32,6 +32,12 @@ export default function Refills() {
     queryFn: api.vehicles.list
   });
 
+  const { data: currentVehicle } = useQuery({
+    queryKey: ['vehicle', activeVehicleId],
+    queryFn: () => api.vehicles.get(activeVehicleId!),
+    enabled: !!activeVehicleId
+  });
+
   useEffect(() => {
     if (vehicleId) {
       setCurrentVehicle(vehicleId);
@@ -40,13 +46,28 @@ export default function Refills() {
     }
   }, [vehicleId, currentVehicleId, vehiclesData, setCurrentVehicle]);
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error
+  } = useInfiniteQuery({
     queryKey: ['refills', activeVehicleId],
-    queryFn: () => api.refills.list(activeVehicleId!),
-    enabled: !!activeVehicleId
+    queryFn: ({ pageParam }) => api.refills.list(activeVehicleId!, pageParam),
+    enabled: !!activeVehicleId,
+    getNextPageParam: (lastPage) => lastPage.nextToken,
+    initialPageParam: undefined as string | undefined
   });
 
-  const refills = data?.refills || [];
+  const refills = useMemo(() => 
+    data?.pages.flatMap(page => page.refills) || [],
+    [data]
+  );
+
+  const [visibleMonths, setVisibleMonths] = useState(12);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const groupedRefills = useMemo(() => {
     const groups: Record<string, Refill[]> = {};
@@ -59,6 +80,34 @@ export default function Refills() {
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [refills]);
 
+  const visibleGroupedRefills = useMemo(() => 
+    groupedRefills.slice(0, visibleMonths),
+    [groupedRefills, visibleMonths]
+  );
+
+  const hasMoreMonths = visibleMonths < groupedRefills.length;
+
+  useEffect(() => {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = mainElement;
+      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+      
+      if (scrollPercentage > 0.8) {
+        if (hasMoreMonths) {
+          setVisibleMonths(prev => prev + 6);
+        } else if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }
+    };
+
+    mainElement.addEventListener('scroll', handleScroll);
+    return () => mainElement.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMonths, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -68,7 +117,7 @@ export default function Refills() {
     volume: '', 
     pricePerUnit: '', 
     totalCost: '', 
-    currency: 'USD', 
+    currency: 'UAH', 
     fuelType: 'Regular',
     station: ''
   });
@@ -78,9 +127,13 @@ export default function Refills() {
     onMutate: async (newRefill) => {
       await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
       const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
-      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
-        refills: [...(old?.refills || []), { ...newRefill, refillId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }]
-      }));
+      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => {
+        const firstPage = old?.pages?.[0] || { refills: [], nextToken: undefined };
+        return {
+          pages: [{ refills: [...firstPage.refills, { ...newRefill, refillId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }], nextToken: firstPage.nextToken }, ...(old?.pages?.slice(1) || [])],
+          pageParams: old?.pageParams || [undefined]
+        };
+      });
       return { previousRefills };
     },
     onError: (_err, _newRefill, context) => {
@@ -88,7 +141,7 @@ export default function Refills() {
     },
     onSuccess: () => {
       setShowForm(false);
-      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' });
+      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
@@ -102,7 +155,11 @@ export default function Refills() {
       await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
       const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
       queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
-        refills: old?.refills.map((r: Refill) => r.refillId === refillId ? { ...r, ...data } : r) || []
+        pages: old?.pages?.map((page: any) => ({
+          ...page,
+          refills: page.refills.map((r: Refill) => r.refillId === refillId ? { ...r, ...data } : r)
+        })) || [],
+        pageParams: old?.pageParams || []
       }));
       return { previousRefills };
     },
@@ -112,7 +169,7 @@ export default function Refills() {
     onSuccess: () => {
       setShowForm(false);
       setEditingId(null);
-      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' });
+      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
@@ -125,7 +182,11 @@ export default function Refills() {
       await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
       const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
       queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
-        refills: old?.refills.filter((r: Refill) => r.refillId !== refillId) || []
+        pages: old?.pages?.map((page: any) => ({
+          ...page,
+          refills: page.refills.filter((r: Refill) => r.refillId !== refillId)
+        })) || [],
+        pageParams: old?.pageParams || []
       }));
       return { previousRefills };
     },
@@ -191,7 +252,7 @@ export default function Refills() {
           onClick={() => { 
             setShowForm(!showForm); 
             setEditingId(null); 
-            setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: 'Regular', station: '' }); 
+            setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' }); 
           }} 
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
         >
@@ -214,76 +275,52 @@ export default function Refills() {
               <Dialog.Title className="text-xl font-bold text-white mb-4">
                 {editingId ? 'Edit Refill' : 'Add Refill'}
               </Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Odometer" 
-                    value={formData.odometer} 
-                    onChange={(e) => setFormData({...formData, odometer: e.target.value})} 
-                    required 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Volume (L)" 
-                    value={formData.volume} 
-                    onChange={(e) => setFormData({...formData, volume: e.target.value})} 
-                    required 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Price/Unit" 
-                    value={formData.pricePerUnit} 
-                    onChange={(e) => setFormData({...formData, pricePerUnit: e.target.value})} 
-                    required 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Total Cost" 
-                    value={formData.totalCost} 
-                    onChange={(e) => setFormData({...formData, totalCost: e.target.value})} 
-                    required 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Odometer (km)</Label>
+                    <input type="number" step="0.01" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Volume (L)</Label>
+                    <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => setFormData({...formData, volume: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Price/Unit</Label>
+                    <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => setFormData({...formData, pricePerUnit: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Total Cost</Label>
+                    <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => setFormData({...formData, totalCost: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
                 </div>
-                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
-                  <div className="relative">
-                    <Listbox.Button className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center">
-                      <span>{formData.fuelType}</span>
-                      <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-                    </Listbox.Button>
-                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
-                        <Listbox.Option
-                          key={fuel}
-                          value={fuel}
-                          className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                        >
-                          {({ selected }) => (
-                            <div className="flex justify-between items-center">
-                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
-                              {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                            </div>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </div>
-                </Listbox>
-                <input 
-                  type="text" 
-                  placeholder="Station (optional)" 
-                  value={formData.station} 
-                  onChange={(e) => setFormData({...formData, station: e.target.value})} 
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                />
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Fuel Type</Label>
+                  <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                    <div className="relative">
+                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span>{formData.fuelType}</span>
+                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                          <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
+                </Field>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Station <span className="text-xs font-normal text-slate-400">(Optional)</span></Label>
+                  <textarea rows={3} value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                </Field>
                 <div className="flex gap-2">
                   <button 
                     type="submit" 
@@ -310,34 +347,34 @@ export default function Refills() {
         <>
           {/* Desktop Table */}
           <div className="hidden md:block">
-            {groupedRefills.map(([month, monthRefills]) => (
+            {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4">
                   {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
                 </h2>
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-slate-700">
-                      <th className="text-left p-4 text-slate-400 font-semibold">Odometer (km)</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Volume (L)</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Price/Unit</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Total</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Fuel Type</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">Odometer<br/>(km)</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-24">Volume<br/>(L)</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">Price/Unit<br/>(UAH)</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">Total<br/>(UAH)</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-24">Fuel Type</th>
                       <th className="text-left p-4 text-slate-400 font-semibold">Station</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Date</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-48">Date</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-16"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {monthRefills.map(r => (
                       <tr key={r.refillId} className="border-b border-slate-800 hover:bg-slate-800">
-                        <td className="p-4 text-white">{r.odometer}</td>
-                        <td className="p-4 text-white">{r.volume}</td>
-                        <td className="p-4 text-white">{r.pricePerUnit} {r.currency}</td>
-                        <td className="p-4 text-white">{r.totalCost} {r.currency}</td>
+                        <td className="p-4 text-white font-mono text-right">{r.odometer}</td>
+                        <td className="p-4 text-white font-mono text-right">{Number(r.volume).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{Number(r.pricePerUnit).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{Number(r.totalCost).toFixed(2)}</td>
                         <td className="p-4 text-white">{r.fuelType}</td>
-                        <td className="p-4 text-white">{r.station}</td>
-                        <td className="p-4 text-white">{new Date(r.timestamp || r.createdAt).toLocaleString()}</td>
+                        <td className="p-4 text-white">{r.station || r.comment}</td>
+                        <td className="p-4 text-white font-mono">{new Date(r.timestamp || r.createdAt).toLocaleString()}</td>
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -368,11 +405,14 @@ export default function Refills() {
                 <p>No refills yet. Add your first refill to get started!</p>
               </div>
             )}
+            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
+              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
+            </div>}
           </div>
 
           {/* Mobile Cards */}
           <div className="md:hidden">
-            {groupedRefills.map(([month, monthRefills]) => (
+            {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4">
                   {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
@@ -381,10 +421,10 @@ export default function Refills() {
                   {monthRefills.map((r: Refill) => (
                     <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-bold text-white">{r.volume}L @ {r.pricePerUnit} {r.currency}/L</h3>
-                        <p className="text-slate-400">Odometer: {r.odometer} km • Total: {r.totalCost} {r.currency}</p>
-                        <p className="text-slate-500 text-sm">{r.fuelType} {r.station ? `• ${r.station}` : ''}</p>
-                        {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm">{new Date(r.timestamp || r.createdAt).toLocaleString()}</p>}
+                        <h3 className="text-xl font-bold text-white"><span className="font-mono">{Number(r.volume).toFixed(2)}L</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
+                        <p className="text-slate-400">Odometer: <span className="font-mono">{r.odometer} km</span> • Total: <span className="font-mono">{Number(r.totalCost).toFixed(2)} {r.currency}</span></p>
+                        <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
+                        {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{new Date(r.timestamp || r.createdAt).toLocaleString()}</p>}
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -413,6 +453,9 @@ export default function Refills() {
                 <p>No refills yet. Add your first refill to get started!</p>
               </div>
             )}
+            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
+              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
+            </div>}
           </div>
         </>
       )}

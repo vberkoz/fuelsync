@@ -37,7 +37,7 @@ export default function MobileNav() {
               <a href="#" className="hover:text-blue-400">Docs</a>
               <a href="#" className="hover:text-blue-400">About</a>
               <hr className="border-slate-700" />
-              <a href="#" className="hover:text-blue-400">Log in</a>
+              <a href="https://app.fuelsync.vberkoz.com/login" className="hover:text-blue-400">Log in</a>
             </nav>
           </DialogPanel>
         </div>

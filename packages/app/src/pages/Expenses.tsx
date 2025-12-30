@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Dialog, Menu, Listbox } from '@headlessui/react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Dialog, Menu, Listbox, Field, Label } from '@headlessui/react';
+import { useParams } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 
@@ -13,25 +13,30 @@ interface Expense {
   currency: string;
   odometer?: number;
   description?: string;
-  taxDeductible: boolean;
   timestamp?: number;
   createdAt: string;
 }
 
 const EXPENSE_CATEGORIES = [
+  'Other',
+  'Accessories',
+  'Parts',
+  'Loan',
+  'License',
+  'Parking',
+  'Registration',
+  'Service',
+  'Insurance',
+  'Fines',
+  'Wash',
+  'Tax',
   'Maintenance',
   'Repair',
-  'Insurance',
-  'Registration',
-  'Parking',
-  'Tolls',
-  'Wash',
-  'Other'
+  'Tolls'
 ];
 
 export default function Expenses() {
   const { vehicleId } = useParams<{ vehicleId: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
@@ -50,13 +55,28 @@ export default function Expenses() {
     }
   }, [vehicleId, currentVehicleId, vehiclesData, setCurrentVehicle]);
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error
+  } = useInfiniteQuery({
     queryKey: ['expenses', activeVehicleId],
-    queryFn: () => api.expenses.list(activeVehicleId!),
-    enabled: !!activeVehicleId
+    queryFn: ({ pageParam }) => api.expenses.list(activeVehicleId!, pageParam),
+    enabled: !!activeVehicleId,
+    getNextPageParam: (lastPage) => lastPage.nextToken,
+    initialPageParam: undefined as string | undefined
   });
 
-  const expenses = data?.expenses || [];
+  const expenses = useMemo(() => 
+    data?.pages.flatMap(page => page.expenses) || [],
+    [data]
+  );
+
+  const [visibleMonths, setVisibleMonths] = useState(12);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
@@ -69,17 +89,44 @@ export default function Expenses() {
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [expenses]);
 
+  const visibleGroupedExpenses = useMemo(() => 
+    groupedExpenses.slice(0, visibleMonths),
+    [groupedExpenses, visibleMonths]
+  );
+
+  const hasMoreMonths = visibleMonths < groupedExpenses.length;
+
+  useEffect(() => {
+    const mainElement = document.querySelector('main');
+    if (!mainElement) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = mainElement;
+      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+      
+      if (scrollPercentage > 0.8) {
+        if (hasMoreMonths) {
+          setVisibleMonths(prev => prev + 6);
+        } else if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }
+    };
+
+    mainElement.addEventListener('scroll', handleScroll);
+    return () => mainElement.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMonths, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
-    category: 'Maintenance',
+    category: 'Other',
     amount: '',
-    currency: 'USD',
+    currency: 'UAH',
     odometer: '',
-    description: '',
-    taxDeductible: false
+    description: ''
   });
 
   const createMutation = useMutation({
@@ -87,9 +134,13 @@ export default function Expenses() {
     onMutate: async (newExpense) => {
       await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
       const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
-      queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => ({
-        expenses: [...(old?.expenses || []), { ...newExpense, expenseId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }]
-      }));
+      queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => {
+        const firstPage = old?.pages?.[0] || { expenses: [], nextToken: undefined };
+        return {
+          pages: [{ expenses: [...firstPage.expenses, { ...newExpense, expenseId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }], nextToken: firstPage.nextToken }, ...(old?.pages?.slice(1) || [])],
+          pageParams: old?.pageParams || [undefined]
+        };
+      });
       return { previousExpenses };
     },
     onError: (_err, _newExpense, context) => {
@@ -97,7 +148,7 @@ export default function Expenses() {
     },
     onSuccess: () => {
       setShowForm(false);
-      setFormData({ category: 'Maintenance', amount: '', currency: 'USD', odometer: '', description: '', taxDeductible: false });
+      setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
@@ -111,7 +162,11 @@ export default function Expenses() {
       await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
       const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
       queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => ({
-        expenses: old?.expenses.map((e: Expense) => e.expenseId === expenseId ? { ...e, ...data } : e) || []
+        pages: old?.pages?.map((page: any) => ({
+          ...page,
+          expenses: page.expenses.map((e: Expense) => e.expenseId === expenseId ? { ...e, ...data } : e)
+        })) || [],
+        pageParams: old?.pageParams || []
       }));
       return { previousExpenses };
     },
@@ -121,7 +176,7 @@ export default function Expenses() {
     onSuccess: () => {
       setShowForm(false);
       setEditingId(null);
-      setFormData({ category: 'Maintenance', amount: '', currency: 'USD', odometer: '', description: '', taxDeductible: false });
+      setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
@@ -134,7 +189,11 @@ export default function Expenses() {
       await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
       const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
       queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => ({
-        expenses: old?.expenses.filter((e: Expense) => e.expenseId !== expenseId) || []
+        pages: old?.pages?.map((page: any) => ({
+          ...page,
+          expenses: page.expenses.filter((e: Expense) => e.expenseId !== expenseId)
+        })) || [],
+        pageParams: old?.pageParams || []
       }));
       return { previousExpenses };
     },
@@ -157,8 +216,7 @@ export default function Expenses() {
       amount: parseFloat(formData.amount),
       currency: formData.currency,
       odometer: formData.odometer ? parseFloat(formData.odometer) : undefined,
-      description: formData.description,
-      taxDeductible: formData.taxDeductible
+      description: formData.description
     };
     
     if (editingId) {
@@ -174,8 +232,7 @@ export default function Expenses() {
       amount: expense.amount.toString(),
       currency: expense.currency,
       odometer: expense.odometer?.toString() || '',
-      description: expense.description || '',
-      taxDeductible: expense.taxDeductible
+      description: expense.description || ''
     });
     setEditingId(expense.expenseId);
     setShowForm(true);
@@ -198,7 +255,7 @@ export default function Expenses() {
           onClick={() => { 
             setShowForm(!showForm); 
             setEditingId(null); 
-            setFormData({ category: 'Maintenance', amount: '', currency: 'USD', odometer: '', description: '', taxDeductible: false }); 
+            setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' }); 
           }} 
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
         >
@@ -221,66 +278,44 @@ export default function Expenses() {
               <Dialog.Title className="text-xl font-bold text-white mb-4">
                 {editingId ? 'Edit Expense' : 'Add Expense'}
               </Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Listbox value={formData.category} onChange={(value) => setFormData({...formData, category: value})}>
-                  <div className="relative">
-                    <Listbox.Button className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center">
-                      <span>{formData.category}</span>
-                      <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-                    </Listbox.Button>
-                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {EXPENSE_CATEGORIES.map((cat) => (
-                        <Listbox.Option
-                          key={cat}
-                          value={cat}
-                          className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                        >
-                          {({ selected }) => (
-                            <div className="flex justify-between items-center">
-                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                              {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                            </div>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </div>
-                </Listbox>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Category</Label>
+                  <Listbox value={formData.category} onChange={(value) => setFormData({...formData, category: value})}>
+                    <div className="relative">
+                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span>{formData.category}</span>
+                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {EXPENSE_CATEGORIES.map((cat) => (
+                          <Listbox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
+                </Field>
                 <div className="grid grid-cols-2 gap-4">
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Amount" 
-                    value={formData.amount} 
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})} 
-                    required 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="Odometer (optional)" 
-                    value={formData.odometer} 
-                    onChange={(e) => setFormData({...formData, odometer: e.target.value})} 
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                  />
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Amount</Label>
+                    <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Odometer (km) <span className="text-xs font-normal text-slate-400">(Optional)</span></Label>
+                    <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="Description (optional)" 
-                  value={formData.description} 
-                  onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" 
-                />
-                <label className="flex items-center gap-2 text-white cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.taxDeductible} 
-                    onChange={(e) => setFormData({...formData, taxDeductible: e.target.checked})} 
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500" 
-                  />
-                  <span>Tax Deductible</span>
-                </label>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Description <span className="text-xs font-normal text-slate-400">(Optional)</span></Label>
+                  <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                </Field>
                 <div className="flex gap-2">
                   <button 
                     type="submit" 
@@ -307,32 +342,30 @@ export default function Expenses() {
         <>
           {/* Desktop Table */}
           <div className="hidden md:block">
-            {groupedExpenses.map(([month, monthExpenses]) => (
+            {visibleGroupedExpenses.map(([month, monthExpenses]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4">
                   {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
                 </h2>
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-slate-700">
-                      <th className="text-left p-4 text-slate-400 font-semibold">Category</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Amount</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Odometer (km)</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-32">Category</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">Amount<br/>(UAH)</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">Odometer<br/>(km)</th>
                       <th className="text-left p-4 text-slate-400 font-semibold">Description</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Tax Deductible</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">Date</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-48">Date</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-16"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {monthExpenses.map(e => (
                       <tr key={e.expenseId} className="border-b border-slate-800 hover:bg-slate-800">
                         <td className="p-4 text-white">{e.category}</td>
-                        <td className="p-4 text-white">{e.amount} {e.currency}</td>
-                        <td className="p-4 text-white">{e.odometer}</td>
+                        <td className="p-4 text-white font-mono text-right">{Number(e.amount).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{e.odometer}</td>
                         <td className="p-4 text-white">{e.description}</td>
-                        <td className="p-4 text-white">{e.taxDeductible ? '✓' : ''}</td>
-                        <td className="p-4 text-white">{new Date(e.timestamp || e.createdAt).toLocaleString()}</td>
+                        <td className="p-4 text-white font-mono">{new Date(e.timestamp || e.createdAt).toLocaleString()}</td>
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -363,11 +396,14 @@ export default function Expenses() {
                 <p>No expenses yet. Add your first expense to get started!</p>
               </div>
             )}
+            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
+              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
+            </div>}
           </div>
 
           {/* Mobile Cards */}
           <div className="md:hidden">
-            {groupedExpenses.map(([month, monthExpenses]) => (
+            {visibleGroupedExpenses.map(([month, monthExpenses]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4">
                   {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
@@ -376,13 +412,12 @@ export default function Expenses() {
                   {monthExpenses.map((e: Expense) => (
                     <div key={e.expenseId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-bold text-white">{e.category} - {e.amount} {e.currency}</h3>
+                        <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{Number(e.amount).toFixed(2)} {e.currency}</span></h3>
                         <p className="text-slate-400">
-                          {e.odometer && `Odometer: ${e.odometer} km`}
-                          {e.taxDeductible && <span className="ml-2 text-green-400">• Tax Deductible</span>}
+                          {e.odometer && <span className="font-mono">Odometer: {e.odometer} km</span>}
                         </p>
                         {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
-                        {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm">{new Date(e.timestamp || e.createdAt).toLocaleString()}</p>}
+                        {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm font-mono">{new Date(e.timestamp || e.createdAt).toLocaleString()}</p>}
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -411,6 +446,9 @@ export default function Expenses() {
                 <p>No expenses yet. Add your first expense to get started!</p>
               </div>
             )}
+            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
+              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
+            </div>}
           </div>
         </>
       )}

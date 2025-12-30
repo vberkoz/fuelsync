@@ -4,20 +4,24 @@ A serverless vehicle expense tracking application built on AWS. Track fuel consu
 
 ## Features
 
-- **Fuel Tracking**: Log refills with automatic consumption calculations
-- **Expense Management**: Track maintenance, repairs, and other vehicle costs
-- **Multi-Vehicle Support**: Manage multiple vehicles with dropdown selector
-- **Data Migration**: Import existing data from SQLite databases
+- **Fuel Tracking**: Log refills with automatic consumption calculations and fuel type defaults
+- **Expense Management**: Track maintenance, repairs, and other vehicle costs with 15 categories
+- **Multi-Vehicle Support**: Manage multiple vehicles with dropdown selector and auto-selection
+- **Data Migration**: Import existing data from SQLite databases with category mapping
 - **Dark Theme UI**: Modern, responsive interface with HeadlessUI components
 - **Real-time Updates**: Optimistic UI updates with automatic rollback
+- **Infinite Scroll**: Load historical data by month with automatic pagination
+- **Session Management**: Automatic redirect to login when token expires
+- **Numeric Precision**: All monetary values with 2 decimal places and dot separator
 
 ## Tech Stack
 
 **Frontend**:
 - React 18 + TypeScript + Vite
 - TailwindCSS + HeadlessUI
-- TanStack Query + TanStack Table
+- TanStack Query (infinite queries)
 - Zustand for state management
+- JetBrains Mono font for numbers
 
 **Backend (AWS Serverless)**:
 - API Gateway + Lambda (Node.js 20.x)

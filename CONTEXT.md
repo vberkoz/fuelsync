@@ -64,7 +64,6 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ DELETE /vehicles/:id/expenses/:expenseId - Delete expense
   - ✅ Expense management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Category selection with Listbox (Maintenance, Repair, Insurance, etc.)
-  - ✅ Tax deductible checkbox
   - ✅ Timestamp-based date display from migrated data
   - ✅ Overflow menu for expense actions
 - [ ] Simple statistics (totals, averages)
@@ -171,7 +170,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 4. Vehicle Expenses
    PK: VEHICLE#{vehicleId}
    SK: EXPENSE#{timestamp}#{expenseId}
-   Attributes: category, amount, currency, odometer, description, taxDeductible
+   Attributes: category, amount, currency, odometer, description
 
 5. Vehicle Reminders
    PK: VEHICLE#{vehicleId}
@@ -318,13 +317,24 @@ fuelsync/
 - ✅ HeadlessUI Menu for overflow actions
 - ✅ HeadlessUI Listbox for dropdowns (fuel type, vehicle selection)
 - ✅ HeadlessUI RadioGroup for vehicle selection
+- ✅ HeadlessUI Field and Label components for form inputs
 - ✅ Custom radio button styling matching theme colors
 - ✅ Loading states with spinners
 - ✅ TanStack Query for data fetching and caching
-- ✅ TanStack Table for responsive data display (desktop: tables, mobile: cards)
+- ✅ Infinite scroll with DynamoDB pagination for refills and expenses
+- ✅ Monthly grouping for refills and expenses (displays 12 months initially)
 - ✅ Optimistic UI updates for all mutations
 - ✅ Automatic rollback on errors
+- ✅ Automatic redirect to login on 401 (token expired)
 - ✅ Zustand stores for auth and vehicle state management
+- ✅ JetBrains Mono font for all numbers and dates
+- ✅ Right-aligned numeric columns in tables
+- ✅ Two-line column headers with units on second row
+- ✅ Currency displayed in column headers, not with values
+- ✅ Floating point input with comma-to-dot conversion
+- ✅ Two decimal precision for all monetary and volume values
+- ✅ Textarea fields for station (refills) and description (expenses)
+- ✅ Uppercase license plate input and display
 
 ## US Market Optimization
 - Default units: Miles, Gallons, USD
@@ -442,11 +452,14 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - `deleteVehicle`: DELETE /vehicles/:id - Delete vehicle
 
 **Refills**:
-- `listRefills`: GET /vehicles/:vehicleId/refills - List refills for vehicle
+- `listRefills`: GET /vehicles/:vehicleId/refills - List refills for vehicle with pagination (limit: 50, returns nextToken)
 - `createRefill`: POST /vehicles/:vehicleId/refills - Create new refill entry
+- `getRefill`: GET /vehicles/:vehicleId/refills/:refillId - Get single refill by ID
+- `updateRefill`: PUT /vehicles/:vehicleId/refills/:refillId - Update existing refill
+- `deleteRefill`: DELETE /vehicles/:vehicleId/refills/:refillId - Delete refill
 
 **Expenses**:
-- `listExpenses`: GET /vehicles/:vehicleId/expenses - List expenses for vehicle
+- `listExpenses`: GET /vehicles/:vehicleId/expenses - List expenses for vehicle with pagination (limit: 50, returns nextToken)
 - `createExpense`: POST /vehicles/:vehicleId/expenses - Create new expense entry
 - `getExpense`: GET /vehicles/:vehicleId/expenses/:expenseId - Get single expense by ID
 - `updateExpense`: PUT /vehicles/:vehicleId/expenses/:expenseId - Update existing expense

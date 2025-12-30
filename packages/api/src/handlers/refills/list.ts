@@ -15,6 +15,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return response(400, { error: 'Vehicle ID required' });
     }
 
+    const limit = event.queryStringParameters?.limit ? parseInt(event.queryStringParameters.limit) : 50;
+    const exclusiveStartKey = event.queryStringParameters?.nextToken 
+      ? JSON.parse(Buffer.from(event.queryStringParameters.nextToken, 'base64').toString())
+      : undefined;
+
     const result = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
@@ -22,10 +27,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         ':pk': `VEHICLE#${vehicleId}`,
         ':sk': 'REFILL#'
       },
-      ScanIndexForward: false
+      ScanIndexForward: false,
+      Limit: limit,
+      ExclusiveStartKey: exclusiveStartKey
     }));
 
-    return response(200, { refills: result.Items || [] });
+    const nextToken = result.LastEvaluatedKey 
+      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+      : undefined;
+
+    return response(200, { 
+      refills: result.Items || [],
+      nextToken
+    });
   } catch (error) {
     console.error('Error listing refills:', error);
     return response(500, { error: 'Internal server error' });

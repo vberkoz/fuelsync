@@ -1,9 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Dialog, Menu, Listbox } from '@headlessui/react';
+import { useState } from 'react';
+import { Dialog, Menu, Listbox, RadioGroup, Field, Label } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useReactTable, getCoreRowModel, createColumnHelper, flexRender } from '@tanstack/react-table';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 
@@ -34,79 +33,6 @@ export default function Vehicles() {
   });
 
   const vehicles = data?.vehicles || [];
-
-  useEffect(() => {
-    if (vehicles.length > 0 && !currentVehicleId) {
-      setCurrentVehicle(vehicles[0].vehicleId);
-    } else if (vehicles.length > 0 && currentVehicleId && !vehicles.find(v => v.vehicleId === currentVehicleId)) {
-      setCurrentVehicle(vehicles[0].vehicleId);
-    }
-  }, [vehicles, setCurrentVehicle]);
-
-  const columnHelper = createColumnHelper<Vehicle>();
-  const columns = useMemo(() => [
-    columnHelper.display({
-      id: 'select',
-      cell: ({ row }) => {
-        const checked = currentVehicleId === row.original.vehicleId;
-        return (
-          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center cursor-pointer ${
-            checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
-          }`} onClick={() => setCurrentVehicle(row.original.vehicleId)}>
-            {checked && <div className="h-2 w-2 rounded-full bg-white" />}
-          </div>
-        );
-      }
-    }),
-    columnHelper.accessor('year', { header: 'Year' }),
-    columnHelper.accessor('make', { header: 'Make' }),
-    columnHelper.accessor('model', { header: 'Model' }),
-    columnHelper.accessor('licensePlate', { header: 'License Plate' }),
-    columnHelper.accessor('fuelType', { header: 'Fuel Type' }),
-    columnHelper.accessor('createdAt', {
-      header: 'Created',
-      cell: (info) => info.getValue() ? new Date(info.getValue()!).toLocaleString() : ''
-    }),
-    columnHelper.display({
-      id: 'actions',
-      cell: ({ row }) => (
-        <Menu as="div" className="relative">
-          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-            <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
-          </Menu.Button>
-          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
-            <Menu.Item>
-              {({ active }) => (
-                <button onClick={() => navigate(`/refills/${row.original.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
-                  View Refills
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button onClick={() => handleEdit(row.original)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
-                  Edit
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button onClick={() => { setDeleteId(row.original.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
-                  Delete
-                </button>
-              )}
-            </Menu.Item>
-          </Menu.Items>
-        </Menu>
-      )
-    })
-  ], [currentVehicleId, navigate]);
-
-  const table = useReactTable({
-    data: vehicles,
-    columns,
-    getCoreRowModel: getCoreRowModel()
-  });
 
   const createMutation = useMutation({
     mutationFn: api.vehicles.create,
@@ -188,9 +114,9 @@ export default function Vehicles() {
 
   const handleEdit = (vehicle: Vehicle) => {
     setFormData({ 
-      make: vehicle.make, 
-      model: vehicle.model, 
-      year: vehicle.year.toString(), 
+      make: vehicle.make || '', 
+      model: vehicle.model || '', 
+      year: vehicle.year?.toString() || '', 
       licensePlate: vehicle.licensePlate || '',
       fuelType: vehicle.fuelType || 'Regular'
     });
@@ -229,37 +155,52 @@ export default function Vehicles() {
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
               <Dialog.Title className="text-xl font-bold text-white mb-4">{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Make" value={formData.make} onChange={(e) => setFormData({...formData, make: e.target.value})} required className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
-                  <input type="text" placeholder="Model" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
-                  <input type="number" placeholder="Year" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
-                  <input type="text" placeholder="License Plate" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value})} className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Make</Label>
+                    <input type="text" value={formData.make} onChange={(e) => setFormData({...formData, make: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Model</Label>
+                    <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">Year</Label>
+                    <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
+                  <Field>
+                    <Label className="block text-sm font-semibold text-white mb-1.5">License Plate <span className="text-xs font-normal text-slate-400">(Optional)</span></Label>
+                    <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </Field>
                 </div>
-                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
-                  <div className="relative">
-                    <Listbox.Button className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center">
-                      <span>{formData.fuelType}</span>
-                      <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-                    </Listbox.Button>
-                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
-                        <Listbox.Option
-                          key={fuel}
-                          value={fuel}
-                          className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                        >
-                          {({ selected }) => (
-                            <div className="flex justify-between items-center">
-                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
-                              {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                            </div>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </div>
-                </Listbox>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Fuel Type</Label>
+                  <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                    <div className="relative">
+                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span>{formData.fuelType}</span>
+                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                          <Listbox.Option
+                            key={fuel}
+                            value={fuel}
+                            className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                          >
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
+                </Field>
                 <div className="flex gap-2">
                   <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                     {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editingId ? 'Update' : 'Add'}
@@ -273,30 +214,67 @@ export default function Vehicles() {
       )}
 
       {!isLoading && (
-        <>
+        <RadioGroup value={currentVehicleId || undefined} onChange={setCurrentVehicle}>
           {/* Desktop Table */}
           <div className="hidden md:block">
             <table className="w-full">
               <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id} className="border-b border-slate-700">
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className="text-left p-4 text-slate-400 font-semibold">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                <tr className="border-b border-slate-700">
+                  <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">Year</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">Make</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">Model</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">License Plate</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">Fuel Type</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">Created</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                </tr>
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="border-b border-slate-800 hover:bg-slate-800">
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="p-4 text-white">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
+                {vehicles.map((v: Vehicle) => (
+                  <RadioGroup.Option key={v.vehicleId} value={v.vehicleId} as="tr" className="border-b border-slate-800 hover:bg-slate-800 cursor-pointer">
+                    {({ checked }) => (
+                      <>
+                        <td className="p-4">
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                            checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
+                          }`}>
+                            {checked && <div className="h-2 w-2 rounded-full bg-white" />}
+                          </div>
+                        </td>
+                        <td className="p-4 text-white font-mono">{v.year}</td>
+                        <td className="p-4 text-white">{v.make}</td>
+                        <td className="p-4 text-white">{v.model}</td>
+                        <td className="p-4 text-white font-mono uppercase">{v.licensePlate}</td>
+                        <td className="p-4 text-white">{v.fuelType}</td>
+                        <td className="p-4 text-white font-mono">{v.createdAt ? new Date(v.createdAt).toLocaleString() : ''}</td>
+                        <td className="p-4 text-white" onClick={(e) => e.stopPropagation()}>
+                          <Menu as="div" className="relative">
+                            <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                              <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                            </Menu.Button>
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>View Refills</button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>Edit</button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>Delete</button>
+                                )}
+                              </Menu.Item>
+                            </Menu.Items>
+                          </Menu>
+                        </td>
+                      </>
+                    )}
+                  </RadioGroup.Option>
                 ))}
               </tbody>
             </table>
@@ -310,52 +288,58 @@ export default function Vehicles() {
           {/* Mobile Cards */}
           <div className="md:hidden grid gap-4">
             {vehicles.map((v: Vehicle) => (
-              <div key={v.vehicleId} className={`bg-slate-800 p-6 rounded-lg ${
-                currentVehicleId === v.vehicleId ? 'ring-2 ring-indigo-500' : ''
-              }`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center cursor-pointer ${
-                      currentVehicleId === v.vehicleId ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
-                    }`} onClick={() => setCurrentVehicle(v.vehicleId)}>
-                      {currentVehicleId === v.vehicleId && <div className="h-2 w-2 rounded-full bg-white" />}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">{v.year} {v.make} {v.model}</h3>
-                      <p className="text-slate-400">{v.licensePlate} • {v.fuelType}</p>
-                      {v.createdAt && <p className="text-slate-500 text-sm">{new Date(v.createdAt).toLocaleString()}</p>}
+              <RadioGroup.Option key={v.vehicleId} value={v.vehicleId} className="focus:outline-none">
+                {({ checked }) => (
+                  <div className={`bg-slate-800 p-6 rounded-lg ${
+                    checked ? 'ring-2 ring-indigo-500' : ''
+                  }`}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                          checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
+                        }`}>
+                          {checked && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white"><span className="font-mono">{v.year}</span> {v.make} {v.model}</h3>
+                          <p className="text-slate-400 font-mono"><span className="uppercase">{v.licensePlate}</span> • {v.fuelType}</p>
+                          {v.createdAt && <p className="text-slate-500 text-sm">{new Date(v.createdAt).toLocaleString()}</p>}
+                        </div>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Menu as="div" className="relative">
+                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                            <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                          </Menu.Button>
+                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
+                                  View Refills
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
+                                  Edit
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
+                                  Delete
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </Menu.Items>
+                        </Menu>
+                      </div>
                     </div>
                   </div>
-                  <Menu as="div" className="relative">
-                    <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                      <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
-                    </Menu.Button>
-                    <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
-                            View Refills
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
-                            Edit
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
-                            Delete
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Menu>
-                </div>
-              </div>
+                )}
+              </RadioGroup.Option>
             ))}
             {vehicles.length === 0 && !showForm && (
               <div className="text-center py-12 text-slate-400">
@@ -363,7 +347,7 @@ export default function Vehicles() {
               </div>
             )}
           </div>
-        </>
+        </RadioGroup>
       )}
 
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} className="relative z-50">
