@@ -139,5 +139,45 @@ export const api = {
       });
       return handleResponse(res);
     }
+  },
+  profile: {
+    get: async () => {
+      const res = await fetch(`${API_URL}/users/me`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    update: async (data: any) => {
+      const res = await fetch(`${API_URL}/users/me`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    }
+  },
+  settings: {
+    get: async () => {
+      const res = await fetch(`${API_URL}/users/settings`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    update: async (data: any) => {
+      const res = await fetch(`${API_URL}/users/settings`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    }
+  },
+  dashboard: {
+    get: async () => {
+      const res = await fetch(`${API_URL}/dashboard`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    }
   }
 };

@@ -221,6 +221,15 @@ DELETE /vehicles/:id          # Delete vehicle (deleteVehicle Lambda)
 GET    /vehicles/:id/statistics # Get statistics for a vehicle (getStatistics Lambda)
 GET    /vehicles/:id/charts     # Get chart data for a vehicle (getCharts Lambda)
 
+Users:
+GET    /users/me              # Get user profile (getProfile Lambda)
+PUT    /users/me              # Update user profile (updateProfile Lambda)
+GET    /users/settings        # Get user settings (getSettings Lambda)
+PUT    /users/settings        # Update user settings (updateSettings Lambda)
+
+Dashboard:
+GET    /dashboard             # Get dashboard summary (getDashboard Lambda)
+
 Refills:
 GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
 POST   /vehicles/:id/refills  # Create a refill (createRefill Lambda)
@@ -247,10 +256,6 @@ DELETE /vehicles/:id/expenses/:expenseId  # Delete expense (deleteExpense Lambda
 ```
 Authentication:
 POST   /auth/logout           # Logout user (revoke tokens)
-
-Users:
-GET    /users/me
-PUT    /users/me
 ```
 
 ## Project Structure
@@ -279,12 +284,19 @@ fuelsync/
 │   │   │   │   │   ├── get.ts
 │   │   │   │   │   ├── update.ts
 │   │   │   │   │   └── delete.ts
-│   │   │   │   └── expenses/   # Expense CRUD operations
-│   │   │   │       ├── list.ts
-│   │   │   │       ├── create.ts
-│   │   │   │       ├── get.ts
-│   │   │   │       ├── update.ts
-│   │   │   │       └── delete.ts
+│   │   │   │   ├── expenses/   # Expense CRUD operations
+│   │   │   │   │   ├── list.ts
+│   │   │   │   │   ├── create.ts
+│   │   │   │   │   ├── get.ts
+│   │   │   │   │   ├── update.ts
+│   │   │   │   │   └── delete.ts
+│   │   │   │   └── users/      # User profile operations
+│   │   │   │       ├── get-profile.ts
+│   │   │   │       ├── update-profile.ts
+│   │   │   │       ├── get-settings.ts
+│   │   │   │       └── update-settings.ts
+│   │   │   └── dashboard/  # Dashboard operations
+│   │   │       └── get.ts
 │   │   │   └── utils/          # Shared utilities
 │   │   │       ├── dynamodb.ts # DynamoDB client
 │   │   │       └── response.ts # API response helper
@@ -303,6 +315,10 @@ fuelsync/
 │   │   │   │   ├── Vehicles.tsx
 │   │   │   │   ├── Refills.tsx
 │   │   │   │   ├── Expenses.tsx
+│   │   │   │   ├── Analytics.tsx
+│   │   │   │   ├── Reminders.tsx
+│   │   │   │   ├── Profile.tsx
+│   │   │   │   ├── Settings.tsx
 │   │   │   │   └── ...
 │   │   │   ├── App.tsx         # Main app component
 │   │   │   └── main.tsx        # Entry point
@@ -326,12 +342,14 @@ fuelsync/
 ## Current Pages (Scaffolded)
 - Login (/login) - Dark theme authentication ✅
 - Register (/register) - Dark theme registration ✅
-- Dashboard (/)
+- Dashboard (/) - Summary cards and recent activity ✅
 - Vehicles (/vehicles) - Full CRUD UI with current vehicle selection ✅
 - Refills (/refills, /refills/:vehicleId) - Full CRUD UI with current vehicle context ✅
 - Expenses (/expenses, /expenses/:vehicleId) - Full CRUD UI with current vehicle context ✅
 - Analytics (/analytics) - Statistics cards and charts (fuel consumption, costs) ✅
-- Reminders (/reminders)
+- Reminders (/reminders) - UI mock with reminder cards and form ✅
+- Profile (/profile) - User profile management (name, currency) ✅
+- Settings (/settings) - User settings (units, date format, notifications) ✅
 
 ## UI Features
 - ✅ Dark theme with gradient backgrounds
@@ -369,6 +387,46 @@ fuelsync/
 - ✅ Uppercase license plate input and display
 - ✅ Chart.js with react-chartjs-2 for data visualization
 - ✅ Line charts with legend for fuel consumption and costs
+
+## Profile Management
+- ✅ User profile page with HeadlessUI components
+- ✅ Display user email (read-only from Cognito)
+- ✅ Edit user name and currency preference
+- ✅ Profile API endpoints (GET /users/me, PUT /users/me)
+- ✅ Profile Lambda handlers with DynamoDB integration
+- ✅ Optimistic UI updates for profile changes
+- ✅ Profile link in sidebar menu
+
+## Settings Management
+- ✅ User settings page with HeadlessUI components
+- ✅ Units preference (Imperial/Metric) with Listbox
+- ✅ Date format preference with Listbox
+- ✅ Notifications toggle with Switch
+- ✅ Settings API endpoints (GET /users/settings, PUT /users/settings)
+- ✅ Settings Lambda handlers with DynamoDB integration
+- ✅ Auto-create default settings on first access
+- ✅ Optimistic UI updates for settings changes
+- ✅ Settings link in sidebar menu
+
+## Dashboard
+- ✅ Dashboard page with summary cards
+- ✅ Vehicle count card with link to vehicles page
+- ✅ Recent refills card (last 5) with link to refills page
+- ✅ Recent expenses card (last 5) with link to expenses page
+- ✅ Dashboard API endpoint (GET /dashboard)
+- ✅ Dashboard Lambda handler with DynamoDB queries
+- ✅ Responsive grid layout for cards
+- ✅ Heroicons for card icons
+
+## Reminders (UI Mock)
+- ✅ Reminders page with mock data
+- ✅ Reminder cards with progress bars
+- ✅ Urgent status indicator (80%+ threshold)
+- ✅ Add reminder form with HeadlessUI Dialog
+- ✅ Type selection with Listbox (Maintenance, Document, Inspection)
+- ✅ Unit selection with Listbox (km, days, months)
+- ✅ Responsive grid layout for cards
+- ✅ Visual progress indicators with color coding
 
 ## US Market Optimization
 - Default units: Miles, Gallons, USD
@@ -504,6 +562,15 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 
 **Charts**:
 - `getCharts`: GET /vehicles/:vehicleId/charts - Get chart data for a vehicle (monthly fuel consumption and costs for last 6 months)
+
+**Users**:
+- `getProfile`: GET /users/me - Get user profile
+- `updateProfile`: PUT /users/me - Update user profile (name, currency)
+- `getSettings`: GET /users/settings - Get user settings
+- `updateSettings`: PUT /users/settings - Update user settings (units, dateFormat, notifications)
+
+**Dashboard**:
+- `getDashboard`: GET /dashboard - Get dashboard summary (vehicle count, recent refills, recent expenses)
 
 ### Lambda Configuration
 - Runtime: Node.js 20.x

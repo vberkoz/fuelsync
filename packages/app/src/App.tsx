@@ -7,6 +7,8 @@ import Refills from './pages/Refills'
 import Expenses from './pages/Expenses'
 import Analytics from './pages/Analytics'
 import Reminders from './pages/Reminders'
+import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ConfirmEmail from './pages/ConfirmEmail'
@@ -64,6 +66,20 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <Reminders />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Layout>
+              <Profile />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
             </Layout>
           </ProtectedRoute>
         } />

@@ -383,7 +383,68 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getProfile = new nodejs.NodejsFunction(this, 'GetProfile', {
+      entry: '../api/src/handlers/users/get-profile.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateProfile = new nodejs.NodejsFunction(this, 'UpdateProfile', {
+      entry: '../api/src/handlers/users/update-profile.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const getSettings = new nodejs.NodejsFunction(this, 'GetSettings', {
+      entry: '../api/src/handlers/users/get-settings.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateSettings = new nodejs.NodejsFunction(this, 'UpdateSettings', {
+      entry: '../api/src/handlers/users/update-settings.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const getDashboard = new nodejs.NodejsFunction(this, 'GetDashboard', {
+      entry: '../api/src/handlers/dashboard/get.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     // Grant DynamoDB permissions
+    table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
     table.grantWriteData(createVehicle);
     table.grantReadData(getVehicle);
@@ -401,6 +462,11 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(deleteExpense);
     table.grantReadData(getStatistics);
     table.grantReadData(getCharts);
+    table.grantReadWriteData(getProfile);
+    table.grantReadWriteData(updateProfile);
+    table.grantReadWriteData(getSettings);
+    table.grantReadWriteData(updateSettings);
+    table.grantReadData(getDashboard);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -485,6 +551,20 @@ export class InfrastructureStack extends cdk.Stack {
     // /vehicles/{id}/charts resource
     const charts = vehicleId.addResource('charts');
     charts.addMethod('GET', new apigateway.LambdaIntegration(getCharts), { authorizer });
+
+    // /users resource
+    const users = api.root.addResource('users');
+    const me = users.addResource('me');
+    me.addMethod('GET', new apigateway.LambdaIntegration(getProfile), { authorizer });
+    me.addMethod('PUT', new apigateway.LambdaIntegration(updateProfile), { authorizer });
+    
+    const settings = users.addResource('settings');
+    settings.addMethod('GET', new apigateway.LambdaIntegration(getSettings), { authorizer });
+    settings.addMethod('PUT', new apigateway.LambdaIntegration(updateSettings), { authorizer });
+
+    // /dashboard resource
+    const dashboard = api.root.addResource('dashboard');
+    dashboard.addMethod('GET', new apigateway.LambdaIntegration(getDashboard), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
