@@ -87,9 +87,9 @@ export class InfrastructureStack extends cdk.Stack {
         userSrp: true
       },
       generateSecret: false,
-      accessTokenValidity: cdk.Duration.minutes(60),
-      idTokenValidity: cdk.Duration.minutes(60),
-      refreshTokenValidity: cdk.Duration.days(30)
+      accessTokenValidity: cdk.Duration.minutes(15),
+      idTokenValidity: cdk.Duration.minutes(15),
+      refreshTokenValidity: cdk.Duration.days(7)
     });
 
     // S3 bucket for user uploads (receipts, photos)

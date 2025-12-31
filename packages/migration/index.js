@@ -6,7 +6,7 @@ const { randomUUID } = require('crypto');
 
 const DB_PATH = '/Users/basilsergius/Downloads/Топливомер_БД_20221120_160204_1281347789493688515.db3';
 const DYNAMODB_TABLE = 'FuelSyncTable';
-const USER_ID = '94788478-8001-7025-6795-71b7af2a06c9'; // vberkoz@vf-soft.com
+const USER_ID = '8488e4f8-2051-7066-fd78-22f39fcab599'; // rikzgt1@gmail.com
 
 const client = new DynamoDBClient({ profile: 'basil' });
 const docClient = DynamoDBDocumentClient.from(client);

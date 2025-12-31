@@ -10,11 +10,30 @@ const getAuthHeaders = () => {
   };
 };
 
+const safeFetch = async (url: string, options?: RequestInit) => {
+  try {
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+      useAuthStore.getState().clearAuth();
+      window.location.replace('/login');
+      throw new Error('Session expired');
+    }
+    return res;
+  } catch (error: any) {
+    if (error.message === 'Session expired') throw error;
+    if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+      useAuthStore.getState().clearAuth();
+      window.location.replace('/login');
+    }
+    throw error;
+  }
+};
+
 const handleResponse = async (res: Response) => {
   if (res.status === 401) {
     useAuthStore.getState().clearAuth();
-    window.location.href = '/login';
-    throw new Error('Session expired');
+    window.location.replace('/login');
+    return Promise.reject(new Error('Session expired'));
   }
   if (!res.ok) throw new Error(`Error: ${res.status}`);
   return res.json();
@@ -23,19 +42,19 @@ const handleResponse = async (res: Response) => {
 export const api = {
   vehicles: {
     list: async () => {
-      const res = await fetch(`${API_URL}/vehicles`, {
+      const res = await safeFetch(`${API_URL}/vehicles`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     get: async (id: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${id}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${id}`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     create: async (data: any) => {
-      const res = await fetch(`${API_URL}/vehicles`, {
+      const res = await safeFetch(`${API_URL}/vehicles`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -43,7 +62,7 @@ export const api = {
       return handleResponse(res);
     },
     update: async (id: string, data: any) => {
-      const res = await fetch(`${API_URL}/vehicles/${id}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -51,7 +70,7 @@ export const api = {
       return handleResponse(res);
     },
     delete: async (id: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${id}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -62,13 +81,13 @@ export const api = {
     list: async (vehicleId: string, nextToken?: string) => {
       const url = new URL(`${API_URL}/vehicles/${vehicleId}/refills`);
       if (nextToken) url.searchParams.set('nextToken', nextToken);
-      const res = await fetch(url.toString(), {
+      const res = await safeFetch(url.toString(), {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     create: async (vehicleId: string, data: any) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/refills`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -76,7 +95,7 @@ export const api = {
       return handleResponse(res);
     },
     update: async (vehicleId: string, refillId: string, data: any) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -84,7 +103,7 @@ export const api = {
       return handleResponse(res);
     },
     delete: async (vehicleId: string, refillId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -95,13 +114,13 @@ export const api = {
     list: async (vehicleId: string, nextToken?: string) => {
       const url = new URL(`${API_URL}/vehicles/${vehicleId}/expenses`);
       if (nextToken) url.searchParams.set('nextToken', nextToken);
-      const res = await fetch(url.toString(), {
+      const res = await safeFetch(url.toString(), {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     create: async (vehicleId: string, data: any) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/expenses`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -109,7 +128,7 @@ export const api = {
       return handleResponse(res);
     },
     update: async (vehicleId: string, expenseId: string, data: any) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -117,7 +136,7 @@ export const api = {
       return handleResponse(res);
     },
     delete: async (vehicleId: string, expenseId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -126,7 +145,7 @@ export const api = {
   },
   statistics: {
     get: async (vehicleId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/statistics`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/statistics`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
@@ -134,7 +153,7 @@ export const api = {
   },
   charts: {
     get: async (vehicleId: string) => {
-      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/charts`, {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/charts`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
@@ -142,13 +161,13 @@ export const api = {
   },
   profile: {
     get: async () => {
-      const res = await fetch(`${API_URL}/users/me`, {
+      const res = await safeFetch(`${API_URL}/users/me`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     update: async (data: any) => {
-      const res = await fetch(`${API_URL}/users/me`, {
+      const res = await safeFetch(`${API_URL}/users/me`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -158,13 +177,13 @@ export const api = {
   },
   settings: {
     get: async () => {
-      const res = await fetch(`${API_URL}/users/settings`, {
+      const res = await safeFetch(`${API_URL}/users/settings`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
     },
     update: async (data: any) => {
-      const res = await fetch(`${API_URL}/users/settings`, {
+      const res = await safeFetch(`${API_URL}/users/settings`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
@@ -174,7 +193,7 @@ export const api = {
   },
   dashboard: {
     get: async () => {
-      const res = await fetch(`${API_URL}/dashboard`, {
+      const res = await safeFetch(`${API_URL}/dashboard`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);

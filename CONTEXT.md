@@ -106,7 +106,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **User Pool**: Email-based authentication
 - **Sign-in**: Email + password with SRP protocol
 - **Password Policy**: Min 8 chars, uppercase, lowercase, digits required
-- **Token Validity**: Access/ID tokens 60 min, refresh tokens 30 days
+- **Token Validity**: Access/ID tokens 15 min, refresh tokens 7 days
 - **Account Recovery**: Email-only password reset
 - **User Attributes**: Email (required), given name, family name (optional)
 
@@ -376,6 +376,8 @@ fuelsync/
 - ✅ Optimistic UI updates for all mutations
 - ✅ Automatic rollback on errors
 - ✅ Automatic redirect to login on 401 (token expired)
+- ✅ Automatic redirect on CORS-blocked 401 responses (Failed to fetch)
+- ✅ Token expiration: 15 minutes (access/ID), 7 days (refresh)
 - ✅ Zustand stores for auth and vehicle state management
 - ✅ JetBrains Mono font for all numbers and dates
 - ✅ Right-aligned numeric columns in tables
