@@ -131,5 +131,13 @@ export const api = {
       });
       return handleResponse(res);
     }
+  },
+  charts: {
+    get: async (vehicleId: string) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/charts`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    }
   }
 };

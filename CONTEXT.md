@@ -74,7 +74,13 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ Expense statistics: count, total cost, avg expense cost
   - ✅ Total costs across all categories
   - ✅ HeadlessUI icons (FireIcon, ChartBarIcon, CurrencyDollarIcon)
-- [ ] Basic charts (fuel consumption, costs)
+- ✅ Basic charts (fuel consumption, costs)
+  - ✅ Chart.js and react-chartjs-2 installed
+  - ✅ GET /vehicles/:id/charts - Get chart data for a vehicle
+  - ✅ Charts Lambda handler with monthly aggregation (6 months)
+  - ✅ LineChart component wrapper with dark theme
+  - ✅ Fuel consumption chart (volume over time)
+  - ✅ Costs chart (fuel and expenses over time)
 - [ ] Responsive web application
 
 #### Deliverables
@@ -103,7 +109,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - **State Management**: Zustand (auth, current vehicle), TanStack Query (server state)
 - **API Client**: Centralized API utilities with fetch
 - **Tables**: TanStack Table (responsive tables/cards)
-- **Charts**: Chart.js
+- **Charts**: Chart.js with react-chartjs-2
 
 ### Backend (AWS Serverless)
 - **Compute**: AWS Lambda (Node.js 20.x)
@@ -203,6 +209,7 @@ GET    /vehicles/:id          # Get single vehicle (getVehicle Lambda)
 PUT    /vehicles/:id          # Update vehicle (updateVehicle Lambda)
 DELETE /vehicles/:id          # Delete vehicle (deleteVehicle Lambda)
 GET    /vehicles/:id/statistics # Get statistics for a vehicle (getStatistics Lambda)
+GET    /vehicles/:id/charts     # Get chart data for a vehicle (getCharts Lambda)
 
 Refills:
 GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
@@ -254,7 +261,8 @@ fuelsync/
 │   │   │   │   │   ├── get.ts
 │   │   │   │   │   ├── update.ts
 │   │   │   │   │   ├── delete.ts
-│   │   │   │   │   └── statistics.ts
+│   │   │   │   │   ├── statistics.ts
+│   │   │   │   │   └── charts.ts
 │   │   │   │   ├── refills/    # Refill CRUD operations
 │   │   │   │   │   ├── list.ts
 │   │   │   │   │   ├── create.ts
@@ -275,6 +283,9 @@ fuelsync/
 │   ├── app/                    # React web application
 │   │   ├── src/
 │   │   │   ├── components/     # Reusable UI components
+│   │   │   │   ├── Layout.tsx
+│   │   │   │   ├── LineChart.tsx
+│   │   │   │   └── ...
 │   │   │   ├── pages/          # Page components
 │   │   │   │   ├── Login.tsx   # Login page
 │   │   │   │   ├── Register.tsx # Register page
@@ -309,7 +320,7 @@ fuelsync/
 - Vehicles (/vehicles) - Full CRUD UI with current vehicle selection ✅
 - Refills (/refills, /refills/:vehicleId) - Full CRUD UI with current vehicle context ✅
 - Expenses (/expenses, /expenses/:vehicleId) - Full CRUD UI with current vehicle context ✅
-- Analytics (/analytics) - Statistics cards with totals and averages ✅
+- Analytics (/analytics) - Statistics cards and charts (fuel consumption, costs) ✅
 - Reminders (/reminders)
 
 ## UI Features
@@ -341,6 +352,8 @@ fuelsync/
 - ✅ Two decimal precision for all monetary and volume values
 - ✅ Textarea fields for station (refills) and description (expenses)
 - ✅ Uppercase license plate input and display
+- ✅ Chart.js with react-chartjs-2 for data visualization
+- ✅ Line charts with legend for fuel consumption and costs
 
 ## US Market Optimization
 - Default units: Miles, Gallons, USD
@@ -473,6 +486,9 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 
 **Statistics**:
 - `getStatistics`: GET /vehicles/:vehicleId/statistics - Get aggregated statistics for a vehicle (refills and expenses totals and averages)
+
+**Charts**:
+- `getCharts`: GET /vehicles/:vehicleId/charts - Get chart data for a vehicle (monthly fuel consumption and costs for last 6 months)
 
 ### Lambda Configuration
 - Runtime: Node.js 20.x

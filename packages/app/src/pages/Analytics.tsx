@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChartBarIcon, CurrencyDollarIcon, FireIcon } from '@heroicons/react/24/outline';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+import LineChart from '../components/LineChart';
 
 export default function Analytics() {
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
@@ -25,6 +26,12 @@ export default function Analytics() {
     enabled: !!currentVehicleId
   });
 
+  const { data: chartsData } = useQuery({
+    queryKey: ['charts', currentVehicleId],
+    queryFn: () => api.charts.get(currentVehicleId!),
+    enabled: !!currentVehicleId
+  });
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -40,7 +47,7 @@ export default function Analytics() {
     <div className="p-8">
       <h1 className="text-3xl font-bold text-white mb-8">Analytics</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch mb-8">
         <div className="bg-slate-800 rounded-lg p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-6">
             <FireIcon className="h-8 w-8 text-orange-500" />
@@ -106,6 +113,58 @@ export default function Analytics() {
           </div>
         </div>
       </div>
+
+      {chartsData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-slate-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <FireIcon className="h-6 w-6 text-orange-500" />
+              <h2 className="text-lg font-semibold text-white">Fuel Consumption</h2>
+            </div>
+            <div className="h-64">
+              <LineChart
+                data={{
+                  labels: chartsData.fuelConsumption.labels,
+                  datasets: [{
+                    label: 'Volume (L)',
+                    data: chartsData.fuelConsumption.data,
+                    borderColor: 'rgb(249, 115, 22)',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)'
+                  }]
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="bg-slate-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <CurrencyDollarIcon className="h-6 w-6 text-green-500" />
+              <h2 className="text-lg font-semibold text-white">Costs</h2>
+            </div>
+            <div className="h-64">
+              <LineChart
+                data={{
+                  labels: chartsData.costs.labels,
+                  datasets: [
+                    {
+                      label: 'Fuel',
+                      data: chartsData.costs.fuel,
+                      borderColor: 'rgb(249, 115, 22)',
+                      backgroundColor: 'rgba(249, 115, 22, 0.1)'
+                    },
+                    {
+                      label: 'Expenses',
+                      data: chartsData.costs.expenses,
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                    }
+                  ]
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
