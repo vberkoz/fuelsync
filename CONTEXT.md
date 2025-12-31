@@ -66,7 +66,14 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ Category selection with Listbox (Maintenance, Repair, Insurance, etc.)
   - ✅ Timestamp-based date display from migrated data
   - ✅ Overflow menu for expense actions
-- [ ] Simple statistics (totals, averages)
+- ✅ Simple statistics (totals, averages)
+  - ✅ GET /vehicles/:id/statistics - Get statistics for a vehicle
+  - ✅ Statistics Lambda handler with refills and expenses aggregation
+  - ✅ Analytics page with statistics cards
+  - ✅ Fuel statistics: count, total volume, total cost, avg price/unit, avg refill cost
+  - ✅ Expense statistics: count, total cost, avg expense cost
+  - ✅ Total costs across all categories
+  - ✅ HeadlessUI icons (FireIcon, ChartBarIcon, CurrencyDollarIcon)
 - [ ] Basic charts (fuel consumption, costs)
 - [ ] Responsive web application
 
@@ -195,6 +202,7 @@ POST   /vehicles              # Create a vehicle (createVehicle Lambda)
 GET    /vehicles/:id          # Get single vehicle (getVehicle Lambda)
 PUT    /vehicles/:id          # Update vehicle (updateVehicle Lambda)
 DELETE /vehicles/:id          # Delete vehicle (deleteVehicle Lambda)
+GET    /vehicles/:id/statistics # Get statistics for a vehicle (getStatistics Lambda)
 
 Refills:
 GET    /vehicles/:id/refills  # List refills for a vehicle (listRefills Lambda)
@@ -226,9 +234,6 @@ POST   /auth/logout           # Logout user (revoke tokens)
 Users:
 GET    /users/me
 PUT    /users/me
-
-Analytics:
-GET    /vehicles/:id/analytics/summary
 ```
 
 ## Project Structure
@@ -248,7 +253,8 @@ fuelsync/
 │   │   │   │   │   ├── create.ts
 │   │   │   │   │   ├── get.ts
 │   │   │   │   │   ├── update.ts
-│   │   │   │   │   └── delete.ts
+│   │   │   │   │   ├── delete.ts
+│   │   │   │   │   └── statistics.ts
 │   │   │   │   ├── refills/    # Refill CRUD operations
 │   │   │   │   │   ├── list.ts
 │   │   │   │   │   ├── create.ts
@@ -288,7 +294,7 @@ fuelsync/
 │   ├── landing/                # Astro landing page
 │   │   └── src/
 │   └── migration/              # SQLite to DynamoDB migration tool
-│       ├── index.js            # Migration script
+│       ├── index.js            # Migration script (extracts vehicle creation date from earliest refill/expense)
 │       ├── cleanup.js          # Cleanup script
 │       └── package.json
 ├── devdocs/                    # Documentation
@@ -303,14 +309,14 @@ fuelsync/
 - Vehicles (/vehicles) - Full CRUD UI with current vehicle selection ✅
 - Refills (/refills, /refills/:vehicleId) - Full CRUD UI with current vehicle context ✅
 - Expenses (/expenses, /expenses/:vehicleId) - Full CRUD UI with current vehicle context ✅
-- Analytics (/analytics)
+- Analytics (/analytics) - Statistics cards with totals and averages ✅
 - Reminders (/reminders)
 
 ## UI Features
 - ✅ Dark theme with gradient backgrounds
 - ✅ Responsive mobile and desktop layouts
 - ✅ Current vehicle selection with RadioGroup
-- ✅ Current vehicle display in sidebar (desktop) and header (mobile) with Listbox dropdown
+- ✅ Current vehicle display in sidebar (desktop) with Listbox dropdown
 - ✅ Auto-select first vehicle if none selected or selected vehicle doesn't exist
 - ✅ Overflow menus for item actions (vehicles, refills, expenses)
 - ✅ HeadlessUI Dialog for forms
@@ -464,6 +470,9 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - `getExpense`: GET /vehicles/:vehicleId/expenses/:expenseId - Get single expense by ID
 - `updateExpense`: PUT /vehicles/:vehicleId/expenses/:expenseId - Update existing expense
 - `deleteExpense`: DELETE /vehicles/:vehicleId/expenses/:expenseId - Delete expense
+
+**Statistics**:
+- `getStatistics`: GET /vehicles/:vehicleId/statistics - Get aggregated statistics for a vehicle (refills and expenses totals and averages)
 
 ### Lambda Configuration
 - Runtime: Node.js 20.x

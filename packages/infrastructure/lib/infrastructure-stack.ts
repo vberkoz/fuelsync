@@ -359,6 +359,18 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getStatistics = new nodejs.NodejsFunction(this, 'GetStatistics', {
+      entry: '../api/src/handlers/vehicles/statistics.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     // Grant DynamoDB permissions
     table.grantReadData(listVehicles);
     table.grantWriteData(createVehicle);
@@ -375,6 +387,7 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(getExpense);
     table.grantReadWriteData(updateExpense);
     table.grantWriteData(deleteExpense);
+    table.grantReadData(getStatistics);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -451,6 +464,10 @@ export class InfrastructureStack extends cdk.Stack {
     expenseId.addMethod('GET', new apigateway.LambdaIntegration(getExpense), { authorizer });
     expenseId.addMethod('PUT', new apigateway.LambdaIntegration(updateExpense), { authorizer });
     expenseId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteExpense), { authorizer });
+
+    // /vehicles/{id}/statistics resource
+    const statistics = vehicleId.addResource('statistics');
+    statistics.addMethod('GET', new apigateway.LambdaIntegration(getStatistics), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';

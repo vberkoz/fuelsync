@@ -123,5 +123,13 @@ export const api = {
       });
       return handleResponse(res);
     }
+  },
+  statistics: {
+    get: async (vehicleId: string) => {
+      const res = await fetch(`${API_URL}/vehicles/${vehicleId}/statistics`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    }
   }
 };

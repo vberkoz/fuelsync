@@ -17,6 +17,23 @@ async function migrate() {
   // Map old car IDs to new vehicle UUIDs
   const vehicleMap = new Map();
 
+  // Get all refills and costs to determine vehicle creation dates
+  const allRefills = db.prepare('SELECT car, time FROM refills ORDER BY time ASC').all();
+  const allCosts = db.prepare('SELECT car_id, time FROM costs ORDER BY time ASC').all();
+  
+  // Calculate earliest date for each vehicle
+  const vehicleCreationDates = new Map();
+  for (const refill of allRefills) {
+    if (!vehicleCreationDates.has(refill.car) || refill.time < vehicleCreationDates.get(refill.car)) {
+      vehicleCreationDates.set(refill.car, refill.time);
+    }
+  }
+  for (const cost of allCosts) {
+    if (!vehicleCreationDates.has(cost.car_id) || cost.time < vehicleCreationDates.get(cost.car_id)) {
+      vehicleCreationDates.set(cost.car_id, cost.time);
+    }
+  }
+
   // cars -> vehicles
   const cars = db.prepare('SELECT * FROM cars').all();
   console.log(`Migrating ${cars.length} vehicles...`);
@@ -42,6 +59,8 @@ async function migrate() {
       model = row.model || '';
     }
     
+    const createdAt = vehicleCreationDates.get(row._id) || Date.now();
+    
     await docClient.send(new PutCommand({
       TableName: DYNAMODB_TABLE,
       Item: {
@@ -53,7 +72,8 @@ async function migrate() {
         year,
         licensePlate,
         fuelType: 'Diesel',
-        comment: row.comment || ''
+        comment: row.comment || '',
+        createdAt
       }
     }));
     console.log(`Migrated vehicle ${i + 1}/${cars.length}: ${make} ${model}`);

@@ -243,40 +243,7 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
-            <div className="relative">
-              <Listbox.Button className="flex items-center gap-2">
-                {currentVehicle ? (
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-white">{currentVehicle.year} {currentVehicle.make}</div>
-                    <div className="text-xs text-slate-400">{currentVehicle.model}</div>
-                  </div>
-                ) : (
-                  <span className="text-lg font-semibold text-white">Dashboard</span>
-                )}
-                <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-              </Listbox.Button>
-              <Listbox.Options className="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
-                {vehicles.map((v: Vehicle) => (
-                  <Listbox.Option
-                    key={v.vehicleId}
-                    value={v.vehicleId}
-                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
-                  >
-                    {({ selected }) => (
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">
-                          <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
-                          <div className="text-xs text-slate-400">{v.model}</div>
-                        </div>
-                        {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                      </div>
-                    )}
-                  </Listbox.Option>
-                ))}
-              </Listbox.Options>
-            </div>
-          </Listbox>
+          <span className="text-lg font-semibold text-white">FuelSync</span>
           <ProfileMenu />
         </div>
         {children}
