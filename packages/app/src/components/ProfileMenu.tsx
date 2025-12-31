@@ -15,8 +15,8 @@ export default function ProfileMenu() {
 
   return (
     <Menu as="div" className="relative">
-      <Menu.Button className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">
-        <UserCircleIcon className="w-8 h-8 text-slate-400" />
+      <Menu.Button className="text-gray-400 hover:text-white">
+        <UserCircleIcon className="h-6 w-6" />
       </Menu.Button>
 
       <Transition

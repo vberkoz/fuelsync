@@ -44,19 +44,22 @@ export default function Analytics() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-white mb-8">Analytics</h1>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+        <ChartBarIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Analytics</h1>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch mb-8">
-        <div className="bg-slate-800 rounded-lg p-6 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <FireIcon className="h-8 w-8 text-orange-500" />
-            <h2 className="text-xl font-semibold text-white">Fuel</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch mb-6 sm:mb-8">
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <FireIcon className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Fuel</h2>
           </div>
           <div className="space-y-4 flex-1">
             <div>
               <div className="text-slate-400 text-sm mb-1">Total Cost</div>
-              <div className="text-white font-mono text-3xl">{(stats?.refills.totalCost || 0).toFixed(2)} <span className="text-xl text-slate-400">UAH</span></div>
+              <div className="text-white font-mono text-2xl sm:text-3xl">{(stats?.refills.totalCost || 0).toFixed(2)} <span className="text-lg sm:text-xl text-slate-400">UAH</span></div>
             </div>
             <div className="pt-4 border-t border-slate-700 space-y-3">
               <div className="flex justify-between">
@@ -79,15 +82,15 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-6 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <ChartBarIcon className="h-8 w-8 text-blue-500" />
-            <h2 className="text-xl font-semibold text-white">Expenses</h2>
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <ChartBarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Expenses</h2>
           </div>
           <div className="space-y-4 flex-1">
             <div>
               <div className="text-slate-400 text-sm mb-1">Total Cost</div>
-              <div className="text-white font-mono text-3xl">{(stats?.expenses.totalCost || 0).toFixed(2)} <span className="text-xl text-slate-400">UAH</span></div>
+              <div className="text-white font-mono text-2xl sm:text-3xl">{(stats?.expenses.totalCost || 0).toFixed(2)} <span className="text-lg sm:text-xl text-slate-400">UAH</span></div>
             </div>
             <div className="pt-4 border-t border-slate-700 space-y-3">
               <div className="flex justify-between">
@@ -102,26 +105,26 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-6 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-6">
-            <CurrencyDollarIcon className="h-8 w-8 text-green-500" />
-            <h2 className="text-xl font-semibold text-white">Total</h2>
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <CurrencyDollarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Total</h2>
           </div>
           <div className="flex-1">
             <div className="text-slate-400 text-sm mb-1">All Costs</div>
-            <div className="text-white font-mono text-4xl">{(stats?.totals.allCosts || 0).toFixed(2)} <span className="text-2xl text-slate-400">UAH</span></div>
+            <div className="text-white font-mono text-3xl sm:text-4xl">{(stats?.totals.allCosts || 0).toFixed(2)} <span className="text-xl sm:text-2xl text-slate-400">UAH</span></div>
           </div>
         </div>
       </div>
 
       {chartsData && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <FireIcon className="h-6 w-6 text-orange-500" />
               <h2 className="text-lg font-semibold text-white">Fuel Consumption</h2>
             </div>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               <LineChart
                 data={{
                   labels: chartsData.fuelConsumption.labels,
@@ -136,12 +139,12 @@ export default function Analytics() {
             </div>
           </div>
 
-          <div className="bg-slate-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-6">
+          <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <CurrencyDollarIcon className="h-6 w-6 text-green-500" />
               <h2 className="text-lg font-semibold text-white">Costs</h2>
             </div>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               <LineChart
                 data={{
                   labels: chartsData.costs.labels,

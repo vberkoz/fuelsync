@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, Menu, Listbox, RadioGroup, Field, Label } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
-import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
@@ -129,16 +129,29 @@ export default function Vehicles() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {error && (
         <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
           {error instanceof Error ? error.message : 'An error occurred'}
         </div>
       )}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-white">Vehicles</h1>
-        <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-          {showForm ? 'Cancel' : '+ Add Vehicle'}
+        <div className="flex items-center gap-3">
+          <TruckIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Vehicles</h1>
+        </div>
+        <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+          {showForm ? (
+            <>
+              <XMarkIcon className="h-5 w-5" />
+              <span>Cancel</span>
+            </>
+          ) : (
+            <>
+              <PlusIcon className="h-5 w-5" />
+              <span>Add Vehicle</span>
+            </>
+          )}
         </button>
       </div>
 
