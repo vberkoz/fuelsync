@@ -124,81 +124,34 @@ export default function Refills() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.refills.create(activeVehicleId!, data),
-    onMutate: async (newRefill) => {
-      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
-      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
-      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => {
-        const firstPage = old?.pages?.[0] || { refills: [], nextToken: undefined };
-        return {
-          pages: [{ refills: [...firstPage.refills, { ...newRefill, refillId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }], nextToken: firstPage.nextToken }, ...(old?.pages?.slice(1) || [])],
-          pageParams: old?.pageParams || [undefined]
-        };
-      });
-      return { previousRefills };
-    },
-    onError: (_err, _newRefill, context) => {
-      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
       setShowForm(false);
       setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ refillId, data }: { refillId: string; data: any }) => 
       api.refills.update(activeVehicleId!, refillId, data),
-    onMutate: async ({ refillId, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
-      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
-      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
-        pages: old?.pages?.map((page: any) => ({
-          ...page,
-          refills: page.refills.map((r: Refill) => r.refillId === refillId ? { ...r, ...data } : r)
-        })) || [],
-        pageParams: old?.pageParams || []
-      }));
-      return { previousRefills };
-    },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
       setShowForm(false);
       setEditingId(null);
       setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (refillId: string) => api.refills.delete(activeVehicleId!, refillId),
-    onMutate: async (refillId) => {
-      await queryClient.cancelQueries({ queryKey: ['refills', activeVehicleId] });
-      const previousRefills = queryClient.getQueryData(['refills', activeVehicleId]);
-      queryClient.setQueryData(['refills', activeVehicleId], (old: any) => ({
-        pages: old?.pages?.map((page: any) => ({
-          ...page,
-          refills: page.refills.filter((r: Refill) => r.refillId !== refillId)
-        })) || [],
-        pageParams: old?.pageParams || []
-      }));
-      return { previousRefills };
-    },
-    onError: (_err, _refillId, context) => {
-      queryClient.setQueryData(['refills', activeVehicleId], context?.previousRefills);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
       setShowDeleteDialog(false);
       setDeleteId(null);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+    onError: () => {
+      setShowDeleteDialog(false);
+      setDeleteId(null);
     }
   });
 
@@ -482,13 +435,15 @@ export default function Refills() {
             <div className="flex gap-2">
               <button 
                 onClick={() => deleteId && handleDelete(deleteId)} 
-                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
               >
-                Delete
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
               <button 
                 onClick={() => setShowDeleteDialog(false)} 
-                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg disabled:opacity-50"
               >
                 Cancel
               </button>

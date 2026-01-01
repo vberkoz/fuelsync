@@ -40,7 +40,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ POST /vehicles - Create a vehicle
   - ✅ GET /vehicles/:id - Get single vehicle
   - ✅ PUT /vehicles/:id - Update vehicle
-  - ✅ DELETE /vehicles/:id - Delete vehicle
+  - ✅ DELETE /vehicles/:id - Delete vehicle with cascade delete (removes all refills and expenses)
   - ✅ Vehicle management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Current vehicle selection with radio buttons
   - ✅ Current vehicle display in sidebar and mobile header with dropdown selector
@@ -51,7 +51,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ POST /vehicles/:id/refills - Create a refill
   - ✅ GET /vehicles/:id/refills/:refillId - Get single refill
   - ✅ PUT /vehicles/:id/refills/:refillId - Update refill
-  - ✅ DELETE /vehicles/:id/refills/:refillId - Delete refill
+  - ✅ DELETE /vehicles/:id/refills/:refillId - Delete refill (queries by refillId attribute)
   - ✅ Refill management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Current vehicle context with localStorage persistence
   - ✅ Timestamp-based date display from migrated data
@@ -61,7 +61,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ POST /vehicles/:id/expenses - Create an expense
   - ✅ GET /vehicles/:id/expenses/:expenseId - Get single expense
   - ✅ PUT /vehicles/:id/expenses/:expenseId - Update expense
-  - ✅ DELETE /vehicles/:id/expenses/:expenseId - Delete expense
+  - ✅ DELETE /vehicles/:id/expenses/:expenseId - Delete expense (queries by expenseId attribute)
   - ✅ Expense management UI with HeadlessUI dialogs (list, add, edit, delete)
   - ✅ Category selection with Listbox (Maintenance, Repair, Insurance, etc.)
   - ✅ Timestamp-based date display from migrated data
@@ -373,8 +373,9 @@ fuelsync/
 - ✅ TanStack Query for data fetching and caching
 - ✅ Infinite scroll with DynamoDB pagination for refills and expenses
 - ✅ Monthly grouping for refills and expenses (displays 12 months initially)
-- ✅ Optimistic UI updates for all mutations
-- ✅ Automatic rollback on errors
+- ✅ Query invalidation on successful mutations (no optimistic updates)
+- ✅ Loading states for all mutations (Saving..., Deleting...)
+- ✅ Disabled buttons during mutations to prevent duplicate requests
 - ✅ Automatic redirect to login on 401 (token expired)
 - ✅ Automatic redirect on CORS-blocked 401 responses (Failed to fetch)
 - ✅ Token expiration: 15 minutes (access/ID), 7 days (refresh)
@@ -499,6 +500,20 @@ npm install
 npx cdk deploy --all --profile basil
 ```
 
+### Seed Test Data
+```bash
+cd packages/api
+npm install
+AWS_PROFILE=basil USER_ID="your-user-id" npm run seed
+```
+
+Seeds DynamoDB with:
+- 2 vehicles (Toyota Camry 2020, Honda Civic 2019)
+- 6 refills (3 per vehicle)
+- 6 expenses (3 per vehicle)
+- 14 sequential operations with 200ms delays
+- Uses UUID for IDs and timestamp field for dates
+
 ### DynamoDB Table Details
 - Table Name: FuelSyncTable
 - Indexes: GSI1, GSI2
@@ -543,21 +558,21 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - `createVehicle`: POST /vehicles - Create new vehicle
 - `getVehicle`: GET /vehicles/:id - Get single vehicle by ID
 - `updateVehicle`: PUT /vehicles/:id - Update existing vehicle
-- `deleteVehicle`: DELETE /vehicles/:id - Delete vehicle
+- `deleteVehicle`: DELETE /vehicles/:id - Delete vehicle with cascade delete (queries and batch deletes all related refills and expenses)
 
 **Refills**:
 - `listRefills`: GET /vehicles/:vehicleId/refills - List refills for vehicle with pagination (limit: 50, returns nextToken)
 - `createRefill`: POST /vehicles/:vehicleId/refills - Create new refill entry
 - `getRefill`: GET /vehicles/:vehicleId/refills/:refillId - Get single refill by ID
 - `updateRefill`: PUT /vehicles/:vehicleId/refills/:refillId - Update existing refill
-- `deleteRefill`: DELETE /vehicles/:vehicleId/refills/:refillId - Delete refill
+- `deleteRefill`: DELETE /vehicles/:vehicleId/refills/:refillId - Delete refill (queries all refills, filters by refillId attribute)
 
 **Expenses**:
 - `listExpenses`: GET /vehicles/:vehicleId/expenses - List expenses for vehicle with pagination (limit: 50, returns nextToken)
 - `createExpense`: POST /vehicles/:vehicleId/expenses - Create new expense entry
 - `getExpense`: GET /vehicles/:vehicleId/expenses/:expenseId - Get single expense by ID
 - `updateExpense`: PUT /vehicles/:vehicleId/expenses/:expenseId - Update existing expense
-- `deleteExpense`: DELETE /vehicles/:vehicleId/expenses/:expenseId - Delete expense
+- `deleteExpense`: DELETE /vehicles/:vehicleId/expenses/:expenseId - Delete expense (queries all expenses, filters by expenseId attribute)
 
 **Statistics**:
 - `getStatistics`: GET /vehicles/:vehicleId/statistics - Get aggregated statistics for a vehicle (refills and expenses totals and averages)
@@ -578,6 +593,8 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - Runtime: Node.js 20.x
 - Environment: TABLE_NAME=FuelSyncTable
 - Permissions: DynamoDB read/write access via IAM roles
+  - Delete handlers require ReadWriteData permissions for Query + Delete operations
+  - Vehicle delete requires ReadWriteData for cascade delete (Query + BatchWrite)
 - Handler pattern: TypeScript with AWS SDK v3
 
 ### Shared Utilities

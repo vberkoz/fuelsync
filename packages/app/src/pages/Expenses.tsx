@@ -131,81 +131,34 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.expenses.create(activeVehicleId!, data),
-    onMutate: async (newExpense) => {
-      await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
-      const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
-      queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => {
-        const firstPage = old?.pages?.[0] || { expenses: [], nextToken: undefined };
-        return {
-          pages: [{ expenses: [...firstPage.expenses, { ...newExpense, expenseId: 'temp-' + Date.now(), createdAt: new Date().toISOString() }], nextToken: firstPage.nextToken }, ...(old?.pages?.slice(1) || [])],
-          pageParams: old?.pageParams || [undefined]
-        };
-      });
-      return { previousExpenses };
-    },
-    onError: (_err, _newExpense, context) => {
-      queryClient.setQueryData(['expenses', activeVehicleId], context?.previousExpenses);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowForm(false);
       setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ expenseId, data }: { expenseId: string; data: any }) => 
       api.expenses.update(activeVehicleId!, expenseId, data),
-    onMutate: async ({ expenseId, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
-      const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
-      queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => ({
-        pages: old?.pages?.map((page: any) => ({
-          ...page,
-          expenses: page.expenses.map((e: Expense) => e.expenseId === expenseId ? { ...e, ...data } : e)
-        })) || [],
-        pageParams: old?.pageParams || []
-      }));
-      return { previousExpenses };
-    },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['expenses', activeVehicleId], context?.previousExpenses);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowForm(false);
       setEditingId(null);
       setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (expenseId: string) => api.expenses.delete(activeVehicleId!, expenseId),
-    onMutate: async (expenseId) => {
-      await queryClient.cancelQueries({ queryKey: ['expenses', activeVehicleId] });
-      const previousExpenses = queryClient.getQueryData(['expenses', activeVehicleId]);
-      queryClient.setQueryData(['expenses', activeVehicleId], (old: any) => ({
-        pages: old?.pages?.map((page: any) => ({
-          ...page,
-          expenses: page.expenses.filter((e: Expense) => e.expenseId !== expenseId)
-        })) || [],
-        pageParams: old?.pageParams || []
-      }));
-      return { previousExpenses };
-    },
-    onError: (_err, _expenseId, context) => {
-      queryClient.setQueryData(['expenses', activeVehicleId], context?.previousExpenses);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowDeleteDialog(false);
       setDeleteId(null);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
+    onError: () => {
+      setShowDeleteDialog(false);
+      setDeleteId(null);
     }
   });
 
@@ -475,13 +428,15 @@ export default function Expenses() {
             <div className="flex gap-2">
               <button 
                 onClick={() => deleteId && handleDelete(deleteId)} 
-                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
               >
-                Delete
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
               <button 
                 onClick={() => setShowDeleteDialog(false)} 
-                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg disabled:opacity-50"
               >
                 Cancel
               </button>

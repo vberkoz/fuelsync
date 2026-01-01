@@ -17,28 +17,25 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return response(400, { error: 'Vehicle ID and Refill ID required' });
     }
 
-    // First, find the exact SK
     const queryResult = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
-      KeyConditionExpression: 'PK = :pk AND contains(SK, :refillId)',
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
         ':pk': `VEHICLE#${vehicleId}`,
-        ':refillId': refillId
-      },
-      Limit: 1
+        ':sk': 'REFILL#'
+      }
     }));
 
-    if (!queryResult.Items || queryResult.Items.length === 0) {
+    const item = queryResult.Items?.find(i => i.refillId === refillId);
+    if (!item) {
       return response(404, { error: 'Refill not found' });
     }
-
-    const existingSK = queryResult.Items[0].SK;
 
     await docClient.send(new DeleteCommand({
       TableName: TABLE_NAME,
       Key: {
-        PK: `VEHICLE#${vehicleId}`,
-        SK: existingSK
+        PK: item.PK,
+        SK: item.SK
       }
     }));
 

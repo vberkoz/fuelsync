@@ -19,26 +19,22 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const queryResult = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-      FilterExpression: 'expenseId = :expenseId',
       ExpressionAttributeValues: {
         ':pk': `VEHICLE#${vehicleId}`,
-        ':sk': 'EXPENSE#',
-        ':expenseId': expenseId
-      },
-      Limit: 1
+        ':sk': 'EXPENSE#'
+      }
     }));
 
-    if (!queryResult.Items || queryResult.Items.length === 0) {
+    const item = queryResult.Items?.find(i => i.expenseId === expenseId);
+    if (!item) {
       return response(404, { error: 'Expense not found' });
     }
-
-    const existingExpense = queryResult.Items[0];
 
     await docClient.send(new DeleteCommand({
       TableName: TABLE_NAME,
       Key: {
-        PK: existingExpense.PK,
-        SK: existingExpense.SK
+        PK: item.PK,
+        SK: item.SK
       }
     }));
 

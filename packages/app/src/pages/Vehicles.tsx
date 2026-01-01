@@ -36,68 +36,35 @@ export default function Vehicles() {
 
   const createMutation = useMutation({
     mutationFn: api.vehicles.create,
-    onMutate: async (newVehicle) => {
-      await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      const previousVehicles = queryClient.getQueryData(['vehicles']);
-      queryClient.setQueryData(['vehicles'], (old: any) => ({
-        vehicles: [...(old?.vehicles || []), { ...newVehicle, vehicleId: 'temp-' + Date.now() }]
-      }));
-      return { previousVehicles };
-    },
-    onError: (_err, _newVehicle, context) => {
-      queryClient.setQueryData(['vehicles'], context?.previousVehicles);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setShowForm(false);
       setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.vehicles.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      const previousVehicles = queryClient.getQueryData(['vehicles']);
-      queryClient.setQueryData(['vehicles'], (old: any) => ({
-        vehicles: old?.vehicles.map((v: Vehicle) => v.vehicleId === id ? { ...v, ...data } : v) || []
-      }));
-      return { previousVehicles };
-    },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['vehicles'], context?.previousVehicles);
-    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       setShowForm(false);
       setEditingId(null);
       setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: api.vehicles.delete,
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      const previousVehicles = queryClient.getQueryData(['vehicles']);
-      queryClient.setQueryData(['vehicles'], (old: any) => ({
-        vehicles: old?.vehicles.filter((v: Vehicle) => v.vehicleId !== id) || []
-      }));
-      return { previousVehicles };
-    },
-    onError: (_err, _id, context) => {
-      queryClient.setQueryData(['vehicles'], context?.previousVehicles);
-    },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.removeQueries({ queryKey: ['refills', id] });
+      queryClient.removeQueries({ queryKey: ['expenses', id] });
       setShowDeleteDialog(false);
       setDeleteId(null);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+    onError: () => {
+      setShowDeleteDialog(false);
+      setDeleteId(null);
     }
   });
 
@@ -125,6 +92,10 @@ export default function Vehicles() {
   };
 
   const handleDelete = async (id: string) => {
+    if (id === currentVehicleId && vehicles.length > 1) {
+      const nextVehicle = vehicles.find((v: Vehicle) => v.vehicleId !== id);
+      if (nextVehicle) setCurrentVehicle(nextVehicle.vehicleId);
+    }
     deleteMutation.mutate(id);
   };
 
@@ -370,8 +341,8 @@ export default function Vehicles() {
             <Dialog.Title className="text-xl font-bold text-white mb-4">Delete Vehicle</Dialog.Title>
             <p className="text-slate-300 mb-6">Are you sure you want to delete this vehicle? This action cannot be undone.</p>
             <div className="flex gap-2">
-              <button onClick={() => deleteId && handleDelete(deleteId)} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
-              <button onClick={() => setShowDeleteDialog(false)} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+              <button onClick={() => deleteId && handleDelete(deleteId)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</button>
+              <button onClick={() => setShowDeleteDialog(false)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg disabled:opacity-50">Cancel</button>
             </div>
           </Dialog.Panel>
         </div>
