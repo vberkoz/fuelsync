@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Field, Label, Listbox } from '@headlessui/react';
 import { UserCircleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
 export default function Profile() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const userEmail = useAuthStore((state) => state.userEmail);
   const [formData, setFormData] = useState({ name: '', currency: 'USD' });
@@ -44,7 +46,7 @@ export default function Profile() {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
-          <p className="mt-4 text-slate-400">Loading profile...</p>
+          <p className="mt-4 text-slate-400">{t('profile.loading')}</p>
         </div>
       </div>
     );
@@ -59,13 +61,13 @@ export default function Profile() {
       )}
       <div className="flex items-center gap-3 mb-6">
         <UserCircleIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('profile.title')}</h1>
       </div>
 
       <div className="bg-slate-800 rounded-lg p-6 max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-5">
           <Field>
-            <Label className="block text-sm font-semibold text-white mb-1.5">Email</Label>
+            <Label className="block text-sm font-semibold text-white mb-1.5">{t('profile.email')}</Label>
             <input
               type="email"
               value={userEmail || ''}
@@ -75,7 +77,7 @@ export default function Profile() {
           </Field>
 
           <Field>
-            <Label className="block text-sm font-semibold text-white mb-1.5">Name</Label>
+            <Label className="block text-sm font-semibold text-white mb-1.5">{t('profile.name')}</Label>
             <input
               type="text"
               value={formData.name}
@@ -86,7 +88,7 @@ export default function Profile() {
           </Field>
 
           <Field>
-            <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+            <Label className="block text-sm font-semibold text-white mb-1.5">{t('profile.currency')}</Label>
             <Listbox value={formData.currency} onChange={(value) => setFormData({ ...formData, currency: value })}>
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -118,7 +120,7 @@ export default function Profile() {
             disabled={updateMutation.isPending}
             className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
           >
-            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+            {updateMutation.isPending ? t('common.saving') : t('profile.saveChanges')}
           </button>
         </form>
       </div>

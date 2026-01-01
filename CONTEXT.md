@@ -351,6 +351,111 @@ fuelsync/
 - Profile (/profile) - User profile management (name, currency) ✅
 - Settings (/settings) - User settings (units, date format, notifications) ✅
 
+## Internationalization (i18n)
+
+### Implementation Status
+- ✅ **Packages Installed**: react-i18next, i18next
+- ✅ **Translation Files**: English and Ukrainian locales created
+- ✅ **i18n Configuration**: Language detection with localStorage persistence
+- ✅ **Language Switcher**: Added to Settings page with HeadlessUI Listbox
+- ✅ **Initialization**: i18n imported in main.tsx before app render
+- ✅ **Translation Coverage**: All pages and components translated
+- ✅ **DynamoDB Integration**: Language preference saved to user settings
+
+### Implemented Files
+```
+packages/app/src/
+├── i18n.ts                           # i18n configuration
+├── locales/
+│   ├── en/translation.json           # English translations
+│   └── uk/translation.json           # Ukrainian translations
+└── main.tsx                          # i18n initialization
+```
+
+### Translated Pages
+- ✅ Layout (navigation, sidebar)
+- ✅ Dashboard
+- ✅ Vehicles
+- ✅ Refills (with localized month captions)
+- ✅ Expenses (with localized month captions)
+- ✅ Analytics
+- ✅ Reminders
+- ✅ Profile
+- ✅ Settings
+
+### Translation Keys Structure
+- `common`: save, cancel, delete, edit, add, loading, saving, deleting, search, filter, close
+- `navigation`: dashboard, vehicles, refills, expenses, analytics, reminders, profile, settings, logout
+- `auth`: login, register, email, password, etc.
+- `dashboard`: title, addVehicle, addRefill, addExpense, viewAnalytics, etc.
+- `vehicles`: title, add, edit, delete, make, model, year, licensePlate, fuelType, etc.
+- `refills`: title, add, edit, delete, odometer, volume, pricePerUnit, totalCost, station, date, etc.
+- `expenses`: title, add, edit, delete, category, amount, description, etc.
+- `analytics`: title, fuel, expenses, total, totalCost, allCosts, fuelConsumption, costs, etc.
+- `reminders`: title, add, reminderTitle, type, threshold, unit, current, urgent
+- `profile`: title, email, name, currency, saveChanges, loading
+- `settings`: title, language, units, dateFormat, notifications, loading
+
+### Implementation Steps
+1. ✅ **Install i18n Library**
+   - Added `react-i18next` and `i18next` packages
+   - Configured i18next with language detection and localStorage persistence
+
+2. ✅ **Translation Files Structure**
+   ```
+   packages/app/src/locales/
+   ├── en/
+   │   └── translation.json    # English translations
+   └── uk/
+       └── translation.json    # Ukrainian translations
+   ```
+
+3. ✅ **Translation Keys Organization**
+   - `common`: Shared UI elements (buttons, labels, messages)
+   - `auth`: Login, register, password reset
+   - `navigation`: Sidebar menu items
+   - `vehicles`: Vehicle management page
+   - `refills`: Refills tracking page
+   - `expenses`: Expenses tracking page
+   - `analytics`: Statistics and charts
+   - `reminders`: Reminders page
+   - `profile`: User profile page
+   - `settings`: Settings page
+   - `dashboard`: Dashboard page
+
+4. ✅ **Language Switcher Component**
+   - Added language selector in Settings page
+   - Uses HeadlessUI Listbox for language selection
+   - Options: English (en), Українська (uk)
+   - Stores preference in localStorage
+   - Changes language immediately on selection
+
+5. ✅ **User Settings Integration**
+   - Added `language` field to user settings in DynamoDB
+   - Updated settings API to persist language preference
+   - Language saved automatically when changed
+
+6. ✅ **Translation Coverage**
+   - All UI text, labels, and buttons
+   - Form validation messages
+   - Error messages and notifications
+   - Date and number formatting (locale-aware)
+   - Chart labels and tooltips
+   - Email templates (future)
+
+7. **Implementation Priority**
+   - Phase 1: Core UI (navigation, forms, buttons)
+   - Phase 2: Messages and notifications
+   - Phase 3: Dynamic content and charts
+
+### Technical Details
+- **Default Language**: English (en)
+- **Fallback**: English for missing translations
+- **Detection Order**: User settings → localStorage → browser language → default
+- **Format**: JSON translation files with nested keys
+- **Date Formatting**: Use `date-fns` with locale support
+- **Number Formatting**: Use `Intl.NumberFormat` for currency and decimals
+
 ## UI Features
 - ✅ Dark theme with gradient backgrounds
 - ✅ Responsive mobile and desktop layouts with mobile-first approach
@@ -450,6 +555,7 @@ fuelsync/
 6. **Frontend Integration**: Connect React app to API
 6. **Basic UI**: Implement vehicle and refill forms
 7. **Simple Analytics**: Display totals and averages
+8. **Internationalization (i18n)**: Add English/Ukrainian language switching
 
 ### Phase 1 Success Criteria
 - Users can register and login

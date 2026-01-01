@@ -3,6 +3,7 @@ import { Dialog, Menu, Listbox, RadioGroup, Field, Label } from '@headlessui/rea
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 
@@ -17,6 +18,7 @@ interface Vehicle {
 }
 
 export default function Vehicles() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -109,18 +111,18 @@ export default function Vehicles() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           <TruckIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Vehicles</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('vehicles.title')}</h1>
         </div>
         <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
           {showForm ? (
             <>
               <XMarkIcon className="h-5 w-5" />
-              <span>Cancel</span>
+              <span>{t('common.cancel')}</span>
             </>
           ) : (
             <>
               <PlusIcon className="h-5 w-5" />
-              <span>Add Vehicle</span>
+              <span>{t('vehicles.add')}</span>
             </>
           )}
         </button>
@@ -129,7 +131,7 @@ export default function Vehicles() {
       {isLoading && (
         <div className="text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
-          <p className="mt-4 text-slate-400">Loading vehicles...</p>
+          <p className="mt-4 text-slate-400">{t('vehicles.loading')}</p>
         </div>
       )}
 
@@ -138,28 +140,26 @@ export default function Vehicles() {
           <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold text-white mb-4">{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</Dialog.Title>
+              <Dialog.Title className="text-xl font-bold text-white mb-4">{editingId ? t('vehicles.edit') : t('vehicles.add')}</Dialog.Title>
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">Make</Label>
-                    <input type="text" value={formData.make} onChange={(e) => setFormData({...formData, make: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </Field>
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">Model</Label>
-                    <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </Field>
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">Year</Label>
-                    <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </Field>
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">License Plate <span className="text-xs font-normal text-slate-400">(Optional)</span></Label>
-                    <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </Field>
-                </div>
                 <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">Fuel Type</Label>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
+                  <input type="text" value={formData.make} onChange={(e) => setFormData({...formData, make: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </Field>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
+                  <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </Field>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.year')}</Label>
+                  <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </Field>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.licensePlate')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+                  <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </Field>
+                <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
                   <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -187,9 +187,9 @@ export default function Vehicles() {
                 </Field>
                 <div className="flex gap-2">
                   <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
-                    {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editingId ? 'Update' : 'Add'}
+                    {createMutation.isPending || updateMutation.isPending ? t('common.saving') : editingId ? t('common.save') : t('common.add')}
                   </button>
-                  <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                  <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">{t('common.cancel')}</button>
                 </div>
               </form>
             </Dialog.Panel>
@@ -205,12 +205,12 @@ export default function Vehicles() {
               <thead>
                 <tr className="border-b border-slate-700">
                   <th className="text-left p-4 text-slate-400 font-semibold"></th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">Year</th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">Make</th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">Model</th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">License Plate</th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">Fuel Type</th>
-                  <th className="text-left p-4 text-slate-400 font-semibold">Created</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.year')}</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.make')}</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.model')}</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.licensePlate')}</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.fuelType')}</th>
+                  <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.created')}</th>
                   <th className="text-left p-4 text-slate-400 font-semibold"></th>
                 </tr>
               </thead>
@@ -240,17 +240,17 @@ export default function Vehicles() {
                             <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>View Refills</button>
+                                  <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('vehicles.viewRefills')}</button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>Edit</button>
+                                  <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>{t('common.edit')}</button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>Delete</button>
+                                  <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
                                 )}
                               </Menu.Item>
                             </Menu.Items>
@@ -264,7 +264,7 @@ export default function Vehicles() {
             </table>
             {vehicles.length === 0 && !showForm && (
               <div className="text-center py-12 text-slate-400">
-                <p>No vehicles yet. Add your first vehicle to get started!</p>
+                <p>{t('vehicles.noVehicles')}</p>
               </div>
             )}
           </div>
@@ -299,21 +299,21 @@ export default function Vehicles() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
-                                  View Refills
+                                  {t('vehicles.viewRefills')}
                                 </button>
                               )}
                             </Menu.Item>
                             <Menu.Item>
                               {({ active }) => (
                                 <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
-                                  Edit
+                                  {t('common.edit')}
                                 </button>
                               )}
                             </Menu.Item>
                             <Menu.Item>
                               {({ active }) => (
                                 <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
-                                  Delete
+                                  {t('common.delete')}
                                 </button>
                               )}
                             </Menu.Item>
@@ -327,7 +327,7 @@ export default function Vehicles() {
             ))}
             {vehicles.length === 0 && !showForm && (
               <div className="text-center py-12 text-slate-400">
-                <p>No vehicles yet. Add your first vehicle to get started!</p>
+                <p>{t('vehicles.noVehicles')}</p>
               </div>
             )}
           </div>
@@ -338,11 +338,11 @@ export default function Vehicles() {
         <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-sm">
-            <Dialog.Title className="text-xl font-bold text-white mb-4">Delete Vehicle</Dialog.Title>
-            <p className="text-slate-300 mb-6">Are you sure you want to delete this vehicle? This action cannot be undone.</p>
+            <Dialog.Title className="text-xl font-bold text-white mb-4">{t('vehicles.delete')}</Dialog.Title>
+            <p className="text-slate-300 mb-6">{t('vehicles.deleteConfirm')}</p>
             <div className="flex gap-2">
-              <button onClick={() => deleteId && handleDelete(deleteId)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</button>
-              <button onClick={() => setShowDeleteDialog(false)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg disabled:opacity-50">Cancel</button>
+              <button onClick={() => deleteId && handleDelete(deleteId)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">{deleteMutation.isPending ? t('common.deleting') : t('common.delete')}</button>
+              <button onClick={() => setShowDeleteDialog(false)} disabled={deleteMutation.isPending} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg disabled:opacity-50">{t('common.cancel')}</button>
             </div>
           </Dialog.Panel>
         </div>

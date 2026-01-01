@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query'
 import { useAuthStore } from './stores/authStore'
 import App from './App'
+import './i18n'
 import './index.css'
 
 const queryClient = new QueryClient({

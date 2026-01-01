@@ -1,25 +1,20 @@
-import { useState, Fragment, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { HomeIcon, TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
-import { Menu, Transition, Listbox } from '@headlessui/react'
-import ProfileMenu from './ProfileMenu'
+import { Listbox } from '@headlessui/react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../stores/authStore'
 import { useVehicleStore } from '../stores/vehicleStore'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 
 const navigation = [
-  { name: 'Dashboard', icon: HomeIcon, href: '/' },
-  { name: 'Vehicles', icon: TruckIcon, href: '/vehicles' },
-  { name: 'Refills', icon: BeakerIcon, href: '/refills' },
-  { name: 'Expenses', icon: BanknotesIcon, href: '/expenses' },
-  { name: 'Analytics', icon: ChartBarIcon, href: '/analytics' },
-  { name: 'Reminders', icon: BellIcon, href: '/reminders' },
-]
-
-const teams = [
-  { name: 'My Vehicles', initial: 'M' },
-  { name: 'Family Cars', initial: 'F' },
+  { name: 'navigation.dashboard', icon: HomeIcon, href: '/' },
+  { name: 'navigation.vehicles', icon: TruckIcon, href: '/vehicles' },
+  { name: 'navigation.refills', icon: BeakerIcon, href: '/refills' },
+  { name: 'navigation.expenses', icon: BanknotesIcon, href: '/expenses' },
+  { name: 'navigation.analytics', icon: ChartBarIcon, href: '/analytics' },
+  { name: 'navigation.reminders', icon: BellIcon, href: '/reminders' },
 ]
 
 interface LayoutProps {
@@ -34,10 +29,10 @@ interface Vehicle {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null)
   const location = useLocation()
-  const userEmail = useAuthStore((state) => state.userEmail)
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId)
   const setCurrentVehicleId = useVehicleStore((state) => state.setCurrentVehicle)
 
@@ -79,7 +74,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900/95 backdrop-blur-sm border-r border-slate-700 transition-transform duration-300 lg:static lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex h-16 items-center justify-between px-6">
+        <div className="flex h-16 items-center justify-between px-6 border-b border-slate-700">
           <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
             <div className="relative flex items-center gap-3 w-full">
               <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -125,7 +120,7 @@ export default function Layout({ children }: LayoutProps) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="flex-1 space-y-1 p-3">
           {navigation.map((item) => (
             <Link
               key={item.name}
@@ -136,101 +131,44 @@ export default function Layout({ children }: LayoutProps) {
               }`}
             >
               <item.icon className="h-6 w-6" />
-              {item.name}
+              {t(item.name)}
             </Link>
           ))}
-
-          <div className="pt-8">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-              Vehicle Groups
-            </p>
-            <div className="mt-3 space-y-1">
-              {teams.map((team) => (
-                <a
-                  key={team.name}
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800 text-xs font-medium text-gray-400">
-                    {team.initial}
-                  </span>
-                  {team.name}
-                </a>
-              ))}
-            </div>
-          </div>
         </nav>
 
-        <div className="border-t border-slate-700 p-4">
-          <Menu as="div" className="relative">
-            <Menu.Button className="flex items-center gap-3 w-full rounded-lg px-2 py-2 hover:bg-slate-800/50 transition-colors">
-              <UserCircleIcon className="h-10 w-10 text-slate-400" />
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-white">{userEmail}</p>
-              </div>
-            </Menu.Button>
+        <div className="border-t border-slate-700 p-3 space-y-1">
+          <Link
+            to="/profile"
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
+              location.pathname === '/profile' ? 'bg-slate-800/50' : ''
+            }`}
+          >
+            <UserCircleIcon className="h-6 w-6" />
+            {t('navigation.profile')}
+          </Link>
 
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <Menu.Items className="absolute bottom-full left-0 right-0 mb-2 origin-bottom bg-slate-800 border border-slate-700 rounded-lg shadow-lg focus:outline-none">
-                <div className="p-1">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        to="/profile"
-                        className={`${
-                          active ? 'bg-slate-700' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-slate-300`}
-                      >
-                        <UserCircleIcon className="mr-3 h-5 w-5" />
-                        Profile
-                      </Link>
-                    )}
-                  </Menu.Item>
+          <Link
+            to="/settings"
+            onClick={handleNavClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
+              location.pathname === '/settings' ? 'bg-slate-800/50' : ''
+            }`}
+          >
+            <Cog6ToothIcon className="h-6 w-6" />
+            {t('navigation.settings')}
+          </Link>
 
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        to="/settings"
-                        className={`${
-                          active ? 'bg-slate-700' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-slate-300`}
-                      >
-                        <Cog6ToothIcon className="mr-3 h-5 w-5" />
-                        Settings
-                      </Link>
-                    )}
-                  </Menu.Item>
-
-                  <div className="my-1 h-px bg-slate-700" />
-
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => {
-                          useAuthStore.getState().clearAuth();
-                          window.location.href = '/login';
-                        }}
-                        className={`${
-                          active ? 'bg-slate-700' : ''
-                        } group flex w-full items-center rounded-md px-3 py-2 text-sm text-red-400`}
-                      >
-                        <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
-                        Sign out
-                      </button>
-                    )}
-                  </Menu.Item>
-                </div>
-              </Menu.Items>
-            </Transition>
-          </Menu>
+          <button
+            onClick={() => {
+              useAuthStore.getState().clearAuth();
+              window.location.href = '/login';
+            }}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-slate-800/50 w-full text-left"
+          >
+            <ArrowRightOnRectangleIcon className="h-6 w-6" />
+            {t('navigation.logout')}
+          </button>
         </div>
       </div>
 
@@ -244,7 +182,7 @@ export default function Layout({ children }: LayoutProps) {
             <Bars3Icon className="h-6 w-6" />
           </button>
           <span className="text-lg font-semibold text-white">FuelSync</span>
-          <ProfileMenu />
+          <div className="w-6" />
         </div>
         {children}
       </main>

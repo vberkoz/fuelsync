@@ -11,7 +11,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { units, dateFormat, notifications } = body;
+    const { units, dateFormat, notifications, language } = body;
 
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
@@ -19,11 +19,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         PK: `USER#${userId}`,
         SK: 'SETTINGS'
       },
-      UpdateExpression: 'SET units = :units, dateFormat = :dateFormat, notifications = :notifications, updatedAt = :updatedAt',
+      UpdateExpression: 'SET units = :units, dateFormat = :dateFormat, notifications = :notifications, #lang = :language, updatedAt = :updatedAt',
+      ExpressionAttributeNames: {
+        '#lang': 'language'
+      },
       ExpressionAttributeValues: {
         ':units': units,
         ':dateFormat': dateFormat,
         ':notifications': notifications,
+        ':language': language,
         ':updatedAt': Date.now()
       },
       ReturnValues: 'ALL_NEW'
