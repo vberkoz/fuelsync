@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { HomeIcon, TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, Cog6ToothIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { Listbox } from '@headlessui/react'
 import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '../stores/authStore'
 import { useVehicleStore } from '../stores/vehicleStore'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 
 const navigation = [
-  { name: 'navigation.dashboard', icon: HomeIcon, href: '/' },
+  { name: 'navigation.refills', icon: BeakerIcon, href: '/' },
   { name: 'navigation.vehicles', icon: TruckIcon, href: '/vehicles' },
-  { name: 'navigation.refills', icon: BeakerIcon, href: '/refills' },
   { name: 'navigation.expenses', icon: BanknotesIcon, href: '/expenses' },
   { name: 'navigation.analytics', icon: ChartBarIcon, href: '/analytics' },
   { name: 'navigation.reminders', icon: BellIcon, href: '/reminders' },
@@ -138,17 +136,6 @@ export default function Layout({ children }: LayoutProps) {
 
         <div className="border-t border-slate-700 p-3 space-y-1">
           <Link
-            to="/profile"
-            onClick={handleNavClick}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
-              location.pathname === '/profile' ? 'bg-slate-800/50' : ''
-            }`}
-          >
-            <UserCircleIcon className="h-6 w-6" />
-            {t('navigation.profile')}
-          </Link>
-
-          <Link
             to="/settings"
             onClick={handleNavClick}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
@@ -158,17 +145,6 @@ export default function Layout({ children }: LayoutProps) {
             <Cog6ToothIcon className="h-6 w-6" />
             {t('navigation.settings')}
           </Link>
-
-          <button
-            onClick={() => {
-              useAuthStore.getState().clearAuth();
-              window.location.href = '/login';
-            }}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-slate-800/50 w-full text-left"
-          >
-            <ArrowRightOnRectangleIcon className="h-6 w-6" />
-            {t('navigation.logout')}
-          </button>
         </div>
       </div>
 

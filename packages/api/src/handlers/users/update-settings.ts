@@ -13,24 +13,43 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const body = JSON.parse(event.body || '{}');
     const { units, dateFormat, notifications, language, preferredCurrency } = body;
 
+    const updateExpressions: string[] = [];
+    const expressionAttributeValues: Record<string, any> = { ':updatedAt': Date.now() };
+    const expressionAttributeNames: Record<string, string> = {};
+
+    if (units !== undefined) {
+      updateExpressions.push('units = :units');
+      expressionAttributeValues[':units'] = units;
+    }
+    if (dateFormat !== undefined) {
+      updateExpressions.push('dateFormat = :dateFormat');
+      expressionAttributeValues[':dateFormat'] = dateFormat;
+    }
+    if (notifications !== undefined) {
+      updateExpressions.push('notifications = :notifications');
+      expressionAttributeValues[':notifications'] = notifications;
+    }
+    if (language !== undefined) {
+      updateExpressions.push('#lang = :language');
+      expressionAttributeValues[':language'] = language;
+      expressionAttributeNames['#lang'] = 'language';
+    }
+    if (preferredCurrency !== undefined) {
+      updateExpressions.push('preferredCurrency = :preferredCurrency');
+      expressionAttributeValues[':preferredCurrency'] = preferredCurrency;
+    }
+
+    updateExpressions.push('updatedAt = :updatedAt');
+
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
       Key: {
         PK: `USER#${userId}`,
         SK: 'SETTINGS'
       },
-      UpdateExpression: 'SET units = :units, dateFormat = :dateFormat, notifications = :notifications, #lang = :language, preferredCurrency = :preferredCurrency, updatedAt = :updatedAt',
-      ExpressionAttributeNames: {
-        '#lang': 'language'
-      },
-      ExpressionAttributeValues: {
-        ':units': units,
-        ':dateFormat': dateFormat,
-        ':notifications': notifications,
-        ':language': language,
-        ':preferredCurrency': preferredCurrency || 'USD',
-        ':updatedAt': Date.now()
-      },
+      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+      ...(Object.keys(expressionAttributeNames).length > 0 && { ExpressionAttributeNames: expressionAttributeNames }),
+      ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: 'ALL_NEW'
     }));
 

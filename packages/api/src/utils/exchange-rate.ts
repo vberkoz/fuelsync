@@ -15,11 +15,11 @@ interface CachedRate {
   lastUpdated: number;
 }
 
-export async function getExchangeRate(currency: string): Promise<number> {
+export async function getExchangeRate(currency: string, date?: string): Promise<number> {
   if (currency === BASE_CURRENCY) return 1.0;
 
-  const today = new Date().toISOString().split('T')[0];
-  const cacheKey = `EXCHANGE_RATE#${today}`;
+  const targetDate = date || new Date().toISOString().split('T')[0];
+  const cacheKey = `EXCHANGE_RATE#${targetDate}`;
 
   try {
     const cached = await getCachedRates(cacheKey);
@@ -27,10 +27,15 @@ export async function getExchangeRate(currency: string): Promise<number> {
       return cached.rates[currency];
     }
 
-    const rates = await fetchRatesFromAPI();
-    await cacheRates(cacheKey, rates);
-    
-    return rates[currency] || 1.0;
+    // Only fetch from API for today's date
+    if (!date || targetDate === new Date().toISOString().split('T')[0]) {
+      const rates = await fetchRatesFromAPI();
+      await cacheRates(cacheKey, rates);
+      return rates[currency] || 1.0;
+    }
+
+    // For historical dates, return 1.0 if not cached
+    return 1.0;
   } catch (error) {
     console.error('Error fetching exchange rate:', error);
     const fallback = await getCachedRates(cacheKey);
@@ -42,7 +47,7 @@ async function fetchRatesFromAPI(): Promise<ExchangeRates> {
   const response = await fetch(EXCHANGE_RATE_API);
   if (!response.ok) throw new Error('Failed to fetch rates');
   
-  const data = await response.json();
+  const data: any = await response.json();
   return data.rates;
 }
 

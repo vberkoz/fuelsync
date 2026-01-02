@@ -133,6 +133,7 @@
   "settings": {
     "title": "Налаштування",
     "language": "Мова",
+    "preferredCurrency": "Основна валюта",
     "units": "Одиниці",
     "dateFormat": "Формат дати",
     "notifications": "Сповіщення",

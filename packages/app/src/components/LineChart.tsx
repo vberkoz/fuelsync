@@ -31,9 +31,11 @@ interface LineChartProps {
       backgroundColor: string;
     }[];
   };
+  yAxisLabel?: string;
+  yAxisLabelPosition?: 'before' | 'after';
 }
 
-export default function LineChart({ data }: LineChartProps) {
+export default function LineChart({ data, yAxisLabel, yAxisLabelPosition = 'after' }: LineChartProps) {
   const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
@@ -55,7 +57,11 @@ export default function LineChart({ data }: LineChartProps) {
           color: 'rgba(148, 163, 184, 0.1)'
         },
         ticks: {
-          color: '#94a3b8'
+          color: '#94a3b8',
+          callback: function(value) {
+            if (!yAxisLabel) return value;
+            return yAxisLabelPosition === 'before' ? `${yAxisLabel}${value}` : `${value} ${yAxisLabel}`;
+          }
         }
       },
       x: {

@@ -133,6 +133,7 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "preferredCurrency": "Preferred Currency",
     "units": "Units",
     "dateFormat": "Date Format",
     "notifications": "Notifications",

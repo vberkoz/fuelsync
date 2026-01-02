@@ -179,6 +179,18 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const changePassword = new nodejs.NodejsFunction(this, 'ChangePassword', {
+      entry: '../api/src/handlers/auth/change-password.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     const listVehicles = new nodejs.NodejsFunction(this, 'ListVehicles', {
       entry: '../api/src/handlers/vehicles/list.ts',
       handler: 'handler',
@@ -383,30 +395,6 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
-    const getProfile = new nodejs.NodejsFunction(this, 'GetProfile', {
-      entry: '../api/src/handlers/users/get-profile.ts',
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment,
-      bundling: {
-        minify: true,
-        sourceMap: false,
-        forceDockerBundling: false
-      }
-    });
-
-    const updateProfile = new nodejs.NodejsFunction(this, 'UpdateProfile', {
-      entry: '../api/src/handlers/users/update-profile.ts',
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment,
-      bundling: {
-        minify: true,
-        sourceMap: false,
-        forceDockerBundling: false
-      }
-    });
-
     const getSettings = new nodejs.NodejsFunction(this, 'GetSettings', {
       entry: '../api/src/handlers/users/get-settings.ts',
       handler: 'handler',
@@ -421,18 +409,6 @@ export class InfrastructureStack extends cdk.Stack {
 
     const updateSettings = new nodejs.NodejsFunction(this, 'UpdateSettings', {
       entry: '../api/src/handlers/users/update-settings.ts',
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      environment: lambdaEnvironment,
-      bundling: {
-        minify: true,
-        sourceMap: false,
-        forceDockerBundling: false
-      }
-    });
-
-    const getDashboard = new nodejs.NodejsFunction(this, 'GetDashboard', {
-      entry: '../api/src/handlers/dashboard/get.ts',
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       environment: lambdaEnvironment,
@@ -462,11 +438,8 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadWriteData(deleteExpense);
     table.grantReadData(getStatistics);
     table.grantReadData(getCharts);
-    table.grantReadWriteData(getProfile);
-    table.grantReadWriteData(updateProfile);
     table.grantReadWriteData(getSettings);
     table.grantReadWriteData(updateSettings);
-    table.grantReadData(getDashboard);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -510,6 +483,8 @@ export class InfrastructureStack extends cdk.Stack {
     confirm.addMethod('POST', new apigateway.LambdaIntegration(confirmEmail));
     const resend = auth.addResource('resend-code');
     resend.addMethod('POST', new apigateway.LambdaIntegration(resendCode));
+    const changePass = auth.addResource('change-password');
+    changePass.addMethod('POST', new apigateway.LambdaIntegration(changePassword), { authorizer });
 
     // /vehicles resource
     const vehicles = api.root.addResource('vehicles');
@@ -554,17 +529,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     // /users resource
     const users = api.root.addResource('users');
-    const me = users.addResource('me');
-    me.addMethod('GET', new apigateway.LambdaIntegration(getProfile), { authorizer });
-    me.addMethod('PUT', new apigateway.LambdaIntegration(updateProfile), { authorizer });
     
     const settings = users.addResource('settings');
     settings.addMethod('GET', new apigateway.LambdaIntegration(getSettings), { authorizer });
     settings.addMethod('PUT', new apigateway.LambdaIntegration(updateSettings), { authorizer });
-
-    // /dashboard resource
-    const dashboard = api.root.addResource('dashboard');
-    dashboard.addMethod('GET', new apigateway.LambdaIntegration(getDashboard), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';

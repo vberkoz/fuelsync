@@ -4,7 +4,8 @@
   "description": "SQLite to DynamoDB migration tool",
   "main": "index.js",
   "scripts": {
-    "migrate": "node index.js"
+    "migrate": "node index.js",
+    "import-rates": "node import-exchange-rates.js"
   },
   "keywords": [],
   "author": "",

@@ -6,13 +6,7 @@ export interface Currency {
 
 export const CURRENCIES: Currency[] = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
   { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'CA$' },
-  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
 ];
 
 export function getCurrencySymbol(code: string): string {
@@ -24,10 +18,22 @@ export function formatCurrency(amount: number, currency: string): string {
   return `${symbol}${amount.toFixed(2)}`;
 }
 
-export function formatWithBaseAmount(amount: number, currency: string, baseAmount?: number): string {
-  const formatted = formatCurrency(amount, currency);
-  if (baseAmount && currency !== 'USD') {
-    return `${formatted} ($${baseAmount.toFixed(2)})`;
+export function formatWithBaseAmount(
+  amount: number,
+  currency: string,
+  baseAmount: number | undefined,
+  preferredCurrency: string = 'USD'
+): string {
+  // If preferred is USD, always show USD (either original or converted)
+  if (preferredCurrency === 'USD') {
+    return baseAmount ? `$${baseAmount.toFixed(2)}` : formatCurrency(amount, currency);
   }
-  return formatted;
+  
+  // If preferred is not USD, show original with USD conversion in parentheses
+  if (currency !== 'USD' && baseAmount) {
+    return `${formatCurrency(amount, currency)} ($${baseAmount.toFixed(2)})`;
+  }
+  
+  // Fallback: just show the amount
+  return formatCurrency(amount, currency);
 }

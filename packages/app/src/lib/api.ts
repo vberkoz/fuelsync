@@ -159,22 +159,6 @@ export const api = {
       return handleResponse(res);
     }
   },
-  profile: {
-    get: async () => {
-      const res = await safeFetch(`${API_URL}/users/me`, {
-        headers: getAuthHeaders()
-      });
-      return handleResponse(res);
-    },
-    update: async (data: any) => {
-      const res = await safeFetch(`${API_URL}/users/me`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data)
-      });
-      return handleResponse(res);
-    }
-  },
   settings: {
     get: async () => {
       const res = await safeFetch(`${API_URL}/users/settings`, {
@@ -191,10 +175,12 @@ export const api = {
       return handleResponse(res);
     }
   },
-  dashboard: {
-    get: async () => {
-      const res = await safeFetch(`${API_URL}/dashboard`, {
-        headers: getAuthHeaders()
+  auth: {
+    changePassword: async (data: { oldPassword: string; newPassword: string }) => {
+      const res = await safeFetch(`${API_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
       });
       return handleResponse(res);
     }

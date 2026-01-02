@@ -5,6 +5,7 @@ import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
+import { formatDate } from '../lib/date';
 import { useVehicleStore } from '../stores/vehicleStore';
 
 interface Vehicle {
@@ -33,6 +34,13 @@ export default function Vehicles() {
     queryKey: ['vehicles'],
     queryFn: api.vehicles.list
   });
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: api.settings.get
+  });
+
+  const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
 
   const vehicles = data?.vehicles || [];
 
@@ -231,7 +239,7 @@ export default function Vehicles() {
                         <td className="p-4 text-white">{v.model}</td>
                         <td className="p-4 text-white font-mono uppercase">{v.licensePlate}</td>
                         <td className="p-4 text-white">{v.fuelType}</td>
-                        <td className="p-4 text-white font-mono">{v.createdAt ? new Date(v.createdAt).toLocaleString() : ''}</td>
+                        <td className="p-4 text-white font-mono">{v.createdAt ? formatDate(v.createdAt, dateFormat) : ''}</td>
                         <td className="p-4 text-white" onClick={(e) => e.stopPropagation()}>
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
@@ -287,7 +295,7 @@ export default function Vehicles() {
                         <div>
                           <h3 className="text-xl font-bold text-white"><span className="font-mono">{v.year}</span> {v.make} {v.model}</h3>
                           <p className="text-slate-400 font-mono"><span className="uppercase">{v.licensePlate}</span> • {v.fuelType}</p>
-                          {v.createdAt && <p className="text-slate-500 text-sm">{new Date(v.createdAt).toLocaleString()}</p>}
+                          {v.createdAt && <p className="text-slate-500 text-sm">{formatDate(v.createdAt, dateFormat)}</p>}
                         </div>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>

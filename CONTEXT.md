@@ -569,7 +569,46 @@ packages/app/src/
 
 ## Recent Changes
 
-### Profile Page Fix (Latest)
+### Settings Page Redesign & User Preferences (Latest)
+- **Dashboard Removal**: Removed Dashboard page, made Refills the home page (/) for faster access to primary use case
+- **Profile Merge**: Merged Profile page into Settings, removed separate profile navigation
+- **Settings Redesign**: 
+  - Removed card backgrounds, using separator lines between sections
+  - Three sections: Change Password, Preferences, Log Out
+  - Two-column layout: description left, controls right
+  - Change password functionality with Cognito integration
+  - Auto-save for all preferences (no save button)
+- **Currency Settings**: 
+  - Reduced from 8 to 2 currencies (USD, UAH only)
+  - Currency conversion: 1 USD = 40 UAH (hardcoded)
+  - Display logic: USD shows only USD, UAH shows "₴X ($Y)"
+  - Analytics page respects currency preference with conversion
+- **Units Conversion**:
+  - Distance: km ↔ miles (1 km = 0.621371 mi)
+  - Volume: liters ↔ gallons (1 L = 0.264172 gal)
+  - All data stored in metric, converted on display
+  - Updated unit functions to accept string ('imperial'/'metric') instead of boolean
+- **Date Formatting**: User-preferred format (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD) across all pages
+- **Analytics Enhancements**:
+  - Currency values convert based on user preference
+  - Volume units convert based on user preference
+  - Chart labels localized to user language (en-US/uk-UA)
+  - Y-axis labels show units (volume after value, currency before value)
+  - Chart data converts to user's preferred units and currency
+- **API Changes**:
+  - Added POST /auth/change-password endpoint
+  - Removed GET/PUT /users/me (profile) endpoints
+  - Removed GET /dashboard endpoint
+- **Files Modified**:
+  - `packages/app/src/pages/Settings.tsx` - Complete redesign
+  - `packages/app/src/pages/Analytics.tsx` - Added currency/units/language support
+  - `packages/app/src/lib/units.ts` - Changed to accept string parameters
+  - `packages/app/src/lib/currency.ts` - Reduced to USD/UAH only
+  - `packages/app/src/components/LineChart.tsx` - Added yAxisLabel positioning
+  - `packages/api/src/handlers/auth/change-password.ts` - New handler
+  - `packages/infrastructure/lib/infrastructure-stack.ts` - Removed profile/dashboard Lambdas
+
+### Profile Page Fix
 - **Issue**: Profile update endpoint (PUT /users/me) was returning 500 error
 - **Cause**: Handler was trying to update `currency` field that was removed from Profile page
 - **Fix**: Updated `update-profile.ts` handler to only update `name` field

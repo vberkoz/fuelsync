@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 import LineChart from '../components/LineChart';
+import { formatCurrency } from '../lib/currency';
+import { convertVolume, getVolumeUnit } from '../lib/units';
 
 export default function Analytics() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
 
@@ -27,6 +29,24 @@ export default function Analytics() {
     queryFn: () => api.statistics.get(currentVehicleId!),
     enabled: !!currentVehicleId
   });
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: api.settings.get,
+    staleTime: 0
+  });
+
+  const preferredCurrency = settingsData?.settings?.preferredCurrency || 'USD';
+  const units = settingsData?.settings?.units || 'imperial';
+  const volumeUnit = getVolumeUnit(units);
+
+  // Convert USD to preferred currency (assuming 1 USD = 40 UAH for now)
+  const convertCurrency = (usdAmount: number) => {
+    if (preferredCurrency === 'UAH') {
+      return usdAmount * 40; // TODO: Use actual exchange rate
+    }
+    return usdAmount;
+  };
 
   const { data: chartsData } = useQuery({
     queryKey: ['charts', currentVehicleId],
@@ -61,7 +81,7 @@ export default function Analytics() {
           <div className="space-y-4 flex-1">
             <div>
               <div className="text-slate-400 text-sm mb-1">{t('analytics.totalCost')}</div>
-              <div className="text-white font-mono text-2xl sm:text-3xl">{(stats?.refills.totalCost || 0).toFixed(2)} <span className="text-lg sm:text-xl text-slate-400">UAH</span></div>
+              <div className="text-white font-mono text-2xl sm:text-3xl">{formatCurrency(convertCurrency(stats?.refills.totalCost || 0), preferredCurrency)}</div>
             </div>
             <div className="pt-4 border-t border-slate-700 space-y-3">
               <div className="flex justify-between">
@@ -70,15 +90,15 @@ export default function Analytics() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 text-sm">{t('analytics.totalVolume')}</span>
-                <span className="text-white font-mono">{(stats?.refills.totalVolume || 0).toFixed(2)} L</span>
+                <span className="text-white font-mono">{convertVolume(stats?.refills.totalVolume || 0, units).toFixed(2)} {volumeUnit}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 text-sm">{t('analytics.avgPricePerUnit')}</span>
-                <span className="text-white font-mono">{(stats?.refills.avgPricePerUnit || 0).toFixed(2)} UAH/L</span>
+                <span className="text-white font-mono">{formatCurrency(convertCurrency(stats?.refills.avgPricePerUnit || 0), preferredCurrency)}/{volumeUnit}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 text-sm">{t('analytics.avgRefillCost')}</span>
-                <span className="text-white font-mono">{(stats?.refills.avgCost || 0).toFixed(2)} UAH</span>
+                <span className="text-white font-mono">{formatCurrency(convertCurrency(stats?.refills.avgCost || 0), preferredCurrency)}</span>
               </div>
             </div>
           </div>
@@ -92,7 +112,7 @@ export default function Analytics() {
           <div className="space-y-4 flex-1">
             <div>
               <div className="text-slate-400 text-sm mb-1">{t('analytics.totalCost')}</div>
-              <div className="text-white font-mono text-2xl sm:text-3xl">{(stats?.expenses.totalCost || 0).toFixed(2)} <span className="text-lg sm:text-xl text-slate-400">UAH</span></div>
+              <div className="text-white font-mono text-2xl sm:text-3xl">{formatCurrency(convertCurrency(stats?.expenses.totalCost || 0), preferredCurrency)}</div>
             </div>
             <div className="pt-4 border-t border-slate-700 space-y-3">
               <div className="flex justify-between">
@@ -101,7 +121,7 @@ export default function Analytics() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 text-sm">{t('analytics.avgExpense')}</span>
-                <span className="text-white font-mono">{(stats?.expenses.avgCost || 0).toFixed(2)} UAH</span>
+                <span className="text-white font-mono">{formatCurrency(convertCurrency(stats?.expenses.avgCost || 0), preferredCurrency)}</span>
               </div>
             </div>
           </div>
@@ -114,7 +134,7 @@ export default function Analytics() {
           </div>
           <div className="flex-1">
             <div className="text-slate-400 text-sm mb-1">{t('analytics.allCosts')}</div>
-            <div className="text-white font-mono text-3xl sm:text-4xl">{(stats?.totals.allCosts || 0).toFixed(2)} <span className="text-xl sm:text-2xl text-slate-400">UAH</span></div>
+            <div className="text-white font-mono text-3xl sm:text-4xl">{formatCurrency(convertCurrency(stats?.totals.allCosts || 0), preferredCurrency)}</div>
           </div>
         </div>
       </div>
@@ -129,14 +149,18 @@ export default function Analytics() {
             <div className="h-48 sm:h-64">
               <LineChart
                 data={{
-                  labels: chartsData.fuelConsumption.labels,
+                  labels: chartsData.fuelConsumption.labels.map((label: string) => {
+                    const date = new Date(label);
+                    return date.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { month: 'short', year: 'numeric' });
+                  }),
                   datasets: [{
-                    label: 'Volume (L)',
-                    data: chartsData.fuelConsumption.data,
+                    label: `Volume (${volumeUnit})`,
+                    data: chartsData.fuelConsumption.data.map((v: number) => convertVolume(v, units)),
                     borderColor: 'rgb(249, 115, 22)',
                     backgroundColor: 'rgba(249, 115, 22, 0.1)'
                   }]
                 }}
+                yAxisLabel={volumeUnit}
               />
             </div>
           </div>
@@ -149,22 +173,27 @@ export default function Analytics() {
             <div className="h-48 sm:h-64">
               <LineChart
                 data={{
-                  labels: chartsData.costs.labels,
+                  labels: chartsData.costs.labels.map((label: string) => {
+                    const date = new Date(label);
+                    return date.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', { month: 'short', year: 'numeric' });
+                  }),
                   datasets: [
                     {
-                      label: 'Fuel',
-                      data: chartsData.costs.fuel,
+                      label: t('analytics.fuel'),
+                      data: chartsData.costs.fuel.map((v: number) => convertCurrency(v)),
                       borderColor: 'rgb(249, 115, 22)',
                       backgroundColor: 'rgba(249, 115, 22, 0.1)'
                     },
                     {
-                      label: 'Expenses',
-                      data: chartsData.costs.expenses,
+                      label: t('analytics.expenses'),
+                      data: chartsData.costs.expenses.map((v: number) => convertCurrency(v)),
                       borderColor: 'rgb(59, 130, 246)',
                       backgroundColor: 'rgba(59, 130, 246, 0.1)'
                     }
                   ]
                 }}
+                yAxisLabel={formatCurrency(0, preferredCurrency).replace('0.00', '').trim()}
+                yAxisLabelPosition="before"
               />
             </div>
           </div>

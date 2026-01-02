@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 const Database = require('better-sqlite3');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, PutCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
 const { randomUUID } = require('crypto');
 
 const DB_PATH = '/Users/basilsergius/Downloads/Топливомер_БД_20221120_160204_1281347789493688515.db3';
 const DYNAMODB_TABLE = 'FuelSyncTable';
-const USER_ID = 'd418a428-5071-7038-0c49-e352a6649773'; // rikzgt1@gmail.com
+const USER_ID = 'd418a428-5071-7038-0c49-e352a6649773'; // vberkoz@gmail.com
 // const USER_ID = '8488e4f8-2051-7066-fd78-22f39fcab599'; // rikzgt1@gmail.com
 
 const client = new DynamoDBClient({ profile: 'basil' });
 const docClient = DynamoDBDocumentClient.from(client);
 
-// Cache for exchange rates by date
 const rateCache = new Map();
 
 async function getExchangeRate(timestamp) {
@@ -23,12 +22,47 @@ async function getExchangeRate(timestamp) {
   }
   
   try {
-    const response = await fetch(`https://open.er-api.com/v6/latest/USD?date=${date}`);
-    const data = await response.json();
-    const uahRate = data.rates?.UAH || 27.0; // fallback to ~27 if not found
-    rateCache.set(date, uahRate);
-    console.log(`  Fetched rate for ${date}: 1 USD = ${uahRate} UAH`);
-    return uahRate;
+    const result = await docClient.send(new GetCommand({
+      TableName: DYNAMODB_TABLE,
+      Key: { PK: `EXCHANGE_RATE#${date}`, SK: 'RATES' }
+    }));
+    
+    if (result.Item?.rates?.UAH) {
+      const uahRate = result.Item.rates.UAH;
+      rateCache.set(date, uahRate);
+      console.log(`  Using rate for ${date}: 1 USD = ${uahRate} UAH`);
+      return uahRate;
+    }
+    
+    // Find closest date
+    const targetTime = new Date(date).getTime();
+    let closestRate = null;
+    let minDiff = Infinity;
+    
+    for (let offset = 1; offset <= 30; offset++) {
+      for (const direction of [-1, 1]) {
+        const checkDate = new Date(targetTime + direction * offset * 86400000).toISOString().split('T')[0];
+        const checkResult = await docClient.send(new GetCommand({
+          TableName: DYNAMODB_TABLE,
+          Key: { PK: `EXCHANGE_RATE#${checkDate}`, SK: 'RATES' }
+        }));
+        
+        if (checkResult.Item?.rates?.UAH) {
+          const diff = Math.abs(offset);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestRate = checkResult.Item.rates.UAH;
+          }
+          break;
+        }
+      }
+      if (closestRate) break;
+    }
+    
+    const finalRate = closestRate || 27.0;
+    rateCache.set(date, finalRate);
+    console.log(`  Using ${closestRate ? 'closest' : 'fallback'} rate for ${date}: 1 USD = ${finalRate} UAH`);
+    return finalRate;
   } catch (error) {
     console.error(`  Error fetching rate for ${date}, using fallback`);
     const fallbackRate = 27.0;
