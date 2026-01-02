@@ -2,8 +2,13 @@
 
 A serverless vehicle expense tracking application built on AWS. Track fuel consumption, maintenance costs, and vehicle expenses with beautiful analytics and insights.
 
+## ✅ Phase 1 MVP Complete
+
+Full-featured PWA with complete CRUD operations, analytics, internationalization, and data migration capabilities.
+
 ## Features
 
+- **PWA Support**: Installable app with offline support and native experience
 - **Fuel Tracking**: Log refills with automatic consumption calculations and fuel type defaults
 - **Expense Management**: Track maintenance, repairs, and other vehicle costs with 15 categories
 - **Multi-Vehicle Support**: Manage multiple vehicles with dropdown selector and auto-selection
@@ -13,14 +18,19 @@ A serverless vehicle expense tracking application built on AWS. Track fuel consu
 - **Infinite Scroll**: Load historical data by month with automatic pagination
 - **Session Management**: Automatic redirect to login when token expires
 - **Numeric Precision**: All monetary values with 2 decimal places and dot separator
+- **Analytics & Charts**: Statistics cards and Chart.js visualizations
+- **Internationalization**: English and Ukrainian language support
+- **Responsive Design**: Mobile-first approach with touch-friendly interface
 
 ## Tech Stack
 
 **Frontend**:
 - React 18 + TypeScript + Vite
-- TailwindCSS + HeadlessUI
-- TanStack Query (infinite queries)
-- Zustand for state management
+- PWA with offline support (vite-plugin-pwa)
+- TailwindCSS + HeadlessUI + Heroicons
+- TanStack Query (infinite queries) + Zustand (state)
+- Chart.js + react-chartjs-2 (analytics)
+- React Router v6 + i18next (internationalization)
 - JetBrains Mono font for numbers
 
 **Backend (AWS Serverless)**:

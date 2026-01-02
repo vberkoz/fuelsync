@@ -199,8 +199,8 @@ export default function Vehicles() {
 
       {!isLoading && (
         <RadioGroup value={currentVehicleId || undefined} onChange={setCurrentVehicle}>
-          {/* Desktop Table */}
-          <div className="hidden md:block">
+          {/* Desktop Table (≥1300px) */}
+          <div className="hidden xl:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-700">
@@ -269,8 +269,8 @@ export default function Vehicles() {
             )}
           </div>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden grid gap-4">
+          {/* Mobile/Tablet Cards (<1300px) */}
+          <div className="xl:hidden grid gap-4">
             {vehicles.map((v: Vehicle) => (
               <RadioGroup.Option key={v.vehicleId} value={v.vehicleId} className="focus:outline-none">
                 {({ checked }) => (

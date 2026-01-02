@@ -311,8 +311,8 @@ export default function Refills() {
 
       {!isLoading && (
         <>
-          {/* Desktop Table */}
-          <div className="hidden md:block">
+          {/* Desktop Table (≥1300px) */}
+          <div className="hidden xl:block">
             {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4 capitalize">
@@ -376,8 +376,8 @@ export default function Refills() {
             </div>}
           </div>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden">
+          {/* Mobile/Tablet Cards (<1300px) */}
+          <div className="xl:hidden">
             {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4 capitalize">
