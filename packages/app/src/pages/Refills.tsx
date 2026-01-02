@@ -45,7 +45,7 @@ export default function Refills() {
   });
 
   const preferredCurrency = settingsData?.settings?.preferredCurrency || 'USD';
-  const isImperial = settingsData?.settings?.units === 'imperial';
+  const units = settingsData?.settings?.units || 'metric';
   const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
 
   const { data: currentVehicle } = useQuery({
@@ -358,8 +358,8 @@ export default function Refills() {
                 <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-slate-700">
-                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.odometer')}<br/>({getDistanceUnit(isImperial)})</th>
-                      <th className="text-right p-4 text-slate-400 font-semibold w-24">{t('refills.volume')}<br/>({getVolumeUnit(isImperial)})</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.odometer')}<br/>({getDistanceUnit(units)})</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-24">{t('refills.volume')}<br/>({getVolumeUnit(units)})</th>
                       <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.pricePerUnit')}<br/>({preferredCurrency})</th>
                       <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.total')}<br/>({preferredCurrency})</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-24">{t('vehicles.fuelType')}</th>
@@ -371,8 +371,8 @@ export default function Refills() {
                   <tbody>
                     {monthRefills.map(r => (
                       <tr key={r.refillId} className="border-b border-slate-800 hover:bg-slate-800">
-                        <td className="p-4 text-white font-mono text-right">{Math.round(convertDistance(r.odometer, isImperial))}</td>
-                        <td className="p-4 text-white font-mono text-right">{convertVolume(r.volume, isImperial).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{Math.round(convertDistance(r.odometer, units))}</td>
+                        <td className="p-4 text-white font-mono text-right">{convertVolume(r.volume, units).toFixed(2)}</td>
                         <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.pricePerUnit, r.currency, r.pricePerUnit / (r.exchangeRate || 1), preferredCurrency)}</td>
                         <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</td>
                         <td className="p-4 text-white">{r.fuelType}</td>
@@ -424,8 +424,8 @@ export default function Refills() {
                   {monthRefills.map((r: Refill) => (
                     <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-bold text-white"><span className="font-mono">{convertVolume(r.volume, isImperial).toFixed(2)}{getVolumeUnit(isImperial)}</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
-                        <p className="text-slate-400">Odometer: <span className="font-mono">{Math.round(convertDistance(r.odometer, isImperial))} {getDistanceUnit(isImperial)}</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span></p>
+                        <h3 className="text-xl font-bold text-white"><span className="font-mono">{convertVolume(r.volume, units).toFixed(2)}{getVolumeUnit(units)}</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
+                        <p className="text-slate-400">Odometer: <span className="font-mono">{Math.round(convertDistance(r.odometer, units))} {getDistanceUnit(units)}</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span></p>
                         <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
                         {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</p>}
                       </div>

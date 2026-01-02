@@ -484,7 +484,7 @@ export class InfrastructureStack extends cdk.Stack {
     const resend = auth.addResource('resend-code');
     resend.addMethod('POST', new apigateway.LambdaIntegration(resendCode));
     const changePass = auth.addResource('change-password');
-    changePass.addMethod('POST', new apigateway.LambdaIntegration(changePassword), { authorizer });
+    changePass.addMethod('POST', new apigateway.LambdaIntegration(changePassword));
 
     // /vehicles resource
     const vehicles = api.root.addResource('vehicles');

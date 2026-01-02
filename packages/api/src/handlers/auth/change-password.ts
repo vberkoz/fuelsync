@@ -28,7 +28,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   } catch (error: any) {
     console.error('Error changing password:', error);
     if (error.name === 'NotAuthorizedException') {
-      return response(401, { error: 'Current password is incorrect' });
+      return response(400, { error: 'Current password is incorrect' });
     }
     return response(500, { error: 'Failed to change password' });
   }

@@ -569,6 +569,24 @@ packages/app/src/
 
 ## Recent Changes
 
+### Password Change & TypeScript Fixes (Latest)
+- **Password Change Fix**: 
+  - Fixed redirect issue when changing password
+  - Changed incorrect password error from 401 to 400 to prevent session expiry
+  - Removed Cognito authorizer from /auth/change-password endpoint (Lambda validates token)
+  - Updated frontend to use accessToken instead of idToken for password changes
+  - Bypassed safeFetch to prevent automatic redirect on password errors
+- **TypeScript Fixes**:
+  - Fixed unit conversion functions to accept string ('imperial'/'metric') instead of boolean
+  - Updated Expenses.tsx and Refills.tsx to use `units` string directly
+  - Removed `isImperial` boolean conversion
+- **Files Modified**:
+  - `packages/api/src/handlers/auth/change-password.ts` - Changed 401 to 400 for incorrect password
+  - `packages/app/src/lib/api.ts` - Use accessToken and bypass safeFetch for password change
+  - `packages/app/src/pages/Expenses.tsx` - Use units string instead of isImperial boolean
+  - `packages/app/src/pages/Refills.tsx` - Use units string instead of isImperial boolean
+  - `packages/infrastructure/lib/infrastructure-stack.ts` - Removed authorizer from change-password endpoint
+
 ### Settings Page Redesign & User Preferences (Latest)
 - **Dashboard Removal**: Removed Dashboard page, made Refills the home page (/) for faster access to primary use case
 - **Profile Merge**: Merged Profile page into Settings, removed separate profile navigation

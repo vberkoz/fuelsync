@@ -60,7 +60,7 @@ export default function Expenses() {
   });
 
   const preferredCurrency = settingsData?.settings?.preferredCurrency || 'USD';
-  const isImperial = settingsData?.settings?.units === 'imperial';
+  const units = settingsData?.settings?.units || 'metric';
   const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
 
   useEffect(() => {
@@ -355,7 +355,7 @@ export default function Expenses() {
                     <tr className="border-b border-slate-700">
                       <th className="text-left p-4 text-slate-400 font-semibold w-32">{t('expenses.category')}</th>
                       <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('expenses.amount')}<br/>({preferredCurrency})</th>
-                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.odometer')}<br/>({getDistanceUnit(isImperial)})</th>
+                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.odometer')}<br/>({getDistanceUnit(units)})</th>
                       <th className="text-left p-4 text-slate-400 font-semibold">{t('expenses.description')}</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-48">{t('refills.date')}</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-16"></th>
@@ -366,7 +366,7 @@ export default function Expenses() {
                       <tr key={e.expenseId} className="border-b border-slate-800 hover:bg-slate-800">
                         <td className="p-4 text-white">{e.category}</td>
                         <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</td>
-                        <td className="p-4 text-white font-mono text-right">{e.odometer ? Math.round(convertDistance(e.odometer, isImperial)) : ''}</td>
+                        <td className="p-4 text-white font-mono text-right">{e.odometer ? Math.round(convertDistance(e.odometer, units)) : ''}</td>
                         <td className="p-4 text-white">{e.description}</td>
                         <td className="p-4 text-white font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</td>
                         <td className="p-4 text-white">
@@ -417,7 +417,7 @@ export default function Expenses() {
                       <div>
                         <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</span></h3>
                         <p className="text-slate-400">
-                          {e.odometer && <span className="font-mono">Odometer: {Math.round(convertDistance(e.odometer, isImperial))} {getDistanceUnit(isImperial)}</span>}
+                          {e.odometer && <span className="font-mono">Odometer: {Math.round(convertDistance(e.odometer, units))} {getDistanceUnit(units)}</span>}
                         </p>
                         {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
                         {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</p>}

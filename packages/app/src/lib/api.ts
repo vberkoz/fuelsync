@@ -177,12 +177,20 @@ export const api = {
   },
   auth: {
     changePassword: async (data: { oldPassword: string; newPassword: string }) => {
-      const res = await safeFetch(`${API_URL}/auth/change-password`, {
+      const accessToken = useAuthStore.getState().accessToken;
+      const res = await fetch(`${API_URL}/auth/change-password`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` })
+        },
         body: JSON.stringify(data)
       });
-      return handleResponse(res);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to change password');
+      }
+      return res.json();
     }
   }
 };
