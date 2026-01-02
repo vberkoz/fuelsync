@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../../utils/dynamodb';
 import { response } from '../../utils/response';
+import { getExchangeRate } from '../../utils/exchange-rate';
 import { randomUUID } from 'crypto';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -19,6 +20,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const body = JSON.parse(event.body || '{}');
     const expenseId = randomUUID();
     const timestamp = new Date().toISOString();
+    const currency = body.currency || 'USD';
+    
+    const exchangeRate = await getExchangeRate(currency);
+    const baseAmount = body.amount / exchangeRate;
 
     const expense = {
       PK: `VEHICLE#${vehicleId}`,
@@ -28,7 +33,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       userId,
       category: body.category,
       amount: body.amount,
-      currency: body.currency || 'USD',
+      currency,
+      exchangeRate,
+      baseAmount,
       odometer: body.odometer,
       description: body.description,
       taxDeductible: body.taxDeductible || false,

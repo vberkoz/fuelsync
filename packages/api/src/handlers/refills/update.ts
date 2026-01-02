@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../../utils/dynamodb';
 import { response } from '../../utils/response';
+import { getExchangeRate } from '../../utils/exchange-rate';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -19,6 +20,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const body = JSON.parse(event.body || '{}');
     const timestamp = new Date().toISOString();
+    const currency = body.currency || 'USD';
+    
+    const exchangeRate = await getExchangeRate(currency);
+    const baseAmount = body.totalCost / exchangeRate;
 
     // First, find the exact SK
     const queryResult = await docClient.send(new QueryCommand({
@@ -43,13 +48,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         PK: `VEHICLE#${vehicleId}`,
         SK: existingSK
       },
-      UpdateExpression: 'SET odometer = :odometer, volume = :volume, pricePerUnit = :pricePerUnit, totalCost = :totalCost, currency = :currency, fuelType = :fuelType, station = :station, updatedAt = :updatedAt',
+      UpdateExpression: 'SET odometer = :odometer, volume = :volume, pricePerUnit = :pricePerUnit, totalCost = :totalCost, currency = :currency, exchangeRate = :exchangeRate, baseAmount = :baseAmount, fuelType = :fuelType, station = :station, updatedAt = :updatedAt',
       ExpressionAttributeValues: {
         ':odometer': body.odometer,
         ':volume': body.volume,
         ':pricePerUnit': body.pricePerUnit,
         ':totalCost': body.totalCost,
-        ':currency': body.currency || 'USD',
+        ':currency': currency,
+        ':exchangeRate': exchangeRate,
+        ':baseAmount': baseAmount,
         ':fuelType': body.fuelType,
         ':station': body.station,
         ':updatedAt': timestamp

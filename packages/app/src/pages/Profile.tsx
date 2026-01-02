@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Field, Label, Listbox } from '@headlessui/react';
-import { UserCircleIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { Field, Label } from '@headlessui/react';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
@@ -10,13 +10,19 @@ export default function Profile() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const userEmail = useAuthStore((state) => state.userEmail);
-  const [formData, setFormData] = useState({ name: '', currency: 'USD' });
+  const [formData, setFormData] = useState({ name: '' });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: api.profile.get,
     retry: false
   });
+
+  useEffect(() => {
+    if (data?.profile?.name) {
+      setFormData({ name: data.profile.name });
+    }
+  }, [data]);
 
   const updateMutation = useMutation({
     mutationFn: api.profile.update,
@@ -85,34 +91,6 @@ export default function Profile() {
               placeholder={data?.profile?.name || 'Enter your name'}
               className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-          </Field>
-
-          <Field>
-            <Label className="block text-sm font-semibold text-white mb-1.5">{t('profile.currency')}</Label>
-            <Listbox value={formData.currency} onChange={(value) => setFormData({ ...formData, currency: value })}>
-              <div className="relative">
-                <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <span>{formData.currency === 'USD' ? 'USD ($)' : formData.currency === 'EUR' ? 'EUR (€)' : formData.currency === 'GBP' ? 'GBP (£)' : 'UAH (₴)'}</span>
-                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-                </Listbox.Button>
-                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                  {[{ value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }, { value: 'GBP', label: 'GBP (£)' }, { value: 'UAH', label: 'UAH (₴)' }].map((currency) => (
-                    <Listbox.Option
-                      key={currency.value}
-                      value={currency.value}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                    >
-                      {({ selected }) => (
-                        <div className="flex justify-between items-center">
-                          <span className={selected ? 'font-semibold text-white' : 'text-white'}>{currency.label}</span>
-                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                        </div>
-                      )}
-                    </Listbox.Option>
-                  ))}
-                </Listbox.Options>
-              </div>
-            </Listbox>
           </Field>
 
           <button

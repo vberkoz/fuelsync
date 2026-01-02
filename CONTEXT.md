@@ -193,12 +193,12 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 3. Vehicle Refills
    PK: VEHICLE#{vehicleId}
    SK: REFILL#{timestamp}#{refillId}
-   Attributes: odometer, volume, pricePerUnit, totalCost, currency, fuelType, station
+   Attributes: odometer, volume, pricePerUnit, totalCost, currency, exchangeRate, baseAmount, fuelType, station
 
 4. Vehicle Expenses
    PK: VEHICLE#{vehicleId}
    SK: EXPENSE#{timestamp}#{expenseId}
-   Attributes: category, amount, currency, odometer, description
+   Attributes: category, amount, currency, exchangeRate, baseAmount, odometer, description
 
 5. Vehicle Reminders
    PK: VEHICLE#{vehicleId}
@@ -567,6 +567,15 @@ packages/app/src/
 - ✅ Responsive grid layout for cards
 - ✅ Visual progress indicators with color coding
 
+## Recent Changes
+
+### Profile Page Fix (Latest)
+- **Issue**: Profile update endpoint (PUT /users/me) was returning 500 error
+- **Cause**: Handler was trying to update `currency` field that was removed from Profile page
+- **Fix**: Updated `update-profile.ts` handler to only update `name` field
+- **Files Modified**: `packages/api/src/handlers/users/update-profile.ts`
+- **Status**: Fixed - Profile page now successfully updates user name
+
 ## US Market Optimization
 - Default units: Miles, Gallons, USD
 - MPG as primary fuel efficiency metric
@@ -600,6 +609,132 @@ packages/app/src/
 - ✅ PWA installable with offline support
 - ✅ Multi-language support (EN/UK)
 - ✅ Data migration from existing SQLite databases
+
+### Phase 2: Multi-Currency Support - IN PROGRESS 🚧
+
+#### Overview
+Implement multi-currency support with USD as base currency. All refills and expenses will store both the original currency amount and USD equivalent using real-time exchange rates.
+
+#### Implementation Steps
+1. ✅ **Backend: Exchange Rate Service**
+   - ✅ Created exchange rate utility using free API (open.er-api.com)
+   - ✅ Fetch and cache exchange rates (24-hour TTL in DynamoDB)
+   - ✅ Fallback to cached rates if API unavailable
+   - ✅ File: `packages/api/src/utils/exchange-rate.ts`
+
+2. ✅ **Backend: Update Data Models**
+   - ✅ Added TypeScript types for Refill and Expense with currency fields
+   - ✅ Fields added: `currency`, `exchangeRate`, `baseAmount`
+   - ✅ Updated DynamoDB schema documentation in CONTEXT.md
+   - ✅ File: `packages/api/src/utils/types.ts`
+
+3. ✅ **Backend: Update Create Handlers**
+   - ✅ Modified createRefill: Fetch exchange rate, calculate baseAmount
+   - ✅ Modified createExpense: Fetch exchange rate, calculate baseAmount
+   - ✅ Both handlers now call getExchangeRate() utility
+   - ✅ baseAmount = originalAmount / exchangeRate
+
+4. ✅ **Backend: Update Other Handlers**
+   - ✅ Modified updateRefill: Recalculate baseAmount on updates
+   - ✅ Modified updateExpense: Recalculate baseAmount on updates
+   - ✅ Updated statistics handler: Use baseAmount with fallback to original
+   - ✅ Updated charts handler: Use baseAmount with fallback to original
+
+5. ✅ **Backend: User Settings**
+   - ✅ Added `preferredCurrency` field to user settings
+   - ✅ Default to USD for new users
+   - ✅ Updated get-settings handler with default value
+   - ✅ Updated update-settings handler to accept preferredCurrency
+
+6. ✅ **Frontend: Currency Utilities**
+   - ✅ Created currency utility with list of 8 currencies
+   - ✅ Added currency symbols mapping
+   - ✅ Added formatCurrency() helper function
+   - ✅ Added formatWithBaseAmount() for dual currency display
+   - ✅ File: `packages/app/src/lib/currency.ts`
+
+7. ✅ **Frontend: Update Forms**
+   - ✅ Added currency selector to refill form (Listbox)
+   - ✅ Added currency selector to expense form (Listbox)
+   - ✅ Default to USD for new entries
+   - ✅ Shows currency code and name in dropdown
+
+8. ✅ **Frontend: Update Display Components**
+   - ✅ Updated Refills page to show currency with USD equivalent
+   - ✅ Updated Expenses page to show currency with USD equivalent
+   - ✅ Uses formatWithBaseAmount() utility function
+   - ✅ Format: "€45.23 ($50.00)" or "$50.00" (no duplicate for USD)
+   - ✅ Applied to both desktop tables and mobile cards
+
+9. ✅ **Frontend: Settings Page**
+   - ✅ Added preferred currency selector with Listbox
+   - ✅ Shows currency symbol, code, and name
+   - ✅ Saves preference to user settings
+   - ✅ Positioned between language and units fields
+
+#### Multi-Currency Implementation Summary
+
+**Completed Steps (1-9)** ✅:
+- ✅ Backend exchange rate service with caching
+- ✅ Database schema updated with currency fields
+- ✅ All Lambda handlers support multi-currency
+- ✅ Statistics and charts use USD for consistency
+- ✅ User settings include preferredCurrency
+- ✅ Frontend currency utilities and formatting
+- ✅ Forms have currency selectors
+- ✅ Display shows both original and USD amounts
+- ✅ Settings page has currency preference selector
+
+**How It Works**:
+1. User selects currency when creating refill/expense
+2. Backend fetches exchange rate from API (cached 24h)
+3. Calculates baseAmount (USD equivalent)
+4. Stores: amount, currency, exchangeRate, baseAmount
+5. Frontend displays: "€45.23 ($50.00)" or "$50.00"
+6. Statistics/charts aggregate using baseAmount (USD)
+7. User can set preferred currency in Settings
+
+**Phase 2 Multi-Currency Support - COMPLETE** ✅
+
+#### Technical Details
+- **Base Currency**: USD (all calculations and aggregations)
+- **Exchange Rate API**: exchangerate-api.com (free tier: 1,500 requests/month)
+- **Rate Caching**: Store rates in DynamoDB with daily TTL
+- **Fallback**: Use last known rate if API unavailable
+- **Supported Currencies**: USD, EUR, GBP, UAH, CAD, AUD, JPY, CNY
+- **Display Format**: "$50.00 (€45.23)" or "€45.23 ($50.00 USD)"
+
+#### Database Schema Updates
+```
+Refill:
+  - currency: STRING (e.g., "USD", "EUR")
+  - exchangeRate: NUMBER (e.g., 1.0 for USD, 0.92 for EUR)
+  - baseAmount: NUMBER (totalCost in USD)
+  - totalCost: NUMBER (original currency amount)
+
+Expense:
+  - currency: STRING
+  - exchangeRate: NUMBER
+  - baseAmount: NUMBER (amount in USD)
+  - amount: NUMBER (original currency amount)
+
+ExchangeRate (new entity):
+  PK: EXCHANGE_RATE#{date}
+  SK: CURRENCY#{code}
+  rate: NUMBER
+  lastUpdated: NUMBER (timestamp)
+  ttl: NUMBER (24 hours)
+```
+
+#### API Changes
+- No new endpoints required
+- Existing endpoints return additional currency fields
+- Statistics/charts use baseAmount for calculations
+
+#### Migration Strategy
+- Existing records without currency: Default to USD (rate: 1.0, baseAmount = totalCost/amount)
+- Add migration script to backfill currency fields
+- Frontend handles missing currency gracefully
 
 ## Design Principles
 - **Simplicity First**: Quick entry forms (3-tap refill entry)

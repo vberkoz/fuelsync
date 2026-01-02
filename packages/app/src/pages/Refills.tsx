@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
 
 interface Refill {
   refillId: string;
@@ -14,6 +15,8 @@ interface Refill {
   pricePerUnit: number;
   totalCost: number;
   currency: string;
+  exchangeRate?: number;
+  baseAmount?: number;
   fuelType: string;
   station?: string;
   comment?: string;
@@ -119,7 +122,7 @@ export default function Refills() {
     volume: '', 
     pricePerUnit: '', 
     totalCost: '', 
-    currency: 'UAH', 
+    currency: 'USD', 
     fuelType: 'Regular',
     station: ''
   });
@@ -261,6 +264,29 @@ export default function Refills() {
                   <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => setFormData({...formData, totalCost: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                  <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                    <div className="relative">
+                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span>{formData.currency}</span>
+                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {CURRENCIES.map((curr) => (
+                          <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
+                </Field>
+                <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
                   <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
                     <div className="relative">
@@ -337,7 +363,7 @@ export default function Refills() {
                         <td className="p-4 text-white font-mono text-right">{r.odometer}</td>
                         <td className="p-4 text-white font-mono text-right">{Number(r.volume).toFixed(2)}</td>
                         <td className="p-4 text-white font-mono text-right">{Number(r.pricePerUnit).toFixed(2)}</td>
-                        <td className="p-4 text-white font-mono text-right">{Number(r.totalCost).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount)}</td>
                         <td className="p-4 text-white">{r.fuelType}</td>
                         <td className="p-4 text-white">{r.station || r.comment}</td>
                         <td className="p-4 text-white font-mono">{new Date(r.timestamp || r.createdAt).toLocaleString()}</td>
@@ -388,7 +414,7 @@ export default function Refills() {
                     <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
                       <div>
                         <h3 className="text-xl font-bold text-white"><span className="font-mono">{Number(r.volume).toFixed(2)}L</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
-                        <p className="text-slate-400">Odometer: <span className="font-mono">{r.odometer} km</span> • Total: <span className="font-mono">{Number(r.totalCost).toFixed(2)} {r.currency}</span></p>
+                        <p className="text-slate-400">Odometer: <span className="font-mono">{r.odometer} km</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount)}</span></p>
                         <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
                         {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{new Date(r.timestamp || r.createdAt).toLocaleString()}</p>}
                       </div>

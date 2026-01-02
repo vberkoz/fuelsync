@@ -4,11 +4,12 @@ import { Cog6ToothIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
+import { CURRENCIES } from '../lib/currency';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({ units: 'imperial', dateFormat: 'MM/DD/YYYY', notifications: true, language: i18n.language });
+  const [formData, setFormData] = useState({ units: 'imperial', dateFormat: 'MM/DD/YYYY', notifications: true, language: i18n.language, preferredCurrency: 'USD' });
 
   const { isLoading, error } = useQuery({
     queryKey: ['settings'],
@@ -87,6 +88,34 @@ export default function Settings() {
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
                           <span className={selected ? 'font-semibold text-white' : 'text-white'}>{lang.label}</span>
+                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                        </div>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </div>
+            </Listbox>
+          </Field>
+
+          <Field>
+            <Label className="block text-sm font-semibold text-white mb-1.5">Preferred Currency</Label>
+            <Listbox value={formData.preferredCurrency} onChange={(value) => setFormData({ ...formData, preferredCurrency: value })}>
+              <div className="relative">
+                <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <span>{CURRENCIES.find(c => c.code === formData.preferredCurrency)?.name || formData.preferredCurrency}</span>
+                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                </Listbox.Button>
+                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {CURRENCIES.map((curr) => (
+                    <Listbox.Option
+                      key={curr.code}
+                      value={curr.code}
+                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                    >
+                      {({ selected }) => (
+                        <div className="flex justify-between items-center">
+                          <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.symbol} {curr.code} - {curr.name}</span>
                           {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
                         </div>
                       )}

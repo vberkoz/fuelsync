@@ -41,7 +41,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       const date = new Date(item.timestamp);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!monthlyData[monthKey]) monthlyData[monthKey] = { fuel: 0, expenses: 0, volume: 0 };
-      monthlyData[monthKey].fuel += item.totalCost || 0;
+      monthlyData[monthKey].fuel += item.baseAmount || item.totalCost || 0;
       monthlyData[monthKey].volume += item.volume || 0;
     });
 
@@ -49,7 +49,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       const date = new Date(item.timestamp);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       if (!monthlyData[monthKey]) monthlyData[monthKey] = { fuel: 0, expenses: 0, volume: 0 };
-      monthlyData[monthKey].expenses += item.amount || 0;
+      monthlyData[monthKey].expenses += item.baseAmount || item.amount || 0;
     });
 
     const sortedMonths = Object.keys(monthlyData).sort();

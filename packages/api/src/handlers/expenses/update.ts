@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../../utils/dynamodb';
 import { response } from '../../utils/response';
+import { getExchangeRate } from '../../utils/exchange-rate';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -34,6 +35,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const existingExpense = queryResult.Items[0];
     const body = JSON.parse(event.body || '{}');
+    const currency = body.currency || 'USD';
+    
+    const exchangeRate = await getExchangeRate(currency);
+    const baseAmount = body.amount / exchangeRate;
 
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
@@ -41,11 +46,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         PK: existingExpense.PK,
         SK: existingExpense.SK
       },
-      UpdateExpression: 'SET category = :category, amount = :amount, currency = :currency, odometer = :odometer, description = :description, taxDeductible = :taxDeductible',
+      UpdateExpression: 'SET category = :category, amount = :amount, currency = :currency, exchangeRate = :exchangeRate, baseAmount = :baseAmount, odometer = :odometer, description = :description, taxDeductible = :taxDeductible',
       ExpressionAttributeValues: {
         ':category': body.category,
         ':amount': body.amount,
-        ':currency': body.currency || 'USD',
+        ':currency': currency,
+        ':exchangeRate': exchangeRate,
+        ':baseAmount': baseAmount,
         ':odometer': body.odometer,
         ':description': body.description,
         ':taxDeductible': body.taxDeductible || false

@@ -25,6 +25,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         units: 'imperial',
         dateFormat: 'MM/DD/YYYY',
         notifications: true,
+        preferredCurrency: 'USD',
         createdAt: Date.now(),
         updatedAt: Date.now()
       };

@@ -70,6 +70,9 @@ async function seedData() {
     volume: 12.5,
     pricePerUnit: 3.45,
     totalCost: 43.13,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 43.13,
     fuelType: 'Regular 87',
     station: 'Shell Station'
   };
@@ -92,6 +95,9 @@ async function seedData() {
     volume: 11.8,
     pricePerUnit: 3.52,
     totalCost: 41.54,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 41.54,
     fuelType: 'Regular 87',
     station: 'BP Gas'
   };
@@ -114,6 +120,9 @@ async function seedData() {
     volume: 13.2,
     pricePerUnit: 3.48,
     totalCost: 45.94,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 45.94,
     fuelType: 'Regular 87',
     station: 'Chevron'
   };
@@ -136,6 +145,9 @@ async function seedData() {
     volume: 10.5,
     pricePerUnit: 3.42,
     totalCost: 35.91,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 35.91,
     fuelType: 'Regular 87',
     station: 'Exxon'
   };
@@ -158,6 +170,9 @@ async function seedData() {
     volume: 11.2,
     pricePerUnit: 3.49,
     totalCost: 39.09,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 39.09,
     fuelType: 'Regular 87',
     station: 'Shell Station'
   };
@@ -180,6 +195,9 @@ async function seedData() {
     volume: 10.8,
     pricePerUnit: 3.51,
     totalCost: 37.91,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 37.91,
     fuelType: 'Regular 87',
     station: 'BP Gas'
   };
@@ -200,6 +218,9 @@ async function seedData() {
     timestamp: expense1V1Timestamp,
     category: 'Maintenance',
     amount: 45.99,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 45.99,
     odometer: 24800,
     description: 'Oil change and filter replacement'
   };
@@ -220,6 +241,9 @@ async function seedData() {
     timestamp: expense2V1Timestamp,
     category: 'Repair',
     amount: 125.50,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 125.50,
     odometer: 25100,
     description: 'Brake pad replacement'
   };
@@ -240,6 +264,9 @@ async function seedData() {
     timestamp: expense3V1Timestamp,
     category: 'Wash',
     amount: 15.00,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 15.00,
     odometer: 25600,
     description: 'Car wash and interior cleaning'
   };
@@ -260,6 +287,9 @@ async function seedData() {
     timestamp: expense1V2Timestamp,
     category: 'Insurance',
     amount: 450.00,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 450.00,
     odometer: 41500,
     description: 'Monthly insurance premium'
   };
@@ -280,6 +310,9 @@ async function seedData() {
     timestamp: expense2V2Timestamp,
     category: 'Maintenance',
     amount: 89.99,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 89.99,
     odometer: 42100,
     description: 'Tire rotation and alignment'
   };
@@ -300,6 +333,9 @@ async function seedData() {
     timestamp: expense3V2Timestamp,
     category: 'Parking',
     amount: 25.00,
+    currency: 'USD',
+    exchangeRate: 1.0,
+    baseAmount: 25.00,
     odometer: 42650,
     description: 'Airport parking fee'
   };

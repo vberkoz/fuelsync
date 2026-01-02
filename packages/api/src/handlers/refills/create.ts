@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../../utils/dynamodb';
 import { response } from '../../utils/response';
+import { getExchangeRate } from '../../utils/exchange-rate';
 import { randomUUID } from 'crypto';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -19,6 +20,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const body = JSON.parse(event.body || '{}');
     const refillId = randomUUID();
     const timestamp = new Date().toISOString();
+    const currency = body.currency || 'USD';
+    
+    const exchangeRate = await getExchangeRate(currency);
+    const baseAmount = body.totalCost / exchangeRate;
 
     const refill = {
       PK: `VEHICLE#${vehicleId}`,
@@ -30,7 +35,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       volume: body.volume,
       pricePerUnit: body.pricePerUnit,
       totalCost: body.totalCost,
-      currency: body.currency || 'USD',
+      currency,
+      exchangeRate,
+      baseAmount,
       fuelType: body.fuelType,
       station: body.station,
       createdAt: timestamp

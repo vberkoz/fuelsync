@@ -6,12 +6,15 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
 
 interface Expense {
   expenseId: string;
   category: string;
   amount: number;
   currency: string;
+  exchangeRate?: number;
+  baseAmount?: number;
   odometer?: number;
   description?: string;
   timestamp?: number;
@@ -126,7 +129,7 @@ export default function Expenses() {
   const [formData, setFormData] = useState({ 
     category: 'Other',
     amount: '',
-    currency: 'UAH',
+    currency: 'USD',
     odometer: '',
     description: ''
   });
@@ -275,6 +278,29 @@ export default function Expenses() {
                   <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
+                  <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                  <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                    <div className="relative">
+                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span>{formData.currency}</span>
+                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {CURRENCIES.map((curr) => (
+                          <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
+                </Field>
+                <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km) <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
                   <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
@@ -328,7 +354,7 @@ export default function Expenses() {
                     {monthExpenses.map(e => (
                       <tr key={e.expenseId} className="border-b border-slate-800 hover:bg-slate-800">
                         <td className="p-4 text-white">{e.category}</td>
-                        <td className="p-4 text-white font-mono text-right">{Number(e.amount).toFixed(2)}</td>
+                        <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount)}</td>
                         <td className="p-4 text-white font-mono text-right">{e.odometer}</td>
                         <td className="p-4 text-white">{e.description}</td>
                         <td className="p-4 text-white font-mono">{new Date(e.timestamp || e.createdAt).toLocaleString()}</td>
@@ -378,7 +404,7 @@ export default function Expenses() {
                   {monthExpenses.map((e: Expense) => (
                     <div key={e.expenseId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{Number(e.amount).toFixed(2)} {e.currency}</span></h3>
+                        <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount)}</span></h3>
                         <p className="text-slate-400">
                           {e.odometer && <span className="font-mono">Odometer: {e.odometer} km</span>}
                         </p>

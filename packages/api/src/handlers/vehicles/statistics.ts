@@ -39,8 +39,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const totalRefills = refills.length;
     const totalExpenses = expenses.length;
-    const totalFuelCost = refills.reduce((sum, r) => sum + (r.totalCost || 0), 0);
-    const totalExpenseCost = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalFuelCost = refills.reduce((sum, r) => sum + (r.baseAmount || r.totalCost || 0), 0);
+    const totalExpenseCost = expenses.reduce((sum, e) => sum + (e.baseAmount || e.amount || 0), 0);
     const totalVolume = refills.reduce((sum, r) => sum + (r.volume || 0), 0);
     const avgPricePerUnit = totalRefills > 0 ? totalFuelCost / totalVolume : 0;
     const avgRefillCost = totalRefills > 0 ? totalFuelCost / totalRefills : 0;

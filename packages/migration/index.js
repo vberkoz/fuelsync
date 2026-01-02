@@ -6,10 +6,36 @@ const { randomUUID } = require('crypto');
 
 const DB_PATH = '/Users/basilsergius/Downloads/Топливомер_БД_20221120_160204_1281347789493688515.db3';
 const DYNAMODB_TABLE = 'FuelSyncTable';
-const USER_ID = '8488e4f8-2051-7066-fd78-22f39fcab599'; // rikzgt1@gmail.com
+const USER_ID = 'd418a428-5071-7038-0c49-e352a6649773'; // rikzgt1@gmail.com
+// const USER_ID = '8488e4f8-2051-7066-fd78-22f39fcab599'; // rikzgt1@gmail.com
 
 const client = new DynamoDBClient({ profile: 'basil' });
 const docClient = DynamoDBDocumentClient.from(client);
+
+// Cache for exchange rates by date
+const rateCache = new Map();
+
+async function getExchangeRate(timestamp) {
+  const date = new Date(timestamp).toISOString().split('T')[0];
+  
+  if (rateCache.has(date)) {
+    return rateCache.get(date);
+  }
+  
+  try {
+    const response = await fetch(`https://open.er-api.com/v6/latest/USD?date=${date}`);
+    const data = await response.json();
+    const uahRate = data.rates?.UAH || 27.0; // fallback to ~27 if not found
+    rateCache.set(date, uahRate);
+    console.log(`  Fetched rate for ${date}: 1 USD = ${uahRate} UAH`);
+    return uahRate;
+  } catch (error) {
+    console.error(`  Error fetching rate for ${date}, using fallback`);
+    const fallbackRate = 27.0;
+    rateCache.set(date, fallbackRate);
+    return fallbackRate;
+  }
+}
 
 async function migrate() {
   const db = new Database(DB_PATH, { readonly: true });
@@ -86,6 +112,11 @@ async function migrate() {
     const refillId = randomUUID();
     const timestamp = row.time || Date.now();
     const vehicleId = vehicleMap.get(row.car);
+    const totalCost = Number((Number(row.sum) || 0).toFixed(2));
+    
+    const exchangeRate = await getExchangeRate(timestamp);
+    const baseAmount = Number((totalCost / exchangeRate).toFixed(2));
+    
     await docClient.send(new PutCommand({
       TableName: DYNAMODB_TABLE,
       Item: {
@@ -95,9 +126,11 @@ async function migrate() {
         odometer: Number(row.odometer) || 0,
         volume: Number((Number(row.amount) || 0).toFixed(2)),
         pricePerUnit: Number((Number(row.price) || 0).toFixed(2)),
-        totalCost: Number((Number(row.sum) || 0).toFixed(2)),
+        totalCost,
         fuelType: 'Diesel',
         currency: 'UAH',
+        exchangeRate,
+        baseAmount,
         timestamp: row.time || Date.now(),
         comment: row.comment || ''
       }
@@ -129,6 +162,10 @@ async function migrate() {
     const timestamp = row.time || Date.now();
     const vehicleId = vehicleMap.get(row.car_id);
     const category = categoryMap[row.type] || 'Other';
+    const amount = Number((Number(row.sum) || 0).toFixed(2));
+    
+    const exchangeRate = await getExchangeRate(timestamp);
+    const baseAmount = Number((amount / exchangeRate).toFixed(2));
     
     await docClient.send(new PutCommand({
       TableName: DYNAMODB_TABLE,
@@ -137,8 +174,10 @@ async function migrate() {
         SK: `EXPENSE#${timestamp}#${expenseId}`,
         expenseId,
         category,
-        amount: Number((Number(row.sum) || 0).toFixed(2)),
+        amount,
         currency: 'UAH',
+        exchangeRate,
+        baseAmount,
         odometer: Number(row.odometer) || 0,
         description: row.comment || row.title || '',
         timestamp: row.time || Date.now()
