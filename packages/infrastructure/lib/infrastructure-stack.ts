@@ -419,6 +419,30 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const listReminders = new nodejs.NodejsFunction(this, 'ListReminders', {
+      entry: '../api/src/handlers/reminders/list.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const createReminder = new nodejs.NodejsFunction(this, 'CreateReminder', {
+      entry: '../api/src/handlers/reminders/create.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const deleteReminder = new nodejs.NodejsFunction(this, 'DeleteReminder', {
+      entry: '../api/src/handlers/reminders/delete.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
     // Grant DynamoDB permissions
     table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
@@ -427,12 +451,12 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadWriteData(updateVehicle);
     table.grantReadWriteData(deleteVehicle);
     table.grantReadData(listRefills);
-    table.grantWriteData(createRefill);
+    table.grantReadWriteData(createRefill);
     table.grantReadData(getRefill);
     table.grantReadWriteData(updateRefill);
     table.grantReadWriteData(deleteRefill);
     table.grantReadData(listExpenses);
-    table.grantWriteData(createExpense);
+    table.grantReadWriteData(createExpense);
     table.grantReadData(getExpense);
     table.grantReadWriteData(updateExpense);
     table.grantReadWriteData(deleteExpense);
@@ -440,6 +464,9 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(getCharts);
     table.grantReadWriteData(getSettings);
     table.grantReadWriteData(updateSettings);
+    table.grantReadData(listReminders);
+    table.grantWriteData(createReminder);
+    table.grantReadWriteData(deleteReminder);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -533,6 +560,13 @@ export class InfrastructureStack extends cdk.Stack {
     const settings = users.addResource('settings');
     settings.addMethod('GET', new apigateway.LambdaIntegration(getSettings), { authorizer });
     settings.addMethod('PUT', new apigateway.LambdaIntegration(updateSettings), { authorizer });
+
+    const reminders = api.root.addResource('reminders');
+    reminders.addMethod('GET', new apigateway.LambdaIntegration(listReminders), { authorizer });
+    reminders.addMethod('POST', new apigateway.LambdaIntegration(createReminder), { authorizer });
+    
+    const reminderId = reminders.addResource('{reminderId}');
+    reminderId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteReminder), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';

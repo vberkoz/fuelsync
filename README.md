@@ -12,6 +12,7 @@ Full-featured PWA with complete CRUD operations, analytics, internationalization
 - **Fuel Tracking**: Log refills with automatic consumption calculations and fuel type defaults
 - **Expense Management**: Track maintenance, repairs, and other vehicle costs with 15 categories
 - **Multi-Vehicle Support**: Manage multiple vehicles with dropdown selector and auto-selection
+- **Reminder Notifications**: Web Push + Email notifications for maintenance reminders
 - **Data Migration**: Import existing data from SQLite databases with category mapping
 - **Dark Theme UI**: Modern, responsive interface with HeadlessUI components
 - **Real-time Updates**: Optimistic UI updates with automatic rollback
@@ -37,6 +38,8 @@ Full-featured PWA with complete CRUD operations, analytics, internationalization
 - API Gateway + Lambda (Node.js 20.x)
 - DynamoDB (single-table design)
 - Amazon Cognito (authentication)
+- EventBridge (scheduled reminders)
+- SES (email notifications)
 - S3 + CloudFront (hosting)
 
 ## Getting Started
@@ -75,6 +78,16 @@ npm install
 npm run migrate
 ```
 
+### Setup Notifications (Optional)
+
+Enable push and email notifications for reminders:
+
+```bash
+./setup-notifications.sh
+```
+
+See [DEPLOY_NOTIFICATIONS.md](DEPLOY_NOTIFICATIONS.md) for detailed setup instructions.
+
 ## Project Structure
 
 ```
@@ -92,3 +105,6 @@ fuelsync/
 
 - [CONTEXT.md](CONTEXT.md) - Current project status and implementation details
 - [devdocs/brainstorm.md](devdocs/brainstorm.md) - Detailed architecture and planning
+- [NOTIFICATIONS.md](NOTIFICATIONS.md) - Notification system documentation
+- [DEPLOY_NOTIFICATIONS.md](DEPLOY_NOTIFICATIONS.md) - Quick deployment guide for notifications
+- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Notification implementation details

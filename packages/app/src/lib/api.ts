@@ -192,5 +192,28 @@ export const api = {
       }
       return res.json();
     }
+  },
+  reminders: {
+    list: async () => {
+      const res = await safeFetch(`${API_URL}/reminders`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    create: async (data: any) => {
+      const res = await safeFetch(`${API_URL}/reminders`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    },
+    delete: async (reminderId: string) => {
+      const res = await safeFetch(`${API_URL}/reminders/${reminderId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    }
   }
 };

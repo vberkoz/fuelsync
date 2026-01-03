@@ -88,10 +88,9 @@ export default function Settings() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('settings.title')}</h1>
       </div>
 
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-4xl space-y-12">
+      <div className="max-w-4xl space-y-12">
         {/* Change Password Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12 border-b border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
             <div>
               <h2 className="text-xl font-bold text-white mb-2">Change password</h2>
               <p className="text-slate-400 text-sm">Update your password associated with your account.</p>
@@ -149,8 +148,10 @@ export default function Settings() {
             </div>
         </div>
 
+        <div className="-mr-4 sm:-mr-6 lg:-mr-8 border-b border-slate-700" />
+
         {/* Preferences Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12 border-b border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Preferences</h2>
             <p className="text-slate-400 text-sm">Customize your application settings and preferences.</p>
@@ -285,6 +286,8 @@ export default function Settings() {
           </div>
         </div>
 
+        <div className="-mr-4 sm:-mr-6 lg:-mr-8 border-b border-slate-700" />
+
         {/* Logout Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
             <div>
@@ -304,7 +307,6 @@ export default function Settings() {
               </button>
             </div>
         </div>
-      </div>
       </div>
     </div>
   );

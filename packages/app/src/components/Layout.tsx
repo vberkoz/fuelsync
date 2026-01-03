@@ -4,8 +4,10 @@ import { TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon
 import { Listbox } from '@headlessui/react'
 import { useTranslation } from 'react-i18next'
 import { useVehicleStore } from '../stores/vehicleStore'
+import { useReminderStore } from '../stores/reminderStore'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
+import ReminderDialog from './ReminderDialog'
 
 const navigation = [
   { name: 'navigation.refills', icon: BeakerIcon, href: '/' },
@@ -24,22 +26,53 @@ interface Vehicle {
   make: string;
   model: string;
   year: number;
+  odometer?: number;
 }
 
 export default function Layout({ children }: LayoutProps) {
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null)
+  const [showReminderDialog, setShowReminderDialog] = useState(false)
   const location = useLocation()
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId)
   const setCurrentVehicleId = useVehicleStore((state) => state.setCurrentVehicle)
+  const { setReminders, getOverdueReminders, hasOverdueReminders } = useReminderStore()
 
   const { data: vehiclesData } = useQuery({
     queryKey: ['vehicles'],
     queryFn: api.vehicles.list
   });
 
+  const { data: remindersData } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: api.reminders.list,
+    retry: false,
+    throwOnError: false
+  });
+
+  const { data: refillsData } = useQuery({
+    queryKey: ['refills', currentVehicleId],
+    queryFn: () => currentVehicleId ? api.refills.list(currentVehicleId) : Promise.resolve({ refills: [] }),
+    enabled: !!currentVehicleId
+  });
+
   const vehicles = vehiclesData?.vehicles || [];
+
+  useEffect(() => {
+    if (remindersData?.reminders) {
+      setReminders(remindersData.reminders);
+    }
+  }, [remindersData, setReminders]);
+
+  useEffect(() => {
+    if (currentVehicle && currentVehicle.odometer) {
+      const overdueReminders = getOverdueReminders(currentVehicle.vehicleId, currentVehicle.odometer);
+      if (overdueReminders.length > 0) {
+        setShowReminderDialog(true);
+      }
+    }
+  }, [currentVehicle, getOverdueReminders]);
 
   useEffect(() => {
     if (vehicles.length > 0) {
@@ -52,8 +85,15 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     const vehicle = vehicles.find((v: Vehicle) => v.vehicleId === currentVehicleId);
-    setCurrentVehicle(vehicle || null);
-  }, [currentVehicleId, vehicles]);
+    // Handle both regular and infinite query formats
+    const refills = refillsData?.refills || refillsData?.pages?.[0]?.refills || [];
+    const latestRefill = refills[0];
+    const vehicleWithOdometer = vehicle ? {
+      ...vehicle,
+      odometer: latestRefill?.odometer
+    } : null;
+    setCurrentVehicle(vehicleWithOdometer);
+  }, [currentVehicleId, vehicles, refillsData]);
 
   const handleNavClick = () => {
     setSidebarOpen(false)
@@ -119,19 +159,29 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={handleNavClick}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
-                location.pathname === item.href ? 'bg-slate-800/50' : ''
-              }`}
-            >
-              <item.icon className="h-6 w-6" />
-              {t(item.name)}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            const isReminders = item.href === '/reminders';
+            const hasOverdue = isReminders && currentVehicle?.odometer && hasOverdueReminders(currentVehicle.vehicleId, currentVehicle.odometer);
+            
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
+                  location.pathname === item.href ? 'bg-slate-800/50' : ''
+                }`}
+              >
+                <div className="relative">
+                  <item.icon className="h-6 w-6" />
+                  {hasOverdue && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full" />
+                  )}
+                </div>
+                {t(item.name)}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="border-t border-slate-700 p-3 space-y-1">
@@ -162,6 +212,15 @@ export default function Layout({ children }: LayoutProps) {
         </div>
         {children}
       </main>
+
+      {currentVehicle?.odometer && (
+        <ReminderDialog
+          isOpen={showReminderDialog}
+          onClose={() => setShowReminderDialog(false)}
+          reminders={getOverdueReminders(currentVehicle.vehicleId, currentVehicle.odometer)}
+          currentOdometer={currentVehicle.odometer}
+        />
+      )}
     </div>
   )
 }

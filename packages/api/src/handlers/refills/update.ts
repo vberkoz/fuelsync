@@ -64,6 +64,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       ReturnValues: 'ALL_NEW'
     }));
 
+    // Update vehicle odometer
+    await docClient.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: `USER#${userId}`,
+        SK: `VEHICLE#${vehicleId}`
+      },
+      UpdateExpression: 'SET odometer = :odometer',
+      ExpressionAttributeValues: {
+        ':odometer': body.odometer
+      }
+    }));
+
     return response(200, { refill: result.Attributes });
   } catch (error) {
     console.error('Error updating refill:', error);

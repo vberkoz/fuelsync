@@ -37,6 +37,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const body = JSON.parse(event.body || '{}');
     const currency = body.currency || 'USD';
     
+    if (!body.odometer) {
+      return response(400, { error: 'Odometer is required' });
+    }
+    
     const exchangeRate = await getExchangeRate(currency);
     const baseAmount = body.amount / exchangeRate;
 
@@ -58,6 +62,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         ':taxDeductible': body.taxDeductible || false
       },
       ReturnValues: 'ALL_NEW'
+    }));
+
+    // Update vehicle odometer
+    await docClient.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        PK: `USER#${userId}`,
+        SK: `VEHICLE#${vehicleId}`
+      },
+      UpdateExpression: 'SET odometer = :odometer',
+      ExpressionAttributeValues: {
+        ':odometer': body.odometer
+      }
     }));
 
     return response(200, { expense: result.Attributes });

@@ -1,18 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, Field, Label, Listbox } from '@headlessui/react';
-import { BellIcon, PlusIcon, XMarkIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { BellIcon, PlusIcon, XMarkIcon, ChevronUpDownIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-
-const mockReminders = [
-  { id: '1', title: 'Oil Change', type: 'Maintenance', threshold: 5000, currentValue: 4200, unit: 'km', status: 'active' },
-  { id: '2', title: 'Tire Rotation', type: 'Maintenance', threshold: 10000, currentValue: 8500, unit: 'km', status: 'active' },
-  { id: '3', title: 'Insurance Renewal', type: 'Document', threshold: 30, currentValue: 15, unit: 'days', status: 'active' },
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
+import { useVehicleStore } from '../stores/vehicleStore';
 
 export default function Reminders() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const currentVehicleId = useVehicleStore(state => state.currentVehicleId);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', type: 'Maintenance', threshold: '', unit: 'km' });
+  const [formData, setFormData] = useState({ 
+    vehicleId: currentVehicleId || '', 
+    title: '', 
+    type: 'Maintenance', 
+    threshold: '', 
+    unit: 'km'
+  });
+
+  const { data: remindersData } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: api.reminders.list,
+    retry: false,
+    throwOnError: false
+  });
+
+  const createMutation = useMutation({
+    mutationFn: api.reminders.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setShowForm(false);
+      setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: '', unit: 'km' });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: api.reminders.delete,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] })
+  });
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, vehicleId: currentVehicleId || '' }));
+  }, [currentVehicleId]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.threshold) return;
+    createMutation.mutate(formData);
+  };
+
+  const reminders = remindersData?.reminders || [];
+  const vehicleReminders = reminders.filter((r: any) => r.vehicleId === currentVehicleId);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -42,7 +81,7 @@ export default function Reminders() {
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
               <Dialog.Title className="text-xl font-bold text-white mb-4">{t('reminders.add')}</Dialog.Title>
-              <form className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('reminders.reminderTitle')}</Label>
                   <input 
@@ -123,7 +162,7 @@ export default function Reminders() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button type="button" className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                  <button type="submit" className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
                     {t('common.add')}
                   </button>
                   <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
@@ -136,51 +175,38 @@ export default function Reminders() {
         </Dialog>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {mockReminders.map((reminder) => {
-          const progress = (reminder.currentValue / reminder.threshold) * 100;
-          const isUrgent = progress >= 80;
-          
-          return (
-            <div key={reminder.id} className={`bg-slate-800 p-6 rounded-lg border-2 ${
-              isUrgent ? 'border-yellow-500' : 'border-transparent'
-            }`}>
+      {vehicleReminders.length === 0 ? (
+        <div className="text-center py-12 text-slate-400">
+          <BellIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <p>No reminders yet. Create one to get started!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {vehicleReminders.map((reminder: any) => (
+            <div key={reminder.reminderId} className="bg-slate-800 p-6 rounded-lg border-2 border-transparent">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white">{reminder.title}</h3>
                   <p className="text-slate-400 text-sm">{reminder.type}</p>
                 </div>
-                {isUrgent && (
-                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-semibold rounded">{t('reminders.urgent')}</span>
-                )}
+                <button 
+                  onClick={() => deleteMutation.mutate(reminder.reminderId)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">{t('reminders.current')}</span>
-                  <span className="text-white font-mono">{reminder.currentValue} {reminder.unit}</span>
-                </div>
-                <div className="flex justify-between text-sm">
                   <span className="text-slate-400">{t('reminders.threshold')}</span>
                   <span className="text-white font-mono">{reminder.threshold} {reminder.unit}</span>
                 </div>
-                
-                <div className="mt-4">
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${
-                        isUrgent ? 'bg-yellow-500' : 'bg-indigo-500'
-                      }`}
-                      style={{ width: `${Math.min(progress, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-slate-400 text-xs mt-1 text-right font-mono">{progress.toFixed(0)}%</p>
-                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
-  )
+  );
 }

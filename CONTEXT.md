@@ -569,6 +569,40 @@ packages/app/src/
 
 ## Recent Changes
 
+### In-App Reminder System (Latest)
+- **Removed**: Backend push notification infrastructure (Lambda, EventBridge, SES, VAPID)
+- **Implemented**: Simple in-app reminder system
+  - Reminders stored in DynamoDB (PK: USER#{userId}, SK: REMINDER#{reminderId})
+  - Vehicle odometer tracked in vehicle record (updated on every refill/expense)
+  - Reminder dialog shows automatically when odometer ≥ threshold
+  - Red dot indicator on Reminders nav item when overdue
+  - Reminders filtered by current vehicle
+  - Full CRUD operations via API
+- **API Endpoints**:
+  - GET /reminders - List user reminders
+  - POST /reminders - Create reminder
+  - DELETE /reminders/{reminderId} - Delete reminder
+- **Backend Changes**:
+  - Refill create/update: Updates vehicle odometer
+  - Expense create/update: Requires odometer, updates vehicle odometer
+  - Vehicle record now includes odometer field
+- **Frontend Changes**:
+  - ReminderDialog component shows overdue reminders
+  - Layout fetches reminders and checks against vehicle odometer
+  - Reminders page shows only current vehicle's reminders
+  - No localStorage - all data in DynamoDB
+- **Files Modified**:
+  - `packages/api/src/handlers/reminders/` - create.ts, list.ts, delete.ts
+  - `packages/api/src/handlers/refills/create.ts` - Updates vehicle odometer
+  - `packages/api/src/handlers/refills/update.ts` - Updates vehicle odometer
+  - `packages/api/src/handlers/expenses/create.ts` - Requires odometer, updates vehicle
+  - `packages/api/src/handlers/expenses/update.ts` - Requires odometer, updates vehicle
+  - `packages/app/src/components/ReminderDialog.tsx` - New dialog component
+  - `packages/app/src/components/Layout.tsx` - Reminder checking logic
+  - `packages/app/src/pages/Reminders.tsx` - Full CRUD with API
+  - `packages/app/src/stores/reminderStore.ts` - Simplified store
+  - `packages/infrastructure/lib/infrastructure-stack.ts` - Added reminder Lambdas
+
 ### Password Change & TypeScript Fixes (Latest)
 - **Password Change Fix**: 
   - Fixed redirect issue when changing password
