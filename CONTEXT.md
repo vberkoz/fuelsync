@@ -5,6 +5,8 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 
 ## Current Status: Phase 1 MVP Complete ✅
 
+Full-featured PWA with complete CRUD operations, analytics, internationalization, data migration capabilities, and notification system.
+
 ### Completed Infrastructure
 - ✅ AWS CDK infrastructure setup
 - ✅ S3 buckets for landing and app hosting
@@ -18,6 +20,9 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Complete Lambda functions for all CRUD operations
 - ✅ API Gateway REST API with full Lambda integrations
 - ✅ Cognito user pool with email authentication
+- ✅ In-app reminder system with notifications
+- ✅ Data migration from SQLite databases
+- ✅ CSV export/import functionality
 
 ### Phase 1 MVP Requirements - COMPLETE ✅
 
@@ -27,6 +32,9 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ API Gateway setup with CORS
 - ✅ Cognito user pool configuration
 - ✅ S3 bucket for user uploads (receipts/photos)
+- ✅ PWA configuration with offline support
+- ✅ Internationalization (English/Ukrainian)
+- ✅ Reminder system with in-app notifications
 
 #### Core Features (To Implement)
 - ✅ User authentication (email/password)
@@ -74,6 +82,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
   - ✅ Expense statistics: count, total cost, avg expense cost
   - ✅ Total costs across all categories
   - ✅ HeadlessUI icons (FireIcon, ChartBarIcon, CurrencyDollarIcon)
+  - ✅ Currency conversion and display based on user preferences
 - ✅ Basic charts (fuel consumption, costs)
   - ✅ Chart.js and react-chartjs-2 installed
   - ✅ GET /vehicles/:id/charts - Get chart data for a vehicle
@@ -103,6 +112,12 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Responsive mobile-first design
 - ✅ Analytics with charts and statistics
 - ✅ CSV export/import for vehicles, refills, and expenses
+- ✅ In-app reminder system with notifications
+- ✅ Multi-vehicle support with dropdown selector
+- ✅ Real-time updates with optimistic UI
+- ✅ Infinite scroll with automatic pagination
+- ✅ Session management with automatic login redirect
+- ✅ Numeric precision with 2 decimal places
 
 ## Technology Stack
 
@@ -570,7 +585,21 @@ packages/app/src/
 
 ## Recent Changes
 
-### CSV Export/Import (Latest)
+### Reminder System Implementation (Latest)
+- **In-App Notifications**: Simple reminder system without push notifications
+- **Reminder Storage**: DynamoDB with user-specific reminders
+- **Odometer Tracking**: Vehicle odometer updated on every refill/expense
+- **Automatic Alerts**: Dialog shows when odometer ≥ reminder threshold
+- **Visual Indicators**: Red dot on Reminders nav when overdue
+- **Vehicle Context**: Reminders filtered by current vehicle
+- **API Endpoints**: GET/POST/DELETE /reminders
+- **Files Modified**:
+  - `packages/api/src/handlers/reminders/` - CRUD operations
+  - `packages/app/src/components/ReminderDialog.tsx` - Alert dialog
+  - `packages/app/src/components/Layout.tsx` - Notification logic
+  - `packages/app/src/pages/Reminders.tsx` - Full UI implementation
+
+### CSV Export/Import
 - **Export Functionality**:
   - Separate CSV files for vehicles, refills, and expenses
   - Overflow menu on each page with Export/Import options
@@ -730,6 +759,9 @@ packages/app/src/
 9. ✅ **Internationalization (i18n)**: English/Ukrainian language switching
 10. ✅ **PWA**: Offline support and installable app
 11. ✅ **Data Migration**: SQLite to DynamoDB migration tool
+12. ✅ **Reminder System**: In-app notifications for maintenance
+13. ✅ **Multi-Currency**: USD/UAH support with conversion
+14. ✅ **CSV Export/Import**: Data portability features
 
 ### Phase 1 Success Criteria - ALL MET ✅
 - ✅ Users can register and login
@@ -741,100 +773,67 @@ packages/app/src/
 - ✅ PWA installable with offline support
 - ✅ Multi-language support (EN/UK)
 - ✅ Data migration from existing SQLite databases
+- ✅ In-app reminder notifications
+- ✅ Multi-currency support (USD/UAH)
+- ✅ CSV data export/import capabilities
 
-### Phase 2: Multi-Currency Support - IN PROGRESS 🚧
+### Phase 2: Future Enhancements
+
+#### Potential Features for Phase 2
+1. **Advanced Analytics**
+   - Fuel efficiency trends and predictions
+   - Cost per mile/kilometer tracking
+   - Maintenance schedule optimization
+   - Comparative analysis across vehicles
+
+2. **Enhanced Notifications**
+   - Email reminders for maintenance
+   - Push notifications (web and mobile)
+   - Scheduled reminder system
+
+3. **Data Enhancements**
+   - Receipt photo uploads to S3
+   - Fuel station location tracking
+   - Integration with fuel price APIs
+   - Advanced expense categorization
+
+4. **User Experience**
+   - Bulk operations for data management
+   - Advanced filtering and search
+   - Data visualization improvements
+   - Mobile app (React Native)
+
+5. **Integration & Export**
+   - Integration with accounting software
+   - Tax reporting features
+   - Advanced CSV/Excel export options
+   - API for third-party integrations
 
 #### Overview
-Implement multi-currency support with USD as base currency. All refills and expenses will store both the original currency amount and USD equivalent using real-time exchange rates.
+Implemented multi-currency support with simplified USD/UAH system. All refills and expenses store both original currency and converted amounts for consistent analytics.
 
-#### Implementation Steps
-1. ✅ **Backend: Exchange Rate Service**
-   - ✅ Created exchange rate utility using free API (open.er-api.com)
-   - ✅ Fetch and cache exchange rates (24-hour TTL in DynamoDB)
-   - ✅ Fallback to cached rates if API unavailable
-   - ✅ File: `packages/api/src/utils/exchange-rate.ts`
-
-2. ✅ **Backend: Update Data Models**
-   - ✅ Added TypeScript types for Refill and Expense with currency fields
-   - ✅ Fields added: `currency`, `exchangeRate`, `baseAmount`
-   - ✅ Updated DynamoDB schema documentation in CONTEXT.md
-   - ✅ File: `packages/api/src/utils/types.ts`
-
-3. ✅ **Backend: Update Create Handlers**
-   - ✅ Modified createRefill: Fetch exchange rate, calculate baseAmount
-   - ✅ Modified createExpense: Fetch exchange rate, calculate baseAmount
-   - ✅ Both handlers now call getExchangeRate() utility
-   - ✅ baseAmount = originalAmount / exchangeRate
-
-4. ✅ **Backend: Update Other Handlers**
-   - ✅ Modified updateRefill: Recalculate baseAmount on updates
-   - ✅ Modified updateExpense: Recalculate baseAmount on updates
-   - ✅ Updated statistics handler: Use baseAmount with fallback to original
-   - ✅ Updated charts handler: Use baseAmount with fallback to original
-
-5. ✅ **Backend: User Settings**
-   - ✅ Added `preferredCurrency` field to user settings
-   - ✅ Default to USD for new users
-   - ✅ Updated get-settings handler with default value
-   - ✅ Updated update-settings handler to accept preferredCurrency
-
-6. ✅ **Frontend: Currency Utilities**
-   - ✅ Created currency utility with list of 8 currencies
-   - ✅ Added currency symbols mapping
-   - ✅ Added formatCurrency() helper function
-   - ✅ Added formatWithBaseAmount() for dual currency display
-   - ✅ File: `packages/app/src/lib/currency.ts`
-
-7. ✅ **Frontend: Update Forms**
-   - ✅ Added currency selector to refill form (Listbox)
-   - ✅ Added currency selector to expense form (Listbox)
-   - ✅ Default to USD for new entries
-   - ✅ Shows currency code and name in dropdown
-
-8. ✅ **Frontend: Update Display Components**
-   - ✅ Updated Refills page to show currency with USD equivalent
-   - ✅ Updated Expenses page to show currency with USD equivalent
-   - ✅ Uses formatWithBaseAmount() utility function
-   - ✅ Format: "€45.23 ($50.00)" or "$50.00" (no duplicate for USD)
-   - ✅ Applied to both desktop tables and mobile cards
-
-9. ✅ **Frontend: Settings Page**
-   - ✅ Added preferred currency selector with Listbox
-   - ✅ Shows currency symbol, code, and name
-   - ✅ Saves preference to user settings
-   - ✅ Positioned between language and units fields
-
-#### Multi-Currency Implementation Summary
-
-**Completed Steps (1-9)** ✅:
-- ✅ Backend exchange rate service with caching
-- ✅ Database schema updated with currency fields
-- ✅ All Lambda handlers support multi-currency
-- ✅ Statistics and charts use USD for consistency
-- ✅ User settings include preferredCurrency
-- ✅ Frontend currency utilities and formatting
-- ✅ Forms have currency selectors
-- ✅ Display shows both original and USD amounts
-- ✅ Settings page has currency preference selector
+#### Implementation Summary
+- ✅ **Simplified Currency System**: Reduced from 8 to 2 currencies (USD, UAH)
+- ✅ **Fixed Exchange Rate**: 1 USD = 40 UAH (hardcoded for simplicity)
+- ✅ **Display Logic**: USD shows only USD, UAH shows "₴X ($Y)"
+- ✅ **Analytics Integration**: Currency conversion in statistics and charts
+- ✅ **User Preferences**: Currency setting in user preferences
+- ✅ **Backend Support**: All handlers support currency fields
+- ✅ **Frontend Integration**: Forms and displays handle currency selection
 
 **How It Works**:
-1. User selects currency when creating refill/expense
-2. Backend fetches exchange rate from API (cached 24h)
-3. Calculates baseAmount (USD equivalent)
-4. Stores: amount, currency, exchangeRate, baseAmount
-5. Frontend displays: "€45.23 ($50.00)" or "$50.00"
-6. Statistics/charts aggregate using baseAmount (USD)
-7. User can set preferred currency in Settings
-
-**Phase 2 Multi-Currency Support - COMPLETE** ✅
+1. User selects currency (USD/UAH) when creating entries
+2. Backend calculates baseAmount using fixed rate (40 UAH = 1 USD)
+3. Stores: amount, currency, exchangeRate, baseAmount
+4. Frontend displays based on user preference
+5. Analytics aggregate using baseAmount for consistency
 
 #### Technical Details
 - **Base Currency**: USD (all calculations and aggregations)
-- **Exchange Rate API**: exchangerate-api.com (free tier: 1,500 requests/month)
-- **Rate Caching**: Store rates in DynamoDB with daily TTL
-- **Fallback**: Use last known rate if API unavailable
-- **Supported Currencies**: USD, EUR, GBP, UAH, CAD, AUD, JPY, CNY
-- **Display Format**: "$50.00 (€45.23)" or "€45.23 ($50.00 USD)"
+- **Supported Currencies**: USD, UAH only (simplified from original 8)
+- **Exchange Rate**: Fixed at 1 USD = 40 UAH (hardcoded)
+- **Display Format**: "$50.00" (USD) or "₴1,800 ($45.00)" (UAH)
+- **Analytics**: All charts and statistics use baseAmount for consistency
 
 #### Database Schema Updates
 ```
