@@ -27,6 +27,22 @@ export default function Reminders() {
     throwOnError: false
   });
 
+  const { data: vehiclesData } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: api.vehicles.list
+  });
+
+  const { data: refillsData } = useQuery({
+    queryKey: ['refills', currentVehicleId],
+    queryFn: () => currentVehicleId ? api.refills.list(currentVehicleId) : Promise.resolve({ refills: [] }),
+    enabled: !!currentVehicleId
+  });
+
+  const currentVehicle = vehiclesData?.vehicles?.find((v: any) => v.vehicleId === currentVehicleId);
+  const refills = refillsData?.refills || refillsData?.pages?.[0]?.refills || [];
+  const latestRefill = refills[0];
+  const currentOdometer = latestRefill?.odometer || currentVehicle?.odometer || 0;
+
   const createMutation = useMutation({
     mutationFn: api.reminders.create,
     onSuccess: () => {
@@ -185,9 +201,28 @@ export default function Reminders() {
           <p>No reminders yet. Create one to get started!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {vehicleReminders.map((reminder: any) => (
-            <div key={reminder.reminderId} className="bg-slate-800 p-6 rounded-lg border-2 border-transparent">
+        <>
+          <div className="mb-4 text-sm text-slate-400">
+            Current odometer: <span className="font-mono text-white">{currentOdometer} km</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {vehicleReminders.map((reminder: any) => {
+            let isOverdue = false;
+            
+            if (reminder.unit === 'km') {
+              isOverdue = currentOdometer >= reminder.threshold;
+            } else if (reminder.unit === 'days') {
+              const daysSinceCreated = Math.floor((Date.now() - new Date(reminder.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+              isOverdue = daysSinceCreated >= reminder.threshold;
+            } else if (reminder.unit === 'months') {
+              const createdDate = new Date(reminder.createdAt);
+              const now = new Date();
+              const monthsDiff = (now.getFullYear() - createdDate.getFullYear()) * 12 + (now.getMonth() - createdDate.getMonth());
+              isOverdue = monthsDiff >= reminder.threshold;
+            }
+            
+            return (
+            <div key={reminder.reminderId} className={`bg-slate-800 p-6 rounded-lg border-2 ${isOverdue ? 'border-red-500' : 'border-transparent'}`}>
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white">{reminder.title}</h3>
@@ -206,10 +241,17 @@ export default function Reminders() {
                   <span className="text-slate-400">{t('reminders.threshold')}</span>
                   <span className="text-white font-mono">{reminder.threshold} {reminder.unit}</span>
                 </div>
+                {isOverdue && (
+                  <div className="mt-2 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded text-red-400 text-sm font-semibold">
+                    Overdue
+                  </div>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+            );
+          })}
+          </div>
+        </>
       )}
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="relative z-50">
