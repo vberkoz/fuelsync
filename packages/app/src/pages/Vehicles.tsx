@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Dialog, Menu, Listbox, RadioGroup, Field, Label } from '@headlessui/react';
+import { useState, useRef, useMemo } from 'react';
+import { Dialog, Menu, Listbox, RadioGroup, Field, Label, Combobox } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +17,33 @@ interface Vehicle {
   licensePlate?: string;
   fuelType?: string;
   createdAt?: string;
+}
+
+const customSlugs: Record<string, string> = {
+  'ABT': 'abt-sportsline',
+  'AMC': 'american-motors',
+  'Atalanta': 'atalanta-motors',
+  'BAIC Motor': 'baic',
+  'Chevrolet Corvette': 'corvette',
+  'Citroën': 'citroen',
+  'DMC': 'delorean',
+  'Force Motors': 'force',
+  'Hindustan Motors': 'hindustan',
+  'IKCO': 'iran-khodro',
+  'JMC': 'jiangling',
+  'LEVC': 'london-ev-company',
+  'Li Auto': 'lixiang',
+  'Lynk & Co': 'lynkco',
+  'SAIC Motor': 'saic',
+  'Tauro': 'tauro-sport-auto',
+  'Zarooq Motors': 'zarooq',
+  'Zinoro': 'zhinuo',
+  'Škoda': 'skoda'
+};
+
+function getVehicleLogo(make: string) {
+  const slug = customSlugs[make] || make.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return `/logos/${slug}.png`;
 }
 
 export default function Vehicles() {
@@ -42,9 +69,20 @@ export default function Vehicles() {
     queryFn: api.settings.get
   });
 
-  const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
+  const { data: brandsData } = useQuery({
+    queryKey: ['brands'],
+    queryFn: api.brands.list
+  });
 
+  const [makeQuery, setMakeQuery] = useState('');
+
+  const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
   const vehicles = data?.vehicles || [];
+  const brands = brandsData?.brands || [];
+  const filteredBrands = useMemo(() => {
+    if (makeQuery === '') return brands.slice(0, 50);
+    return brands.filter((b: any) => b.name.toLowerCase().includes(makeQuery.toLowerCase())).slice(0, 50);
+  }, [brands, makeQuery]);
 
   const createMutation = useMutation({
     mutationFn: api.vehicles.create,
@@ -206,7 +244,36 @@ export default function Vehicles() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
-                  <input type="text" value={formData.make} onChange={(e) => setFormData({...formData, make: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || ''})}>
+                    <div className="relative">
+                      <div className="relative">
+                        {formData.make && (
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <img src={getVehicleLogo(formData.make)} alt={formData.make} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
+                          </div>
+                        )}
+                        <Combobox.Input onChange={(e) => setMakeQuery(e.target.value)} displayValue={(make: string) => make} className={`w-full py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-10' : 'pl-4'}`} required />
+                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        </Combobox.Button>
+                      </div>
+                      <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {filteredBrands.map((brand: any) => (
+                          <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                            {({ selected }) => (
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  {brand.logo && <img src={brand.logo} alt={brand.name} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />}
+                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                                </div>
+                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                              </div>
+                            )}
+                          </Combobox.Option>
+                        ))}
+                      </Combobox.Options>
+                    </div>
+                  </Combobox>
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
@@ -267,6 +334,7 @@ export default function Vehicles() {
               <thead>
                 <tr className="border-b border-slate-700">
                   <th className="text-left p-4 text-slate-400 font-semibold"></th>
+                  <th className="text-left p-4 text-slate-400 font-semibold"></th>
                   <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.year')}</th>
                   <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.make')}</th>
                   <th className="text-left p-4 text-slate-400 font-semibold">{t('vehicles.model')}</th>
@@ -287,6 +355,9 @@ export default function Vehicles() {
                           }`}>
                             {checked && <div className="h-2 w-2 rounded-full bg-white" />}
                           </div>
+                        </td>
+                        <td className="p-4">
+                          <img src={getVehicleLogo(v.make)} alt={v.make} className="h-8 w-8 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
                         </td>
                         <td className="p-4 text-white font-mono">{v.year}</td>
                         <td className="p-4 text-white">{v.make}</td>
@@ -336,26 +407,31 @@ export default function Vehicles() {
             {vehicles.map((v: Vehicle) => (
               <RadioGroup.Option key={v.vehicleId} value={v.vehicleId} className="focus:outline-none">
                 {({ checked }) => (
-                  <div className={`bg-slate-800 p-6 rounded-lg ${
-                    checked ? 'ring-2 ring-indigo-500' : ''
+                  <div className={`relative bg-slate-800 hover:bg-slate-750 transition-all duration-200 rounded-xl border ${
+                    checked ? 'ring-2 ring-indigo-500 border-indigo-500/50 shadow-lg shadow-indigo-500/10' : 'border-slate-700 hover:border-slate-600'
                   }`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                          checked ? 'border-indigo-500 bg-indigo-500' : 'border-slate-400'
-                        }`}>
-                          {checked && <div className="h-2 w-2 rounded-full bg-white" />}
+                    {/* Header with logo, selection, and menu */}
+                    <div className="flex items-center justify-between p-4 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <img src={getVehicleLogo(v.make)} alt={v.make} className="h-12 w-12 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
+                          <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-800 flex items-center justify-center ${
+                            checked ? 'bg-indigo-500' : 'bg-slate-600'
+                          }`}>
+                            {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-white"><span className="font-mono">{v.year}</span> {v.make} {v.model}</h3>
-                          <p className="text-slate-400 font-mono"><span className="uppercase">{v.licensePlate}</span> • {v.fuelType}</p>
-                          {v.createdAt && <p className="text-slate-500 text-sm">{formatDate(v.createdAt, dateFormat)}</p>}
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white leading-tight">
+                            <span className="font-mono text-indigo-400">{v.year}</span> {v.make}
+                          </h3>
+                          <p className="text-slate-300 font-medium">{v.model}</p>
                         </div>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <Menu as="div" className="relative">
-                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                            <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                            <EllipsisVerticalIcon className="h-5 w-5 text-slate-400" />
                           </Menu.Button>
                           <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
                             <Menu.Item>
@@ -381,6 +457,26 @@ export default function Vehicles() {
                             </Menu.Item>
                           </Menu.Items>
                         </Menu>
+                      </div>
+                    </div>
+                    
+                    {/* Vehicle details */}
+                    <div className="px-4 pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {v.licensePlate && (
+                            <div className="bg-slate-700 px-3 py-1.5 rounded-md">
+                              <span className="text-white font-mono text-sm font-bold uppercase tracking-wider">{v.licensePlate}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                            <span className="text-slate-400 text-sm">{v.fuelType}</span>
+                          </div>
+                        </div>
+                        {v.createdAt && (
+                          <span className="text-slate-500 text-xs font-mono">{formatDate(v.createdAt, dateFormat)}</span>
+                        )}
                       </div>
                     </div>
                   </div>

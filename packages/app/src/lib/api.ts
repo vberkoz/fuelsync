@@ -215,5 +215,11 @@ export const api = {
       });
       return handleResponse(res);
     }
+  },
+  brands: {
+    list: async () => {
+      const res = await fetch(`${API_URL}/brands`);
+      return handleResponse(res);
+    }
   }
 };

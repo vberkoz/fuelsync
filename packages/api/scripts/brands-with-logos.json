@@ -1,0 +1,1887 @@
+[
+  {
+    "name": "9ff",
+    "slug": "9ff",
+    "logo": "/logos/9ff.png"
+  },
+  {
+    "name": "ABT",
+    "slug": "abt-sportsline",
+    "logo": "/logos/abt-sportsline.png"
+  },
+  {
+    "name": "AMC",
+    "slug": "american-motors",
+    "logo": "/logos/american-motors.png"
+  },
+  {
+    "name": "ARO",
+    "slug": "aro",
+    "logo": "/logos/aro.png"
+  },
+  {
+    "name": "Abadal",
+    "slug": "abadal",
+    "logo": "/logos/abadal.png"
+  },
+  {
+    "name": "Abarth",
+    "slug": "abarth",
+    "logo": "/logos/abarth.png"
+  },
+  {
+    "name": "Abbott-Detroit",
+    "slug": "abbott-detroit",
+    "logo": "/logos/abbott-detroit.png"
+  },
+  {
+    "name": "Acura",
+    "slug": "acura",
+    "logo": "/logos/acura.png"
+  },
+  {
+    "name": "Aiways",
+    "slug": "aiways",
+    "logo": "/logos/aiways.png"
+  },
+  {
+    "name": "Aixam",
+    "slug": "aixam",
+    "logo": "/logos/aixam.png"
+  },
+  {
+    "name": "Alfa Romeo",
+    "slug": "alfa-romeo",
+    "logo": "/logos/alfa-romeo.png"
+  },
+  {
+    "name": "Alpina",
+    "slug": "alpina",
+    "logo": "/logos/alpina.png"
+  },
+  {
+    "name": "Alpine",
+    "slug": "alpine",
+    "logo": "/logos/alpine.png"
+  },
+  {
+    "name": "Alta",
+    "slug": "alta",
+    "logo": "/logos/alta.png"
+  },
+  {
+    "name": "Alvis",
+    "slug": "alvis",
+    "logo": "/logos/alvis.png"
+  },
+  {
+    "name": "Apollo",
+    "slug": "apollo",
+    "logo": "/logos/apollo.png"
+  },
+  {
+    "name": "Arash",
+    "slug": "arash",
+    "logo": "/logos/arash.png"
+  },
+  {
+    "name": "Arcfox",
+    "slug": "arcfox",
+    "logo": "/logos/arcfox.png"
+  },
+  {
+    "name": "Ariel",
+    "slug": "ariel",
+    "logo": "/logos/ariel.png"
+  },
+  {
+    "name": "Arrinera",
+    "slug": "arrinera",
+    "logo": "/logos/arrinera.png"
+  },
+  {
+    "name": "Arrival",
+    "slug": "arrival",
+    "logo": "/logos/arrival.png"
+  },
+  {
+    "name": "Artega",
+    "slug": "artega",
+    "logo": "/logos/artega.png"
+  },
+  {
+    "name": "Ascari",
+    "slug": "ascari",
+    "logo": "/logos/ascari.png"
+  },
+  {
+    "name": "Askam",
+    "slug": "askam",
+    "logo": "/logos/askam.png"
+  },
+  {
+    "name": "Aspark",
+    "slug": "aspark",
+    "logo": "/logos/aspark.png"
+  },
+  {
+    "name": "Aston Martin",
+    "slug": "aston-martin",
+    "logo": "/logos/aston-martin.png"
+  },
+  {
+    "name": "Atalanta",
+    "slug": "atalanta-motors",
+    "logo": "/logos/atalanta-motors.png"
+  },
+  {
+    "name": "Auburn",
+    "slug": "auburn",
+    "logo": "/logos/auburn.png"
+  },
+  {
+    "name": "Audi",
+    "slug": "audi",
+    "logo": "/logos/audi.png"
+  },
+  {
+    "name": "Audi Sport",
+    "slug": "audi-sport",
+    "logo": "/logos/audi-sport.png"
+  },
+  {
+    "name": "Austin",
+    "slug": "austin",
+    "logo": "/logos/austin.png"
+  },
+  {
+    "name": "Autobacs",
+    "slug": "autobacs",
+    "logo": "/logos/autobacs.png"
+  },
+  {
+    "name": "Autobianchi",
+    "slug": "autobianchi",
+    "logo": "/logos/autobianchi.png"
+  },
+  {
+    "name": "Axon",
+    "slug": "axon",
+    "logo": "/logos/axon.png"
+  },
+  {
+    "name": "BAC",
+    "slug": "bac",
+    "logo": "/logos/bac.png"
+  },
+  {
+    "name": "BAIC Motor",
+    "slug": "baic",
+    "logo": "/logos/baic.png"
+  },
+  {
+    "name": "BMW",
+    "slug": "bmw",
+    "logo": "/logos/bmw.png"
+  },
+  {
+    "name": "BMW M",
+    "slug": "bmw-m",
+    "logo": "/logos/bmw-m.png"
+  },
+  {
+    "name": "BYD",
+    "slug": "byd",
+    "logo": "/logos/byd.png"
+  },
+  {
+    "name": "Baojun",
+    "slug": "baojun",
+    "logo": "/logos/baojun.png"
+  },
+  {
+    "name": "BeiBen",
+    "slug": "beiben",
+    "logo": "/logos/beiben.png"
+  },
+  {
+    "name": "Bentley",
+    "slug": "bentley",
+    "logo": "/logos/bentley.png"
+  },
+  {
+    "name": "Berkeley",
+    "slug": "berkeley",
+    "logo": "/logos/berkeley.png"
+  },
+  {
+    "name": "Berliet",
+    "slug": "berliet",
+    "logo": "/logos/berliet.png"
+  },
+  {
+    "name": "Bertone",
+    "slug": "bertone",
+    "logo": "/logos/bertone.png"
+  },
+  {
+    "name": "Bestune",
+    "slug": "bestune",
+    "logo": "/logos/bestune.png"
+  },
+  {
+    "name": "BharatBenz",
+    "slug": "bharatbenz",
+    "logo": "/logos/bharatbenz.png"
+  },
+  {
+    "name": "Bitter",
+    "slug": "bitter",
+    "logo": "/logos/bitter.png"
+  },
+  {
+    "name": "Bizzarrini",
+    "slug": "bizzarrini",
+    "logo": "/logos/bizzarrini.png"
+  },
+  {
+    "name": "Borgward",
+    "slug": "borgward",
+    "logo": "/logos/borgward.png"
+  },
+  {
+    "name": "Bowler",
+    "slug": "bowler",
+    "logo": "/logos/bowler.png"
+  },
+  {
+    "name": "Brabus",
+    "slug": "brabus",
+    "logo": "/logos/brabus.png"
+  },
+  {
+    "name": "Brammo",
+    "slug": "brammo",
+    "logo": "/logos/brammo.png"
+  },
+  {
+    "name": "Brilliance",
+    "slug": "brilliance",
+    "logo": "/logos/brilliance.png"
+  },
+  {
+    "name": "Bristol",
+    "slug": "bristol",
+    "logo": "/logos/bristol.png"
+  },
+  {
+    "name": "Brooke",
+    "slug": "brooke",
+    "logo": "/logos/brooke.png"
+  },
+  {
+    "name": "Bufori",
+    "slug": "bufori",
+    "logo": "/logos/bufori.png"
+  },
+  {
+    "name": "Bugatti",
+    "slug": "bugatti",
+    "logo": "/logos/bugatti.png"
+  },
+  {
+    "name": "Buick",
+    "slug": "buick",
+    "logo": "/logos/buick.png"
+  },
+  {
+    "name": "Byton",
+    "slug": "byton",
+    "logo": "/logos/byton.png"
+  },
+  {
+    "name": "CAMC",
+    "slug": "camc",
+    "logo": "/logos/camc.png"
+  },
+  {
+    "name": "Cadillac",
+    "slug": "cadillac",
+    "logo": "/logos/cadillac.png"
+  },
+  {
+    "name": "Canoo",
+    "slug": "canoo",
+    "logo": "/logos/canoo.png"
+  },
+  {
+    "name": "Caparo",
+    "slug": "caparo",
+    "logo": "/logos/caparo.png"
+  },
+  {
+    "name": "Carlsson",
+    "slug": "carlsson",
+    "logo": "/logos/carlsson.png"
+  },
+  {
+    "name": "Caterham",
+    "slug": "caterham",
+    "logo": "/logos/caterham.png"
+  },
+  {
+    "name": "Changan",
+    "slug": "changan",
+    "logo": "/logos/changan.png"
+  },
+  {
+    "name": "Changfeng",
+    "slug": "changfeng",
+    "logo": "/logos/changfeng.png"
+  },
+  {
+    "name": "Chery",
+    "slug": "chery",
+    "logo": "/logos/chery.png"
+  },
+  {
+    "name": "Chevrolet",
+    "slug": "chevrolet",
+    "logo": "/logos/chevrolet.png"
+  },
+  {
+    "name": "Chevrolet Corvette",
+    "slug": "corvette",
+    "logo": "/logos/corvette.png"
+  },
+  {
+    "name": "Chrysler",
+    "slug": "chrysler",
+    "logo": "/logos/chrysler.png"
+  },
+  {
+    "name": "Cisitalia",
+    "slug": "cisitalia",
+    "logo": "/logos/cisitalia.png"
+  },
+  {
+    "name": "Citroën",
+    "slug": "citroen",
+    "logo": "/logos/citroen.png"
+  },
+  {
+    "name": "Cizeta",
+    "slug": "cizeta",
+    "logo": "/logos/cizeta.png"
+  },
+  {
+    "name": "Cole",
+    "slug": "cole",
+    "logo": "/logos/cole.png"
+  },
+  {
+    "name": "Corre La Licorne",
+    "slug": "corre-la-licorne",
+    "logo": "/logos/corre-la-licorne.png"
+  },
+  {
+    "name": "DAF",
+    "slug": "daf",
+    "logo": "/logos/daf.png"
+  },
+  {
+    "name": "DINA",
+    "slug": "dina",
+    "logo": "/logos/dina.png"
+  },
+  {
+    "name": "DKW",
+    "slug": "dkw",
+    "logo": "/logos/dkw.png"
+  },
+  {
+    "name": "DMC",
+    "slug": "delorean",
+    "logo": "/logos/delorean.png"
+  },
+  {
+    "name": "Dacia",
+    "slug": "dacia",
+    "logo": "/logos/dacia.png"
+  },
+  {
+    "name": "Daewoo",
+    "slug": "daewoo",
+    "logo": "/logos/daewoo.png"
+  },
+  {
+    "name": "Daihatsu",
+    "slug": "daihatsu",
+    "logo": "/logos/daihatsu.png"
+  },
+  {
+    "name": "Daimler",
+    "slug": "daimler",
+    "logo": "/logos/daimler.png"
+  },
+  {
+    "name": "Dartz",
+    "slug": "dartz",
+    "logo": "/logos/dartz.png"
+  },
+  {
+    "name": "Datsun",
+    "slug": "datsun",
+    "logo": "/logos/datsun.png"
+  },
+  {
+    "name": "David Brown",
+    "slug": "david-brown",
+    "logo": "/logos/david-brown.png"
+  },
+  {
+    "name": "Dayun",
+    "slug": "dayun",
+    "logo": "/logos/dayun.png"
+  },
+  {
+    "name": "De Tomaso",
+    "slug": "de-tomaso",
+    "logo": "/logos/de-tomaso.png"
+  },
+  {
+    "name": "DeSoto",
+    "slug": "desoto",
+    "logo": "/logos/desoto.png"
+  },
+  {
+    "name": "Delage",
+    "slug": "delage",
+    "logo": "/logos/delage.png"
+  },
+  {
+    "name": "Detroit Electric",
+    "slug": "detroit-electric",
+    "logo": "/logos/detroit-electric.png"
+  },
+  {
+    "name": "Devel Sixteen",
+    "slug": "devel-sixteen",
+    "logo": "/logos/devel-sixteen.png"
+  },
+  {
+    "name": "Diatto",
+    "slug": "diatto",
+    "logo": "/logos/diatto.png"
+  },
+  {
+    "name": "Dodge",
+    "slug": "dodge",
+    "logo": "/logos/dodge.png"
+  },
+  {
+    "name": "Dodge Viper",
+    "slug": "dodge-viper",
+    "logo": "/logos/dodge-viper.png"
+  },
+  {
+    "name": "Dongfeng",
+    "slug": "dongfeng",
+    "logo": "/logos/dongfeng.png"
+  },
+  {
+    "name": "Donkervoort",
+    "slug": "donkervoort",
+    "logo": "/logos/donkervoort.png"
+  },
+  {
+    "name": "Drako",
+    "slug": "drako",
+    "logo": "/logos/drako.png"
+  },
+  {
+    "name": "Duesenberg",
+    "slug": "duesenberg",
+    "logo": "/logos/duesenberg.png"
+  },
+  {
+    "name": "EDAG",
+    "slug": "edag",
+    "logo": "/logos/edag.png"
+  },
+  {
+    "name": "ERF",
+    "slug": "erf",
+    "logo": "/logos/erf.png"
+  },
+  {
+    "name": "Eagle",
+    "slug": "eagle",
+    "logo": "/logos/eagle.png"
+  },
+  {
+    "name": "Edsel",
+    "slug": "edsel",
+    "logo": "/logos/edsel.png"
+  },
+  {
+    "name": "Eicher",
+    "slug": "eicher",
+    "logo": "/logos/eicher.png"
+  },
+  {
+    "name": "Elemental",
+    "slug": "elemental",
+    "logo": "/logos/elemental.png"
+  },
+  {
+    "name": "Elfin",
+    "slug": "elfin",
+    "logo": "/logos/elfin.png"
+  },
+  {
+    "name": "Elva",
+    "slug": "elva",
+    "logo": "/logos/elva.png"
+  },
+  {
+    "name": "Englon",
+    "slug": "englon",
+    "logo": "/logos/englon.png"
+  },
+  {
+    "name": "Eterniti",
+    "slug": "eterniti",
+    "logo": "/logos/eterniti.png"
+  },
+  {
+    "name": "Exeed",
+    "slug": "exeed",
+    "logo": "/logos/exeed.png"
+  },
+  {
+    "name": "FAW",
+    "slug": "faw",
+    "logo": "/logos/faw.png"
+  },
+  {
+    "name": "FAW Jiefang",
+    "slug": "faw-jiefang",
+    "logo": "/logos/faw-jiefang.png"
+  },
+  {
+    "name": "FPV",
+    "slug": "fpv",
+    "logo": "/logos/fpv.png"
+  },
+  {
+    "name": "FSO",
+    "slug": "fso",
+    "logo": "/logos/fso.png"
+  },
+  {
+    "name": "Facel Vega",
+    "slug": "facel-vega",
+    "logo": "/logos/facel-vega.png"
+  },
+  {
+    "name": "Faraday Future",
+    "slug": "faraday-future",
+    "logo": "/logos/faraday-future.png"
+  },
+  {
+    "name": "Ferrari",
+    "slug": "ferrari",
+    "logo": "/logos/ferrari.png"
+  },
+  {
+    "name": "Fiat",
+    "slug": "fiat",
+    "logo": "/logos/fiat.png"
+  },
+  {
+    "name": "Fioravanti",
+    "slug": "fioravanti",
+    "logo": "/logos/fioravanti.png"
+  },
+  {
+    "name": "Fisker",
+    "slug": "fisker",
+    "logo": "/logos/fisker.png"
+  },
+  {
+    "name": "Foden",
+    "slug": "foden",
+    "logo": "/logos/foden.png"
+  },
+  {
+    "name": "Force Motors",
+    "slug": "force",
+    "logo": "/logos/force.png"
+  },
+  {
+    "name": "Ford",
+    "slug": "ford",
+    "logo": "/logos/ford.png"
+  },
+  {
+    "name": "Ford Mustang",
+    "slug": "ford-mustang",
+    "logo": "/logos/ford-mustang.png"
+  },
+  {
+    "name": "Foton",
+    "slug": "foton",
+    "logo": "/logos/foton.png"
+  },
+  {
+    "name": "Franklin",
+    "slug": "franklin",
+    "logo": "/logos/franklin.png"
+  },
+  {
+    "name": "Freightliner",
+    "slug": "freightliner",
+    "logo": "/logos/freightliner.png"
+  },
+  {
+    "name": "GAC Group",
+    "slug": "gac-group",
+    "logo": "/logos/gac-group.png"
+  },
+  {
+    "name": "GAZ",
+    "slug": "gaz",
+    "logo": "/logos/gaz.png"
+  },
+  {
+    "name": "GMC",
+    "slug": "gmc",
+    "logo": "/logos/gmc.png"
+  },
+  {
+    "name": "Gardner Douglas",
+    "slug": "gardner-douglas",
+    "logo": "/logos/gardner-douglas.png"
+  },
+  {
+    "name": "Geely",
+    "slug": "geely",
+    "logo": "/logos/geely.png"
+  },
+  {
+    "name": "General Motors",
+    "slug": "general-motors",
+    "logo": "/logos/general-motors.png"
+  },
+  {
+    "name": "Genesis",
+    "slug": "genesis",
+    "logo": "/logos/genesis.png"
+  },
+  {
+    "name": "Geo",
+    "slug": "geo",
+    "logo": "/logos/geo.png"
+  },
+  {
+    "name": "Geometry",
+    "slug": "geometry",
+    "logo": "/logos/geometry.png"
+  },
+  {
+    "name": "Gilbern",
+    "slug": "gilbern",
+    "logo": "/logos/gilbern.png"
+  },
+  {
+    "name": "Gillet",
+    "slug": "gillet",
+    "logo": "/logos/gillet.png"
+  },
+  {
+    "name": "Ginetta",
+    "slug": "ginetta",
+    "logo": "/logos/ginetta.png"
+  },
+  {
+    "name": "Golden Dragon",
+    "slug": "golden-dragon",
+    "logo": "/logos/golden-dragon.png"
+  },
+  {
+    "name": "Gonow",
+    "slug": "gonow",
+    "logo": "/logos/gonow.png"
+  },
+  {
+    "name": "Great Wall",
+    "slug": "great-wall",
+    "logo": "/logos/great-wall.png"
+  },
+  {
+    "name": "Grinnall",
+    "slug": "grinnall",
+    "logo": "/logos/grinnall.png"
+  },
+  {
+    "name": "Gumpert",
+    "slug": "gumpert",
+    "logo": "/logos/gumpert.png"
+  },
+  {
+    "name": "HSV",
+    "slug": "hsv",
+    "logo": "/logos/hsv.png"
+  },
+  {
+    "name": "Hafei",
+    "slug": "hafei",
+    "logo": "/logos/hafei.png"
+  },
+  {
+    "name": "Haima",
+    "slug": "haima",
+    "logo": "/logos/haima.png"
+  },
+  {
+    "name": "Haval",
+    "slug": "haval",
+    "logo": "/logos/haval.png"
+  },
+  {
+    "name": "Hawtai",
+    "slug": "hawtai",
+    "logo": "/logos/hawtai.png"
+  },
+  {
+    "name": "Hennessey",
+    "slug": "hennessey",
+    "logo": "/logos/hennessey.png"
+  },
+  {
+    "name": "HiPhi",
+    "slug": "hiphi",
+    "logo": "/logos/hiphi.png"
+  },
+  {
+    "name": "Higer",
+    "slug": "higer",
+    "logo": "/logos/higer.png"
+  },
+  {
+    "name": "Hillman",
+    "slug": "hillman",
+    "logo": "/logos/hillman.png"
+  },
+  {
+    "name": "Hindustan Motors",
+    "slug": "hindustan",
+    "logo": "/logos/hindustan.png"
+  },
+  {
+    "name": "Hino",
+    "slug": "hino",
+    "logo": "/logos/hino.png"
+  },
+  {
+    "name": "Hispano-Suiza",
+    "slug": "hispano-suiza",
+    "logo": "/logos/hispano-suiza.png"
+  },
+  {
+    "name": "Holden",
+    "slug": "holden",
+    "logo": "/logos/holden.png"
+  },
+  {
+    "name": "Hommell",
+    "slug": "hommell",
+    "logo": "/logos/hommell.png"
+  },
+  {
+    "name": "Honda",
+    "slug": "honda",
+    "logo": "/logos/honda.png"
+  },
+  {
+    "name": "Hongqi",
+    "slug": "hongqi",
+    "logo": "/logos/hongqi.png"
+  },
+  {
+    "name": "Hongyan",
+    "slug": "hongyan",
+    "logo": "/logos/hongyan.png"
+  },
+  {
+    "name": "Horch",
+    "slug": "horch",
+    "logo": "/logos/horch.png"
+  },
+  {
+    "name": "Hudson",
+    "slug": "hudson",
+    "logo": "/logos/hudson.png"
+  },
+  {
+    "name": "Hummer",
+    "slug": "hummer",
+    "logo": "/logos/hummer.png"
+  },
+  {
+    "name": "Hupmobile",
+    "slug": "hupmobile",
+    "logo": "/logos/hupmobile.png"
+  },
+  {
+    "name": "Hyundai",
+    "slug": "hyundai",
+    "logo": "/logos/hyundai.png"
+  },
+  {
+    "name": "IC Bus",
+    "slug": "ic-bus",
+    "logo": "/logos/ic-bus.png"
+  },
+  {
+    "name": "IKCO",
+    "slug": "iran-khodro",
+    "logo": "/logos/iran-khodro.png"
+  },
+  {
+    "name": "Infiniti",
+    "slug": "infiniti",
+    "logo": "/logos/infiniti.png"
+  },
+  {
+    "name": "Innocenti",
+    "slug": "innocenti",
+    "logo": "/logos/innocenti.png"
+  },
+  {
+    "name": "Intermeccanica",
+    "slug": "intermeccanica",
+    "logo": "/logos/intermeccanica.png"
+  },
+  {
+    "name": "International",
+    "slug": "international",
+    "logo": "/logos/international.png"
+  },
+  {
+    "name": "Irizar",
+    "slug": "irizar",
+    "logo": "/logos/irizar.png"
+  },
+  {
+    "name": "Isdera",
+    "slug": "isdera",
+    "logo": "/logos/isdera.png"
+  },
+  {
+    "name": "Iso",
+    "slug": "iso",
+    "logo": "/logos/iso.png"
+  },
+  {
+    "name": "Isuzu",
+    "slug": "isuzu",
+    "logo": "/logos/isuzu.png"
+  },
+  {
+    "name": "Iveco",
+    "slug": "iveco",
+    "logo": "/logos/iveco.png"
+  },
+  {
+    "name": "JAC",
+    "slug": "jac",
+    "logo": "/logos/jac.png"
+  },
+  {
+    "name": "JBA Motors",
+    "slug": "jba-motors",
+    "logo": "/logos/jba-motors.png"
+  },
+  {
+    "name": "JMC",
+    "slug": "jiangling",
+    "logo": "/logos/jiangling.png"
+  },
+  {
+    "name": "Jaguar",
+    "slug": "jaguar",
+    "logo": "/logos/jaguar.png"
+  },
+  {
+    "name": "Jawa",
+    "slug": "jawa",
+    "logo": "/logos/jawa.png"
+  },
+  {
+    "name": "Jeep",
+    "slug": "jeep",
+    "logo": "/logos/jeep.png"
+  },
+  {
+    "name": "Jensen",
+    "slug": "jensen",
+    "logo": "/logos/jensen.png"
+  },
+  {
+    "name": "Jetta",
+    "slug": "jetta",
+    "logo": "/logos/jetta.png"
+  },
+  {
+    "name": "KTM",
+    "slug": "ktm",
+    "logo": "/logos/ktm.png"
+  },
+  {
+    "name": "Kaiser",
+    "slug": "kaiser",
+    "logo": "/logos/kaiser.png"
+  },
+  {
+    "name": "Kamaz",
+    "slug": "kamaz",
+    "logo": "/logos/kamaz.png"
+  },
+  {
+    "name": "Karlmann King",
+    "slug": "karlmann-king",
+    "logo": "/logos/karlmann-king.png"
+  },
+  {
+    "name": "Karma",
+    "slug": "karma",
+    "logo": "/logos/karma.png"
+  },
+  {
+    "name": "Keating",
+    "slug": "keating",
+    "logo": "/logos/keating.png"
+  },
+  {
+    "name": "Kenworth",
+    "slug": "kenworth",
+    "logo": "/logos/kenworth.png"
+  },
+  {
+    "name": "Kia",
+    "slug": "kia",
+    "logo": "/logos/kia.png"
+  },
+  {
+    "name": "King Long",
+    "slug": "king-long",
+    "logo": "/logos/king-long.png"
+  },
+  {
+    "name": "Koenigsegg",
+    "slug": "koenigsegg",
+    "logo": "/logos/koenigsegg.png"
+  },
+  {
+    "name": "LEVC",
+    "slug": "london-ev-company",
+    "logo": "/logos/london-ev-company.png"
+  },
+  {
+    "name": "Lada",
+    "slug": "lada",
+    "logo": "/logos/lada.png"
+  },
+  {
+    "name": "Lagonda",
+    "slug": "lagonda",
+    "logo": "/logos/lagonda.png"
+  },
+  {
+    "name": "Lamborghini",
+    "slug": "lamborghini",
+    "logo": "/logos/lamborghini.png"
+  },
+  {
+    "name": "Lancia",
+    "slug": "lancia",
+    "logo": "/logos/lancia.png"
+  },
+  {
+    "name": "Land Rover",
+    "slug": "land-rover",
+    "logo": "/logos/land-rover.png"
+  },
+  {
+    "name": "Landwind",
+    "slug": "landwind",
+    "logo": "/logos/landwind.png"
+  },
+  {
+    "name": "Laraki",
+    "slug": "laraki",
+    "logo": "/logos/laraki.png"
+  },
+  {
+    "name": "Leapmotor",
+    "slug": "leapmotor",
+    "logo": "/logos/leapmotor.png"
+  },
+  {
+    "name": "Lexus",
+    "slug": "lexus",
+    "logo": "/logos/lexus.png"
+  },
+  {
+    "name": "Leyland",
+    "slug": "leyland",
+    "logo": "/logos/leyland.png"
+  },
+  {
+    "name": "Li Auto",
+    "slug": "lixiang",
+    "logo": "/logos/lixiang.png"
+  },
+  {
+    "name": "Lifan",
+    "slug": "lifan",
+    "logo": "/logos/lifan.png"
+  },
+  {
+    "name": "Ligier",
+    "slug": "ligier",
+    "logo": "/logos/ligier.png"
+  },
+  {
+    "name": "Lincoln",
+    "slug": "lincoln",
+    "logo": "/logos/lincoln.png"
+  },
+  {
+    "name": "Lister",
+    "slug": "lister",
+    "logo": "/logos/lister.png"
+  },
+  {
+    "name": "Lloyd",
+    "slug": "lloyd",
+    "logo": "/logos/lloyd.png"
+  },
+  {
+    "name": "Lobini",
+    "slug": "lobini",
+    "logo": "/logos/lobini.png"
+  },
+  {
+    "name": "Lordstown",
+    "slug": "lordstown",
+    "logo": "/logos/lordstown.png"
+  },
+  {
+    "name": "Lotus",
+    "slug": "lotus",
+    "logo": "/logos/lotus.png"
+  },
+  {
+    "name": "Lucid",
+    "slug": "lucid",
+    "logo": "/logos/lucid.png"
+  },
+  {
+    "name": "Luxgen",
+    "slug": "luxgen",
+    "logo": "/logos/luxgen.png"
+  },
+  {
+    "name": "Lynk & Co",
+    "slug": "lynkco",
+    "logo": "/logos/lynkco.png"
+  },
+  {
+    "name": "MAN",
+    "slug": "man",
+    "logo": "/logos/man.png"
+  },
+  {
+    "name": "MAZ",
+    "slug": "maz",
+    "logo": "/logos/maz.png"
+  },
+  {
+    "name": "MEV",
+    "slug": "mev",
+    "logo": "/logos/mev.png"
+  },
+  {
+    "name": "Mack",
+    "slug": "mack",
+    "logo": "/logos/mack.png"
+  },
+  {
+    "name": "Mahindra",
+    "slug": "mahindra",
+    "logo": "/logos/mahindra.png"
+  },
+  {
+    "name": "Mansory",
+    "slug": "mansory",
+    "logo": "/logos/mansory.png"
+  },
+  {
+    "name": "Marcos",
+    "slug": "marcos",
+    "logo": "/logos/marcos.png"
+  },
+  {
+    "name": "Marlin",
+    "slug": "marlin",
+    "logo": "/logos/marlin.png"
+  },
+  {
+    "name": "Maserati",
+    "slug": "maserati",
+    "logo": "/logos/maserati.png"
+  },
+  {
+    "name": "Mastretta",
+    "slug": "mastretta",
+    "logo": "/logos/mastretta.png"
+  },
+  {
+    "name": "Maxus",
+    "slug": "maxus",
+    "logo": "/logos/maxus.png"
+  },
+  {
+    "name": "Maybach",
+    "slug": "maybach",
+    "logo": "/logos/maybach.png"
+  },
+  {
+    "name": "Mazda",
+    "slug": "mazda",
+    "logo": "/logos/mazda.png"
+  },
+  {
+    "name": "Mazzanti",
+    "slug": "mazzanti",
+    "logo": "/logos/mazzanti.png"
+  },
+  {
+    "name": "McLaren",
+    "slug": "mclaren",
+    "logo": "/logos/mclaren.png"
+  },
+  {
+    "name": "Melkus",
+    "slug": "melkus",
+    "logo": "/logos/melkus.png"
+  },
+  {
+    "name": "Mercedes-AMG",
+    "slug": "mercedes-amg",
+    "logo": "/logos/mercedes-amg.png"
+  },
+  {
+    "name": "Mercedes-Benz",
+    "slug": "mercedes-benz",
+    "logo": "/logos/mercedes-benz.png"
+  },
+  {
+    "name": "Mercury",
+    "slug": "mercury",
+    "logo": "/logos/mercury.png"
+  },
+  {
+    "name": "Merkur",
+    "slug": "merkur",
+    "logo": "/logos/merkur.png"
+  },
+  {
+    "name": "Microcar",
+    "slug": "microcar",
+    "logo": "/logos/microcar.png"
+  },
+  {
+    "name": "Mini",
+    "slug": "mini",
+    "logo": "/logos/mini.png"
+  },
+  {
+    "name": "Mitsubishi",
+    "slug": "mitsubishi",
+    "logo": "/logos/mitsubishi.png"
+  },
+  {
+    "name": "Mitsuoka",
+    "slug": "mitsuoka",
+    "logo": "/logos/mitsuoka.png"
+  },
+  {
+    "name": "Morgan",
+    "slug": "morgan",
+    "logo": "/logos/morgan.png"
+  },
+  {
+    "name": "Morris",
+    "slug": "morris",
+    "logo": "/logos/morris.png"
+  },
+  {
+    "name": "Mosler",
+    "slug": "mosler",
+    "logo": "/logos/mosler.png"
+  },
+  {
+    "name": "NEVS",
+    "slug": "nevs",
+    "logo": "/logos/nevs.png"
+  },
+  {
+    "name": "NIO",
+    "slug": "nio",
+    "logo": "/logos/nio.png"
+  },
+  {
+    "name": "Navistar",
+    "slug": "navistar",
+    "logo": "/logos/navistar.png"
+  },
+  {
+    "name": "Nikola",
+    "slug": "nikola",
+    "logo": "/logos/nikola.png"
+  },
+  {
+    "name": "Nissan",
+    "slug": "nissan",
+    "logo": "/logos/nissan.png"
+  },
+  {
+    "name": "Nissan GT-R",
+    "slug": "nissan-gt-r",
+    "logo": "/logos/nissan-gt-r.png"
+  },
+  {
+    "name": "Nissan Nismo",
+    "slug": "nissan-nismo",
+    "logo": "/logos/nissan-nismo.png"
+  },
+  {
+    "name": "Noble",
+    "slug": "noble",
+    "logo": "/logos/noble.png"
+  },
+  {
+    "name": "OSCA",
+    "slug": "osca",
+    "logo": "/logos/osca.png"
+  },
+  {
+    "name": "Oldsmobile",
+    "slug": "oldsmobile",
+    "logo": "/logos/oldsmobile.png"
+  },
+  {
+    "name": "Oltcit",
+    "slug": "oltcit",
+    "logo": "/logos/oltcit.png"
+  },
+  {
+    "name": "Opel",
+    "slug": "opel",
+    "logo": "/logos/opel.png"
+  },
+  {
+    "name": "PGO",
+    "slug": "pgo",
+    "logo": "/logos/pgo.png"
+  },
+  {
+    "name": "Paccar",
+    "slug": "paccar",
+    "logo": "/logos/paccar.png"
+  },
+  {
+    "name": "Packard",
+    "slug": "packard",
+    "logo": "/logos/packard.png"
+  },
+  {
+    "name": "Pagani",
+    "slug": "pagani",
+    "logo": "/logos/pagani.png"
+  },
+  {
+    "name": "Panhard",
+    "slug": "panhard",
+    "logo": "/logos/panhard.png"
+  },
+  {
+    "name": "Panoz",
+    "slug": "panoz",
+    "logo": "/logos/panoz.png"
+  },
+  {
+    "name": "Pegaso",
+    "slug": "pegaso",
+    "logo": "/logos/pegaso.png"
+  },
+  {
+    "name": "Perodua",
+    "slug": "perodua",
+    "logo": "/logos/perodua.png"
+  },
+  {
+    "name": "Peterbilt",
+    "slug": "peterbilt",
+    "logo": "/logos/peterbilt.png"
+  },
+  {
+    "name": "Peugeot",
+    "slug": "peugeot",
+    "logo": "/logos/peugeot.png"
+  },
+  {
+    "name": "Pierce-Arrow",
+    "slug": "pierce-arrow",
+    "logo": "/logos/pierce-arrow.png"
+  },
+  {
+    "name": "Pininfarina",
+    "slug": "pininfarina",
+    "logo": "/logos/pininfarina.png"
+  },
+  {
+    "name": "Plymouth",
+    "slug": "plymouth",
+    "logo": "/logos/plymouth.png"
+  },
+  {
+    "name": "Polestar",
+    "slug": "polestar",
+    "logo": "/logos/polestar.png"
+  },
+  {
+    "name": "Pontiac",
+    "slug": "pontiac",
+    "logo": "/logos/pontiac.png"
+  },
+  {
+    "name": "Porsche",
+    "slug": "porsche",
+    "logo": "/logos/porsche.png"
+  },
+  {
+    "name": "Praga",
+    "slug": "praga",
+    "logo": "/logos/praga.png"
+  },
+  {
+    "name": "Premier",
+    "slug": "premier",
+    "logo": "/logos/premier.png"
+  },
+  {
+    "name": "Prodrive",
+    "slug": "prodrive",
+    "logo": "/logos/prodrive.png"
+  },
+  {
+    "name": "Proton",
+    "slug": "proton",
+    "logo": "/logos/proton.png"
+  },
+  {
+    "name": "Qoros",
+    "slug": "qoros",
+    "logo": "/logos/qoros.png"
+  },
+  {
+    "name": "RAM",
+    "slug": "ram",
+    "logo": "/logos/ram.png"
+  },
+  {
+    "name": "RUF",
+    "slug": "ruf",
+    "logo": "/logos/ruf.png"
+  },
+  {
+    "name": "Radical",
+    "slug": "radical",
+    "logo": "/logos/radical.png"
+  },
+  {
+    "name": "Rambler",
+    "slug": "rambler",
+    "logo": "/logos/rambler.png"
+  },
+  {
+    "name": "Ranz",
+    "slug": "ranz",
+    "logo": "/logos/ranz.png"
+  },
+  {
+    "name": "Renault",
+    "slug": "renault",
+    "logo": "/logos/renault.png"
+  },
+  {
+    "name": "Renault Samsung",
+    "slug": "renault-samsung",
+    "logo": "/logos/renault-samsung.png"
+  },
+  {
+    "name": "Rezvani",
+    "slug": "rezvani",
+    "logo": "/logos/rezvani.png"
+  },
+  {
+    "name": "Riley",
+    "slug": "riley",
+    "logo": "/logos/riley.png"
+  },
+  {
+    "name": "Rimac",
+    "slug": "rimac",
+    "logo": "/logos/rimac.png"
+  },
+  {
+    "name": "Rinspeed",
+    "slug": "rinspeed",
+    "logo": "/logos/rinspeed.png"
+  },
+  {
+    "name": "Rivian",
+    "slug": "rivian",
+    "logo": "/logos/rivian.png"
+  },
+  {
+    "name": "Roewe",
+    "slug": "roewe",
+    "logo": "/logos/roewe.png"
+  },
+  {
+    "name": "Rolls-Royce",
+    "slug": "rolls-royce",
+    "logo": "/logos/rolls-royce.png"
+  },
+  {
+    "name": "Ronart",
+    "slug": "ronart",
+    "logo": "/logos/ronart.png"
+  },
+  {
+    "name": "Rossion",
+    "slug": "rossion",
+    "logo": "/logos/rossion.png"
+  },
+  {
+    "name": "Rover",
+    "slug": "rover",
+    "logo": "/logos/rover.png"
+  },
+  {
+    "name": "SAIC Motor",
+    "slug": "saic",
+    "logo": "/logos/saic.png"
+  },
+  {
+    "name": "SEAT",
+    "slug": "seat",
+    "logo": "/logos/seat.png"
+  },
+  {
+    "name": "SSC",
+    "slug": "ssc",
+    "logo": "/logos/ssc.png"
+  },
+  {
+    "name": "Saab",
+    "slug": "saab",
+    "logo": "/logos/saab.png"
+  },
+  {
+    "name": "Saipa",
+    "slug": "saipa",
+    "logo": "/logos/saipa.png"
+  },
+  {
+    "name": "Saleen",
+    "slug": "saleen",
+    "logo": "/logos/saleen.png"
+  },
+  {
+    "name": "Saturn",
+    "slug": "saturn",
+    "logo": "/logos/saturn.png"
+  },
+  {
+    "name": "Scania",
+    "slug": "scania",
+    "logo": "/logos/scania.png"
+  },
+  {
+    "name": "Scion",
+    "slug": "scion",
+    "logo": "/logos/scion.png"
+  },
+  {
+    "name": "Setra",
+    "slug": "setra",
+    "logo": "/logos/setra.png"
+  },
+  {
+    "name": "Shacman",
+    "slug": "shacman",
+    "logo": "/logos/shacman.png"
+  },
+  {
+    "name": "Simca",
+    "slug": "simca",
+    "logo": "/logos/simca.png"
+  },
+  {
+    "name": "Singer",
+    "slug": "singer",
+    "logo": "/logos/singer.png"
+  },
+  {
+    "name": "Singulato",
+    "slug": "singulato",
+    "logo": "/logos/singulato.png"
+  },
+  {
+    "name": "Sinotruk",
+    "slug": "sinotruk",
+    "logo": "/logos/sinotruk.png"
+  },
+  {
+    "name": "Sisu",
+    "slug": "sisu",
+    "logo": "/logos/sisu.png"
+  },
+  {
+    "name": "Smart",
+    "slug": "smart",
+    "logo": "/logos/smart.png"
+  },
+  {
+    "name": "Soueast",
+    "slug": "soueast",
+    "logo": "/logos/soueast.png"
+  },
+  {
+    "name": "Spania GTA",
+    "slug": "spania-gta",
+    "logo": "/logos/spania-gta.png"
+  },
+  {
+    "name": "Spirra",
+    "slug": "spirra",
+    "logo": "/logos/spirra.png"
+  },
+  {
+    "name": "Spyker",
+    "slug": "spyker",
+    "logo": "/logos/spyker.png"
+  },
+  {
+    "name": "SsangYong",
+    "slug": "ssangyong",
+    "logo": "/logos/ssangyong.png"
+  },
+  {
+    "name": "Sterling",
+    "slug": "sterling",
+    "logo": "/logos/sterling.png"
+  },
+  {
+    "name": "Studebaker",
+    "slug": "studebaker",
+    "logo": "/logos/studebaker.png"
+  },
+  {
+    "name": "Stutz",
+    "slug": "stutz",
+    "logo": "/logos/stutz.png"
+  },
+  {
+    "name": "Subaru",
+    "slug": "subaru",
+    "logo": "/logos/subaru.png"
+  },
+  {
+    "name": "Suffolk",
+    "slug": "suffolk",
+    "logo": "/logos/suffolk.png"
+  },
+  {
+    "name": "Suzuki",
+    "slug": "suzuki",
+    "logo": "/logos/suzuki.png"
+  },
+  {
+    "name": "TVR",
+    "slug": "tvr",
+    "logo": "/logos/tvr.png"
+  },
+  {
+    "name": "Talbot",
+    "slug": "talbot",
+    "logo": "/logos/talbot.png"
+  },
+  {
+    "name": "Tata",
+    "slug": "tata",
+    "logo": "/logos/tata.png"
+  },
+  {
+    "name": "Tatra",
+    "slug": "tatra",
+    "logo": "/logos/tatra.png"
+  },
+  {
+    "name": "Tauro",
+    "slug": "tauro-sport-auto",
+    "logo": "/logos/tauro-sport-auto.png"
+  },
+  {
+    "name": "TechArt",
+    "slug": "techart",
+    "logo": "/logos/techart.png"
+  },
+  {
+    "name": "Tesla",
+    "slug": "tesla",
+    "logo": "/logos/tesla.png"
+  },
+  {
+    "name": "Toyota",
+    "slug": "toyota",
+    "logo": "/logos/toyota.png"
+  },
+  {
+    "name": "Toyota Alphard",
+    "slug": "toyota-alphard",
+    "logo": "/logos/toyota-alphard.png"
+  },
+  {
+    "name": "Toyota Century",
+    "slug": "toyota-century",
+    "logo": "/logos/toyota-century.png"
+  },
+  {
+    "name": "Toyota Crown",
+    "slug": "toyota-crown",
+    "logo": "/logos/toyota-crown.png"
+  },
+  {
+    "name": "Tramontana",
+    "slug": "tramontana",
+    "logo": "/logos/tramontana.png"
+  },
+  {
+    "name": "Trion",
+    "slug": "trion",
+    "logo": "/logos/trion.png"
+  },
+  {
+    "name": "Triumph",
+    "slug": "triumph",
+    "logo": "/logos/triumph.png"
+  },
+  {
+    "name": "Troller",
+    "slug": "troller",
+    "logo": "/logos/troller.png"
+  },
+  {
+    "name": "Tucker",
+    "slug": "tucker",
+    "logo": "/logos/tucker.png"
+  },
+  {
+    "name": "UAZ",
+    "slug": "uaz",
+    "logo": "/logos/uaz.png"
+  },
+  {
+    "name": "Ultima",
+    "slug": "ultima",
+    "logo": "/logos/ultima.png"
+  },
+  {
+    "name": "VLF",
+    "slug": "vlf",
+    "logo": "/logos/vlf.png"
+  },
+  {
+    "name": "Vandenbrink",
+    "slug": "vandenbrink",
+    "logo": "/logos/vandenbrink.png"
+  },
+  {
+    "name": "Vauxhall",
+    "slug": "vauxhall",
+    "logo": "/logos/vauxhall.png"
+  },
+  {
+    "name": "Vector",
+    "slug": "vector",
+    "logo": "/logos/vector.png"
+  },
+  {
+    "name": "Vencer",
+    "slug": "vencer",
+    "logo": "/logos/vencer.png"
+  },
+  {
+    "name": "Venturi",
+    "slug": "venturi",
+    "logo": "/logos/venturi.png"
+  },
+  {
+    "name": "Venucia",
+    "slug": "venucia",
+    "logo": "/logos/venucia.png"
+  },
+  {
+    "name": "VinFast",
+    "slug": "vinfast",
+    "logo": "/logos/vinfast.png"
+  },
+  {
+    "name": "Volkswagen",
+    "slug": "volkswagen",
+    "logo": "/logos/volkswagen.png"
+  },
+  {
+    "name": "Volvo",
+    "slug": "volvo",
+    "logo": "/logos/volvo.png"
+  },
+  {
+    "name": "W Motors",
+    "slug": "w-motors",
+    "logo": "/logos/w-motors.png"
+  },
+  {
+    "name": "WEY",
+    "slug": "wey",
+    "logo": "/logos/wey.png"
+  },
+  {
+    "name": "Wanderer",
+    "slug": "wanderer",
+    "logo": "/logos/wanderer.png"
+  },
+  {
+    "name": "Wartburg",
+    "slug": "wartburg",
+    "logo": "/logos/wartburg.png"
+  },
+  {
+    "name": "Weltmeister",
+    "slug": "weltmeister",
+    "logo": "/logos/weltmeister.png"
+  },
+  {
+    "name": "Western Star",
+    "slug": "western-star",
+    "logo": "/logos/western-star.png"
+  },
+  {
+    "name": "Westfield",
+    "slug": "westfield",
+    "logo": "/logos/westfield.png"
+  },
+  {
+    "name": "Wiesmann",
+    "slug": "wiesmann",
+    "logo": "/logos/wiesmann.png"
+  },
+  {
+    "name": "Willys-Overland",
+    "slug": "willys-overland",
+    "logo": "/logos/willys-overland.png"
+  },
+  {
+    "name": "Workhorse",
+    "slug": "workhorse",
+    "logo": "/logos/workhorse.png"
+  },
+  {
+    "name": "Wuling",
+    "slug": "wuling",
+    "logo": "/logos/wuling.png"
+  },
+  {
+    "name": "XPeng",
+    "slug": "xpeng",
+    "logo": "/logos/xpeng.png"
+  },
+  {
+    "name": "Yulon",
+    "slug": "yulon",
+    "logo": "/logos/yulon.png"
+  },
+  {
+    "name": "Yutong",
+    "slug": "yutong",
+    "logo": "/logos/yutong.png"
+  },
+  {
+    "name": "ZAZ",
+    "slug": "zaz",
+    "logo": "/logos/zaz.png"
+  },
+  {
+    "name": "Zarooq Motors",
+    "slug": "zarooq",
+    "logo": "/logos/zarooq.png"
+  },
+  {
+    "name": "Zastava",
+    "slug": "zastava",
+    "logo": "/logos/zastava.png"
+  },
+  {
+    "name": "Zeekr",
+    "slug": "zeekr",
+    "logo": "/logos/zeekr.png"
+  },
+  {
+    "name": "Zenos",
+    "slug": "zenos",
+    "logo": "/logos/zenos.png"
+  },
+  {
+    "name": "Zenvo",
+    "slug": "zenvo",
+    "logo": "/logos/zenvo.png"
+  },
+  {
+    "name": "Zhongtong",
+    "slug": "zhongtong",
+    "logo": "/logos/zhongtong.png"
+  },
+  {
+    "name": "Zinoro",
+    "slug": "zhinuo",
+    "logo": "/logos/zhinuo.png"
+  },
+  {
+    "name": "Zotye",
+    "slug": "zotye",
+    "logo": "/logos/zotye.png"
+  },
+  {
+    "name": "Škoda",
+    "slug": "skoda",
+    "logo": "/logos/skoda.png"
+  }
+]

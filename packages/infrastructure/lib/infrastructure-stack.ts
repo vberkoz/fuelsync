@@ -443,6 +443,14 @@ export class InfrastructureStack extends cdk.Stack {
       bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
     });
 
+    const getBrands = new nodejs.NodejsFunction(this, 'GetBrands', {
+      entry: '../api/src/handlers/getBrands.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
     // Grant DynamoDB permissions
     table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
@@ -467,6 +475,7 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(listReminders);
     table.grantWriteData(createReminder);
     table.grantReadWriteData(deleteReminder);
+    table.grantReadData(getBrands);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -567,6 +576,9 @@ export class InfrastructureStack extends cdk.Stack {
     
     const reminderId = reminders.addResource('{reminderId}');
     reminderId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteReminder), { authorizer });
+
+    const brands = api.root.addResource('brands');
+    brands.addMethod('GET', new apigateway.LambdaIntegration(getBrands));
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
