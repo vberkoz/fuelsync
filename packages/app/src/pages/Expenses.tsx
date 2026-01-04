@@ -326,12 +326,12 @@ export default function Expenses() {
             {showForm ? (
               <>
                 <XMarkIcon className="h-5 w-5" />
-                <span>{t('common.cancel')}</span>
+                <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
               </>
             ) : (
               <>
                 <PlusIcon className="h-5 w-5" />
-                <span>{t('expenses.add')}</span>
+                <span className="hidden min-[440px]:inline">{t('expenses.add')}</span>
               </>
             )}
           </button>

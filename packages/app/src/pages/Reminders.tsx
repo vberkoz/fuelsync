@@ -68,12 +68,12 @@ export default function Reminders() {
           {showForm ? (
             <>
               <XMarkIcon className="h-5 w-5" />
-              <span>{t('common.cancel')}</span>
+              <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
             </>
           ) : (
             <>
               <PlusIcon className="h-5 w-5" />
-              <span className="max-[439px]:hidden">{t('reminders.add')}</span>
+              <span className="hidden min-[440px]:inline">{t('reminders.add')}</span>
             </>
           )}
         </button>

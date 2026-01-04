@@ -19,7 +19,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const body = JSON.parse(event.body || '{}');
     const refillId = randomUUID();
-    const timestamp = new Date().toISOString();
+    const timestamp = body.timestamp ? new Date(body.timestamp).toISOString() : new Date().toISOString();
     const currency = body.currency || 'USD';
     
     const exchangeRate = await getExchangeRate(currency);
