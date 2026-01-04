@@ -73,7 +73,7 @@ export default function Refills() {
   } = useInfiniteQuery({
     queryKey: ['refills-infinite', activeVehicleId],
     enabled: Boolean(activeVehicleId),
-    initialPageParam: null as string | null,
+    initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) => {
       const result = await api.refills.list(activeVehicleId!, pageParam);
       return {
