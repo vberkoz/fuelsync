@@ -70,15 +70,24 @@ export default function Refills() {
     isLoading,
     error
   } = useInfiniteQuery({
-    queryKey: ['refills', activeVehicleId],
-    queryFn: ({ pageParam }) => api.refills.list(activeVehicleId!, pageParam),
-    enabled: !!activeVehicleId,
-    getNextPageParam: (lastPage) => lastPage.nextToken,
-    initialPageParam: undefined as string | undefined
+    queryKey: ['refills-infinite', activeVehicleId],
+    enabled: Boolean(activeVehicleId),
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const result = await api.refills.list(activeVehicleId!, pageParam);
+      return {
+        refills: result?.refills ?? [],
+        nextToken: result?.nextToken ?? null,
+      };
+    },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage) return undefined;
+      return lastPage.nextToken ?? undefined;
+    },
   });
 
   const refills = useMemo(() => 
-    data?.pages.flatMap(page => page.refills) || [],
+    data?.pages?.flatMap(page => page.refills) || [],
     [data]
   );
 
@@ -105,7 +114,7 @@ export default function Refills() {
 
   useEffect(() => {
     const mainElement = document.querySelector('main');
-    if (!mainElement) return;
+    if (!mainElement || !data?.pages?.length) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = mainElement;
@@ -122,7 +131,7 @@ export default function Refills() {
 
     mainElement.addEventListener('scroll', handleScroll);
     return () => mainElement.removeEventListener('scroll', handleScroll);
-  }, [hasMoreMonths, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasMoreMonths, hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages?.length]);
 
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

@@ -569,7 +569,24 @@ packages/app/src/
 
 ## Recent Changes
 
-### In-App Reminder System (Latest)
+### TanStack Query Infinite Query Fix (Latest)
+- **Issue**: Refills page crashing with "Cannot read properties of undefined (reading 'length')" error
+- **Root Cause**: React Query InfiniteQueryObserver initialization with undefined pages array
+  - Missing explicit `initialPageParam` caused internal state corruption
+  - Query key collision with potential previous non-infinite query cache
+  - Conditional return in `queryFn` created inconsistent page shapes
+- **Fix Applied**:
+  - Changed query key from `['refills', vehicleId]` to `['refills-infinite', vehicleId]` to avoid cache poisoning
+  - Added explicit `initialPageParam: null as string | null` (mandatory for v5)
+  - Removed conditional early return from `queryFn` - let `enabled` control execution
+  - Ensured consistent page shape: `{ refills: [], nextToken: null }`
+  - Added ultra-safe `getNextPageParam` with explicit null check
+  - Added scroll handler guard to prevent fetch when no pages loaded
+- **Files Modified**:
+  - `packages/app/src/pages/Refills.tsx` - Fixed infinite query configuration
+- **Status**: Resolved - Refills page now loads without crashes
+
+### In-App Reminder System
 - **Removed**: Backend push notification infrastructure (Lambda, EventBridge, SES, VAPID)
 - **Implemented**: Simple in-app reminder system
   - Reminders stored in DynamoDB (PK: USER#{userId}, SK: REMINDER#{reminderId})

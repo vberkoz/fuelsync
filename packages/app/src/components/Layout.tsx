@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, XMarkIcon, Bars3Icon, Cog6ToothIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { TruckIcon, BeakerIcon, BanknotesIcon, ChartBarIcon, BellIcon, Cog6ToothIcon, ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { Listbox } from '@headlessui/react'
 import { useTranslation } from 'react-i18next'
 import { useVehicleStore } from '../stores/vehicleStore'
@@ -31,7 +31,6 @@ interface Vehicle {
 
 export default function Layout({ children }: LayoutProps) {
   const { t } = useTranslation();
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentVehicle, setCurrentVehicle] = useState<Vehicle | null>(null)
   const [showReminderDialog, setShowReminderDialog] = useState(false)
   const location = useLocation()
@@ -96,22 +95,13 @@ export default function Layout({ children }: LayoutProps) {
   }, [currentVehicleId, vehicles, refillsData]);
 
   const handleNavClick = () => {
-    setSidebarOpen(false)
+    window.scrollTo(0, 0)
   }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-gray-900/80 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900/95 backdrop-blur-sm border-r border-slate-700 transition-transform duration-300 lg:static lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex w-72 flex-col bg-slate-900/95 backdrop-blur-sm border-r border-slate-700">
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-700">
           <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
             <div className="relative flex items-center gap-3 w-full">
@@ -150,12 +140,6 @@ export default function Layout({ children }: LayoutProps) {
               </Listbox.Options>
             </div>
           </Listbox>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-white"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
@@ -184,7 +168,7 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </nav>
 
-        <div className="border-t border-slate-700 p-3 space-y-1">
+        <div className="border-t border-slate-700 p-3">
           <Link
             to="/settings"
             onClick={handleNavClick}
@@ -198,20 +182,76 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-28 lg:pb-0">
         {/* Mobile header */}
         <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-700 bg-slate-900/95 backdrop-blur-sm px-4 lg:hidden">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-          <span className="text-lg font-semibold text-white">FuelSync</span>
-          <div className="w-6" />
+          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
+            <div className="relative">
+              <Listbox.Button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50">
+                {currentVehicle ? (
+                  <div className="text-sm text-white">
+                    {currentVehicle.year} {currentVehicle.make} {currentVehicle.model}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400">Select vehicle</div>
+                )}
+                <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+              </Listbox.Button>
+              <Listbox.Options className="absolute top-full left-0 mt-2 w-64 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
+                {vehicles.map((v: Vehicle) => (
+                  <Listbox.Option
+                    key={v.vehicleId}
+                    value={v.vehicleId}
+                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
+                  >
+                    {({ selected }) => (
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm">
+                          <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
+                          <div className="text-xs text-slate-400">{v.model}</div>
+                        </div>
+                        {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                      </div>
+                    )}
+                  </Listbox.Option>
+                ))}
+              </Listbox.Options>
+            </div>
+          </Listbox>
+          <Link to="/settings" className="p-2 rounded-lg hover:bg-slate-800/50">
+            <Cog6ToothIcon className={`h-6 w-6 ${location.pathname === '/settings' ? 'text-indigo-400' : 'text-slate-400'}`} />
+          </Link>
         </div>
         {children}
       </main>
+
+      {/* Bottom Navigation for Mobile/Tablet */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center h-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-safe lg:hidden" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        {navigation.map((item) => {
+          const isActive = location.pathname === item.href;
+          const isReminders = item.href === '/reminders';
+          const hasOverdue = isReminders && currentVehicle?.odometer && hasOverdueReminders(currentVehicle.vehicleId, currentVehicle.odometer);
+          
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              onClick={handleNavClick}
+              className={`flex flex-col items-center justify-center flex-1 h-full ${
+                isActive ? 'text-indigo-400' : 'text-slate-400'
+              }`}
+            >
+              <div className="relative">
+                <item.icon className="h-6 w-6" />
+                {hasOverdue && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full" />
+                )}
+              </div>
+              <span className="text-xs mt-1">{t(item.name).split(' ')[0]}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
       {currentVehicle?.odometer && (
         <ReminderDialog

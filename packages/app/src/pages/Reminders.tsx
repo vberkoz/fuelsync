@@ -11,6 +11,7 @@ export default function Reminders() {
   const queryClient = useQueryClient();
   const currentVehicleId = useVehicleStore(state => state.currentVehicleId);
   const [showForm, setShowForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
     vehicleId: currentVehicleId || '', 
     title: '', 
@@ -37,7 +38,10 @@ export default function Reminders() {
 
   const deleteMutation = useMutation({
     mutationFn: api.reminders.delete,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setDeleteConfirm(null);
+    }
   });
 
   useEffect(() => {
@@ -190,7 +194,7 @@ export default function Reminders() {
                   <p className="text-slate-400 text-sm">{reminder.type}</p>
                 </div>
                 <button 
-                  onClick={() => deleteMutation.mutate(reminder.reminderId)}
+                  onClick={() => setDeleteConfirm(reminder.reminderId)}
                   className="text-red-400 hover:text-red-300"
                 >
                   <TrashIcon className="h-5 w-5" />
@@ -207,6 +211,30 @@ export default function Reminders() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-sm">
+            <Dialog.Title className="text-xl font-bold text-white mb-4">{t('common.confirmDelete')}</Dialog.Title>
+            <p className="text-slate-300 mb-6">{t('reminders.deleteConfirm')}</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)} 
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              >
+                {t('common.delete')}
+              </button>
+              <button 
+                onClick={() => setDeleteConfirm(null)} 
+                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 }

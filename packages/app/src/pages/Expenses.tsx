@@ -79,15 +79,18 @@ export default function Expenses() {
     isLoading,
     error
   } = useInfiniteQuery({
-    queryKey: ['expenses', activeVehicleId],
-    queryFn: ({ pageParam }) => api.expenses.list(activeVehicleId!, pageParam),
-    enabled: !!activeVehicleId,
-    getNextPageParam: (lastPage) => lastPage.nextToken,
-    initialPageParam: undefined as string | undefined
+    queryKey: ['expenses', activeVehicleId || 'none'],
+    queryFn: async ({ pageParam }) => {
+      if (!activeVehicleId) return { expenses: [], nextToken: undefined };
+      const result = await api.expenses.list(activeVehicleId, pageParam);
+      return result || { expenses: [], nextToken: undefined };
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage?.nextToken ?? undefined
   });
 
   const expenses = useMemo(() => 
-    data?.pages.flatMap(page => page.expenses) || [],
+    data?.pages?.flatMap(page => page.expenses) || [],
     [data]
   );
 

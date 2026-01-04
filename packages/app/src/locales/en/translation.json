@@ -10,7 +10,8 @@
     "deleting": "Deleting...",
     "search": "Search",
     "filter": "Filter",
-    "close": "Close"
+    "close": "Close",
+    "confirmDelete": "Confirm Delete"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -120,7 +121,9 @@
     "threshold": "Threshold",
     "unit": "Unit",
     "current": "Current",
-    "urgent": "Urgent"
+    "urgent": "Urgent",
+    "overdue": "Overdue Reminders",
+    "deleteConfirm": "Are you sure you want to delete this reminder?"
   },
   "profile": {
     "title": "Profile",

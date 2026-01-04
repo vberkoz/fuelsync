@@ -10,7 +10,8 @@
     "deleting": "Видалення...",
     "search": "Пошук",
     "filter": "Фільтр",
-    "close": "Закрити"
+    "close": "Закрити",
+    "confirmDelete": "Підтвердити видалення"
   },
   "navigation": {
     "dashboard": "Головна",
@@ -120,7 +121,9 @@
     "threshold": "Поріг",
     "unit": "Одиниця",
     "current": "Поточне",
-    "urgent": "Термінovo"
+    "urgent": "Термінovo",
+    "overdue": "Прострочені нагадування",
+    "deleteConfirm": "Ви впевнені, що хочете видалити це нагадування?"
   },
   "profile": {
     "title": "Профіль",
