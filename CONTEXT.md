@@ -102,6 +102,7 @@ FuelSync is a serverless vehicle expense tracking application built on AWS. Trac
 - ✅ Internationalization (English/Ukrainian)
 - ✅ Responsive mobile-first design
 - ✅ Analytics with charts and statistics
+- ✅ CSV export/import for vehicles, refills, and expenses
 
 ## Technology Stack
 
@@ -568,6 +569,29 @@ packages/app/src/
 - ✅ Visual progress indicators with color coding
 
 ## Recent Changes
+
+### CSV Export/Import (Latest)
+- **Export Functionality**:
+  - Separate CSV files for vehicles, refills, and expenses
+  - Overflow menu on each page with Export/Import options
+  - Fetches ALL records from DynamoDB (not just loaded on page)
+  - Date fields in ISO format (e.g., 2024-01-15T10:30:00.000Z)
+  - Vehicle reference columns in refills/expenses (vehicleYear, vehicleMake, vehicleModel)
+  - No ID fields exported (auto-generated on import)
+- **Import Functionality**:
+  - Converts ISO date to timestamp milliseconds
+  - Duplicate prevention: checks existing records by date before importing
+  - Skips records with matching dates to prevent duplicates
+  - Sequential import with mutation feedback
+- **CSV Format**:
+  - vehicles.csv: make, model, year, licensePlate, fuelType
+  - refills.csv: date, vehicleYear, vehicleMake, vehicleModel, odometer, volume, pricePerUnit, totalCost, currency, fuelType, station
+  - expenses.csv: date, vehicleYear, vehicleMake, vehicleModel, category, amount, currency, odometer, description
+- **Files Modified**:
+  - `packages/app/src/lib/csv.ts` - CSV utility functions
+  - `packages/app/src/pages/Vehicles.tsx` - Export/import with overflow menu
+  - `packages/app/src/pages/Refills.tsx` - Export/import with overflow menu and duplicate check
+  - `packages/app/src/pages/Expenses.tsx` - Export/import with overflow menu and duplicate check
 
 ### TanStack Query Infinite Query Fix (Latest)
 - **Issue**: Refills page crashing with "Cannot read properties of undefined (reading 'length')" error

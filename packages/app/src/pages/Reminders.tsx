@@ -73,7 +73,7 @@ export default function Reminders() {
           ) : (
             <>
               <PlusIcon className="h-5 w-5" />
-              <span>{t('reminders.add')}</span>
+              <span className="max-[439px]:hidden">{t('reminders.add')}</span>
             </>
           )}
         </button>

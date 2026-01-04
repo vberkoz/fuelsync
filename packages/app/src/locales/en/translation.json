@@ -140,6 +140,19 @@
     "units": "Units",
     "dateFormat": "Date Format",
     "notifications": "Notifications",
-    "loading": "Loading settings..."
+    "loading": "Loading settings...",
+    "changePassword": "Change password",
+    "changePasswordDesc": "Update your password associated with your account.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordSuccess": "Password changed successfully",
+    "passwordMismatch": "Passwords do not match",
+    "preferences": "Preferences",
+    "preferencesDesc": "Customize your application settings and preferences.",
+    "imperial": "Imperial (Miles, Gallons)",
+    "metric": "Metric (Kilometers, Liters)",
+    "logout": "Log out",
+    "logoutDesc": "Sign out of your account on this device."
   }
 }

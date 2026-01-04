@@ -9,6 +9,7 @@ import { useVehicleStore } from '../stores/vehicleStore';
 import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
 import { convertDistance, getDistanceUnit } from '../lib/units';
 import { formatDate } from '../lib/date';
+import { exportToCSV, parseCSV } from '../lib/csv';
 
 interface Expense {
   expenseId: string;
@@ -63,6 +64,12 @@ export default function Expenses() {
   const units = settingsData?.settings?.units || 'metric';
   const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
 
+  const { data: currentVehicle } = useQuery({
+    queryKey: ['vehicle', activeVehicleId],
+    queryFn: () => api.vehicles.get(activeVehicleId!),
+    enabled: !!activeVehicleId
+  });
+
   useEffect(() => {
     if (vehicleId) {
       setCurrentVehicle(vehicleId);
@@ -96,6 +103,7 @@ export default function Expenses() {
 
   const [visibleMonths, setVisibleMonths] = useState(12);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
@@ -214,6 +222,64 @@ export default function Expenses() {
     deleteMutation.mutate(id);
   };
 
+  const handleExport = async () => {
+    const allExpenses = [];
+    let nextToken: string | undefined = undefined;
+    
+    do {
+      const result = await api.expenses.list(activeVehicleId!, nextToken);
+      allExpenses.push(...(result?.expenses || []));
+      nextToken = result?.nextToken;
+    } while (nextToken);
+    
+    const csvData = allExpenses.map((e: Expense) => ({
+      date: new Date(e.timestamp || e.createdAt).toISOString(),
+      vehicleYear: currentVehicle?.vehicle?.year || '',
+      vehicleMake: currentVehicle?.vehicle?.make || '',
+      vehicleModel: currentVehicle?.vehicle?.model || '',
+      category: e.category,
+      amount: e.amount,
+      currency: e.currency,
+      odometer: e.odometer || '',
+      description: e.description || ''
+    }));
+    exportToCSV(csvData, 'expenses.csv');
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = parseCSV(text);
+    
+    const allExpenses = [];
+    let nextToken: string | undefined = undefined;
+    do {
+      const result = await api.expenses.list(activeVehicleId!, nextToken);
+      allExpenses.push(...(result?.expenses || []));
+      nextToken = result?.nextToken;
+    } while (nextToken);
+    
+    const existingDates = new Set(allExpenses.map((e: Expense) => 
+      new Date(e.timestamp || e.createdAt).toISOString().split('T')[0]
+    ));
+    
+    for (const row of data) {
+      const importDate = new Date(row.date).toISOString().split('T')[0];
+      if (existingDates.has(importDate)) continue;
+      
+      await createMutation.mutateAsync({
+        category: row.category,
+        amount: parseFloat(row.amount),
+        currency: row.currency,
+        odometer: row.odometer ? parseFloat(row.odometer) : undefined,
+        description: row.description,
+        timestamp: new Date(row.date).getTime()
+      });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {error && (
@@ -226,26 +292,50 @@ export default function Expenses() {
           <BanknotesIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('expenses.title')}</h1>
         </div>
-        <button 
-          onClick={() => { 
-            setShowForm(!showForm); 
-            setEditingId(null); 
-            setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' }); 
-          }} 
-          className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
-        >
-          {showForm ? (
-            <>
-              <XMarkIcon className="h-5 w-5" />
-              <span>{t('common.cancel')}</span>
-            </>
-          ) : (
-            <>
-              <PlusIcon className="h-5 w-5" />
-              <span>{t('expenses.add')}</span>
-            </>
-          )}
-        </button>
+        <div className="flex gap-2">
+          <Menu as="div" className="relative">
+            <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
+              <EllipsisVerticalIcon className="h-5 w-5" />
+            </Menu.Button>
+            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+              <Menu.Item>
+                {({ active }) => (
+                  <button onClick={handleExport} disabled={expenses.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50`}>
+                    {createMutation.isPending ? 'Exporting...' : 'Export CSV'}
+                  </button>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg`}>
+                    Import CSV
+                  </button>
+                )}
+              </Menu.Item>
+            </Menu.Items>
+          </Menu>
+          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleImport} className="hidden" />
+          <button 
+            onClick={() => { 
+              setShowForm(!showForm); 
+              setEditingId(null); 
+              setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' }); 
+            }} 
+            className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+          >
+            {showForm ? (
+              <>
+                <XMarkIcon className="h-5 w-5" />
+                <span>{t('common.cancel')}</span>
+              </>
+            ) : (
+              <>
+                <PlusIcon className="h-5 w-5" />
+                <span>{t('expenses.add')}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {isLoading && (

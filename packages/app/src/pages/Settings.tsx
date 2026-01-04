@@ -34,7 +34,7 @@ export default function Settings() {
     e.preventDefault();
     setPasswordError('');
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError(t('settings.passwordMismatch'));
       return;
     }
     changePasswordMutation.mutate({
@@ -92,23 +92,23 @@ export default function Settings() {
         {/* Change Password Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Change password</h2>
-              <p className="text-slate-400 text-sm">Update your password associated with your account.</p>
+              <h2 className="text-xl font-bold text-white mb-2">{t('settings.changePassword')}</h2>
+              <p className="text-slate-400 text-sm">{t('settings.changePasswordDesc')}</p>
             </div>
             <div>
               {passwordError && (
                 <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                  {passwordError}
+                  {passwordError === 'Passwords do not match' ? t('settings.passwordMismatch') : passwordError}
                 </div>
               )}
               {changePasswordMutation.isSuccess && (
                 <div className="mb-4 bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
-                  Password changed successfully
+                  {t('settings.passwordSuccess')}
                 </div>
               )}
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <Field>
-                  <Label className="block text-sm font-medium text-white mb-2">Current password</Label>
+                  <Label className="block text-sm font-medium text-white mb-2">{t('settings.currentPassword')}</Label>
                   <input
                     type="password"
                     value={passwordData.currentPassword}
@@ -118,7 +118,7 @@ export default function Settings() {
                   />
                 </Field>
                 <Field>
-                  <Label className="block text-sm font-medium text-white mb-2">New password</Label>
+                  <Label className="block text-sm font-medium text-white mb-2">{t('settings.newPassword')}</Label>
                   <input
                     type="password"
                     value={passwordData.newPassword}
@@ -128,7 +128,7 @@ export default function Settings() {
                   />
                 </Field>
                 <Field>
-                  <Label className="block text-sm font-medium text-white mb-2">Confirm password</Label>
+                  <Label className="block text-sm font-medium text-white mb-2">{t('settings.confirmPassword')}</Label>
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
@@ -142,7 +142,7 @@ export default function Settings() {
                   disabled={changePasswordMutation.isPending}
                   className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
                 >
-                  {changePasswordMutation.isPending ? 'Saving...' : 'Save'}
+                  {changePasswordMutation.isPending ? t('common.saving') : t('common.save')}
                 </button>
               </form>
             </div>
@@ -153,8 +153,8 @@ export default function Settings() {
         {/* Preferences Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
           <div>
-            <h2 className="text-xl font-bold text-white mb-2">Preferences</h2>
-            <p className="text-slate-400 text-sm">Customize your application settings and preferences.</p>
+            <h2 className="text-xl font-bold text-white mb-2">{t('settings.preferences')}</h2>
+            <p className="text-slate-400 text-sm">{t('settings.preferencesDesc')}</p>
           </div>
           <div className="space-y-5">
           <Field>
@@ -222,11 +222,11 @@ export default function Settings() {
             <Listbox value={settingsData?.settings?.units || 'imperial'} onChange={(value) => handleChange('units', value)}>
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <span>{(settingsData?.settings?.units || 'imperial') === 'imperial' ? 'Imperial (Miles, Gallons)' : 'Metric (Kilometers, Liters)'}</span>
+                  <span>{(settingsData?.settings?.units || 'imperial') === 'imperial' ? t('settings.imperial') : t('settings.metric')}</span>
                   <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
                 <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                  {[{ value: 'imperial', label: 'Imperial (Miles, Gallons)' }, { value: 'metric', label: 'Metric (Kilometers, Liters)' }].map((unit) => (
+                  {[{ value: 'imperial', label: t('settings.imperial') }, { value: 'metric', label: t('settings.metric') }].map((unit) => (
                     <Listbox.Option
                       key={unit.value}
                       value={unit.value}
@@ -291,8 +291,8 @@ export default function Settings() {
         {/* Logout Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Log out</h2>
-              <p className="text-slate-400 text-sm">Sign out of your account on this device.</p>
+              <h2 className="text-xl font-bold text-white mb-2">{t('settings.logout')}</h2>
+              <p className="text-slate-400 text-sm">{t('settings.logoutDesc')}</p>
             </div>
             <div>
               <button

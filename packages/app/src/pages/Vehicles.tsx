@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, Menu, Listbox, RadioGroup, Field, Label } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/date';
 import { useVehicleStore } from '../stores/vehicleStore';
+import { exportToCSV, parseCSV } from '../lib/csv';
 
 interface Vehicle {
   vehicleId: string;
@@ -29,6 +30,7 @@ export default function Vehicles() {
   const [formData, setFormData] = useState({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' });
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['vehicles'],
@@ -109,6 +111,34 @@ export default function Vehicles() {
     deleteMutation.mutate(id);
   };
 
+  const handleExport = () => {
+    const csvData = vehicles.map((v: Vehicle) => ({
+      make: v.make,
+      model: v.model,
+      year: v.year,
+      licensePlate: v.licensePlate || '',
+      fuelType: v.fuelType || ''
+    }));
+    exportToCSV(csvData, 'vehicles.csv');
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = parseCSV(text);
+    for (const row of data) {
+      await createMutation.mutateAsync({
+        make: row.make,
+        model: row.model,
+        year: parseInt(row.year),
+        licensePlate: row.licensePlate,
+        fuelType: row.fuelType
+      });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {error && (
@@ -121,19 +151,43 @@ export default function Vehicles() {
           <TruckIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('vehicles.title')}</h1>
         </div>
-        <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-          {showForm ? (
-            <>
-              <XMarkIcon className="h-5 w-5" />
-              <span>{t('common.cancel')}</span>
-            </>
-          ) : (
-            <>
-              <PlusIcon className="h-5 w-5" />
-              <span>{t('vehicles.add')}</span>
-            </>
-          )}
-        </button>
+        <div className="flex gap-2">
+          <Menu as="div" className="relative">
+            <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
+              <EllipsisVerticalIcon className="h-5 w-5" />
+            </Menu.Button>
+            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+              <Menu.Item>
+                {({ active }) => (
+                  <button onClick={handleExport} disabled={vehicles.length === 0} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50`}>
+                    Export CSV
+                  </button>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg`}>
+                    Import CSV
+                  </button>
+                )}
+              </Menu.Item>
+            </Menu.Items>
+          </Menu>
+          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleImport} className="hidden" />
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+            {showForm ? (
+              <>
+                <XMarkIcon className="h-5 w-5" />
+                <span>{t('common.cancel')}</span>
+              </>
+            ) : (
+              <>
+                <PlusIcon className="h-5 w-5" />
+                <span>{t('vehicles.add')}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {isLoading && (
