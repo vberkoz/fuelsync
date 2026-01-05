@@ -221,5 +221,21 @@ export const api = {
       const res = await fetch(`${API_URL}/brands`);
       return handleResponse(res);
     }
+  },
+  categories: {
+    list: async () => {
+      const res = await safeFetch(`${API_URL}/categories`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    create: async (name: string) => {
+      const res = await safeFetch(`${API_URL}/categories`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name })
+      });
+      return handleResponse(res);
+    }
   }
 };

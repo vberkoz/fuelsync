@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { Dialog, Menu, Listbox, RadioGroup, Field, Label, Combobox } from '@headlessui/react';
+import { Car, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, TruckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
@@ -41,9 +42,9 @@ const customSlugs: Record<string, string> = {
   'Škoda': 'skoda'
 };
 
-function getVehicleLogo(make: string) {
+function getVehicleLogo(make: string): { type: 'image' | 'icon'; value: string } {
   const slug = customSlugs[make] || make.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  return `/logos/${slug}.png`;
+  return { type: 'image', value: `/logos/${slug}.png` };
 }
 
 export default function Vehicles() {
@@ -55,6 +56,7 @@ export default function Vehicles() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' });
+  const [logoError, setLogoError] = useState<Set<string>>(new Set());
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,26 +188,26 @@ export default function Vehicles() {
       )}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <TruckIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+          <Car className="h-8 w-8 text-indigo-500" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('vehicles.title')}</h1>
         </div>
         <div className="flex gap-2">
           <Menu as="div" className="relative">
             <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+              <MoreVertical className="h-5 w-5" />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-xl border border-slate-600 focus:outline-none z-[100]">
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={handleExport} disabled={vehicles.length === 0} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50`}>
-                    Export CSV
+                  <button onClick={handleExport} disabled={vehicles.length === 0} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50 flex items-center gap-2`}>
+                    <Download className="h-4 w-4" /> Export CSV
                   </button>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg`}>
-                    Import CSV
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg flex items-center gap-2`}>
+                    <Upload className="h-4 w-4" /> Import CSV
                   </button>
                 )}
               </Menu.Item>
@@ -215,12 +217,12 @@ export default function Vehicles() {
           <button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ make: '', model: '', year: '', licensePlate: '', fuelType: 'Regular' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
             {showForm ? (
               <>
-                <XMarkIcon className="h-5 w-5" />
+                <X className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
               </>
             ) : (
               <>
-                <PlusIcon className="h-5 w-5" />
+                <Plus className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('vehicles.add')}</span>
               </>
             )}
@@ -244,33 +246,43 @@ export default function Vehicles() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
-                  <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || ''})}>
+                  <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || makeQuery})}>
                     <div className="relative">
                       <div className="relative">
                         {formData.make && (
                           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <img src={getVehicleLogo(formData.make)} alt={formData.make} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
+                            {logoError.has(formData.make) ? (
+                              <Car className="h-5 w-5 text-slate-400" />
+                            ) : (
+                              <img src={getVehicleLogo(formData.make).value} alt={formData.make} className="h-5 w-5 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(formData.make)); e.currentTarget.style.display = 'none'; }} />
+                            )}
                           </div>
                         )}
-                        <Combobox.Input onChange={(e) => setMakeQuery(e.target.value)} displayValue={(make: string) => make} className={`w-full py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-10' : 'pl-4'}`} required />
+                        <Combobox.Input onChange={(e) => { setMakeQuery(e.target.value); setFormData({...formData, make: e.target.value}); }} displayValue={(make: string) => make} className={`w-full py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-10' : 'pl-4'}`} required placeholder="Type or select a brand" />
                         <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                          <ChevronDown className="h-5 w-5 text-slate-400" />
                         </Combobox.Button>
                       </div>
                       <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {filteredBrands.map((brand: any) => (
-                          <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  {brand.logo && <img src={brand.logo} alt={brand.name} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />}
-                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                        {filteredBrands.length === 0 && makeQuery !== '' ? (
+                          <div className="px-4 py-2 text-slate-400 text-sm">
+                            Press Enter to use "{makeQuery}"
+                          </div>
+                        ) : (
+                          filteredBrands.map((brand: any) => (
+                            <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                              {({ selected }) => (
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    {brand.logo && <img src={brand.logo} alt={brand.name} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                                  </div>
+                                  {selected && <Check className="h-5 w-5 text-indigo-500" />}
                                 </div>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Combobox.Option>
-                        ))}
+                              )}
+                            </Combobox.Option>
+                          ))
+                        )}
                       </Combobox.Options>
                     </div>
                   </Combobox>
@@ -293,7 +305,7 @@ export default function Vehicles() {
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <span>{formData.fuelType}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
                       </Listbox.Button>
                       <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                         {['Regular', 'Premium', 'Diesel'].map((fuel) => (
@@ -305,7 +317,7 @@ export default function Vehicles() {
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
                                 <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
                           </Listbox.Option>
@@ -357,7 +369,11 @@ export default function Vehicles() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <img src={getVehicleLogo(v.make)} alt={v.make} className="h-8 w-8 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
+                          {logoError.has(v.make) ? (
+                            <Car className="h-8 w-8 text-slate-400" />
+                          ) : (
+                            <img src={getVehicleLogo(v.make).value} alt={v.make} className="h-8 w-8 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(v.make)); e.currentTarget.style.display = 'none'; }} />
+                          )}
                         </td>
                         <td className="p-4 text-white font-mono">{v.year}</td>
                         <td className="p-4 text-white">{v.make}</td>
@@ -368,22 +384,28 @@ export default function Vehicles() {
                         <td className="p-4 text-white" onClick={(e) => e.stopPropagation()}>
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                              <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                              <MoreVertical className="h-5 w-5 text-slate-400" />
                             </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-xl border border-slate-600 focus:outline-none z-[100]">
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('vehicles.viewRefills')}</button>
+                                  <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                    <Eye className="h-4 w-4" /> {t('vehicles.viewRefills')}
+                                  </button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>{t('common.edit')}</button>
+                                  <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white flex items-center gap-2`}>
+                                    <Pencil className="h-4 w-4" /> {t('common.edit')}
+                                  </button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
+                                  <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                    <Trash2 className="h-4 w-4" /> {t('common.delete')}
+                                  </button>
                                 )}
                               </Menu.Item>
                             </Menu.Items>
@@ -407,14 +429,20 @@ export default function Vehicles() {
             {vehicles.map((v: Vehicle) => (
               <RadioGroup.Option key={v.vehicleId} value={v.vehicleId} className="focus:outline-none">
                 {({ checked }) => (
-                  <div className={`relative bg-slate-800 hover:bg-slate-750 transition-all duration-200 rounded-xl border ${
+                  <div className={`relative bg-slate-800 hover:bg-slate-750 transition-all duration-200 rounded-xl border overflow-visible ${
                     checked ? 'ring-2 ring-indigo-500 border-indigo-500/50 shadow-lg shadow-indigo-500/10' : 'border-slate-700 hover:border-slate-600'
                   }`}>
                     {/* Header with logo, selection, and menu */}
                     <div className="flex items-center justify-between p-4 pb-3">
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <img src={getVehicleLogo(v.make)} alt={v.make} className="h-12 w-12 object-contain" onError={(e) => { e.currentTarget.src = '/logos/placeholder.svg'; }} />
+                          {logoError.has(v.make) ? (
+                            <div className="h-12 w-12 flex items-center justify-center bg-slate-700 rounded-lg">
+                              <Car className="h-7 w-7 text-slate-400" />
+                            </div>
+                          ) : (
+                            <img src={getVehicleLogo(v.make).value} alt={v.make} className="h-12 w-12 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(v.make)); e.currentTarget.style.display = 'none'; }} />
+                          )}
                           <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-800 flex items-center justify-center ${
                             checked ? 'bg-indigo-500' : 'bg-slate-600'
                           }`}>
@@ -431,27 +459,27 @@ export default function Vehicles() {
                       <div onClick={(e) => e.stopPropagation()}>
                         <Menu as="div" className="relative">
                           <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
-                            <EllipsisVerticalIcon className="h-5 w-5 text-slate-400" />
+                            <MoreVertical className="h-5 w-5 text-slate-400" />
                           </Menu.Button>
-                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-xl border border-slate-600 focus:outline-none z-[100]">
                             <Menu.Item>
                               {({ active }) => (
-                                <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>
-                                  {t('vehicles.viewRefills')}
+                                <button onClick={() => navigate(`/refills/${v.vehicleId}`)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                  <Eye className="h-4 w-4" /> {t('vehicles.viewRefills')}
                                 </button>
                               )}
                             </Menu.Item>
                             <Menu.Item>
                               {({ active }) => (
-                                <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white`}>
-                                  {t('common.edit')}
+                                <button onClick={() => handleEdit(v)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white flex items-center gap-2`}>
+                                  <Pencil className="h-4 w-4" /> {t('common.edit')}
                                 </button>
                               )}
                             </Menu.Item>
                             <Menu.Item>
                               {({ active }) => (
-                                <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>
-                                  {t('common.delete')}
+                                <button onClick={() => { setDeleteId(v.vehicleId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                  <Trash2 className="h-4 w-4" /> {t('common.delete')}
                                 </button>
                               )}
                             </Menu.Item>

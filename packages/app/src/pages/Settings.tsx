@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Field, Label, Listbox, Switch } from '@headlessui/react';
-import { Cog6ToothIcon, ChevronUpDownIcon, CheckIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Settings as SettingsIcon, ChevronsUpDown, Check, LogOut } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
@@ -84,7 +84,7 @@ export default function Settings() {
         </div>
       )}
       <div className="flex items-center gap-3 mb-6">
-        <Cog6ToothIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+        <SettingsIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('settings.title')}</h1>
       </div>
 
@@ -167,7 +167,7 @@ export default function Settings() {
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span>{i18n.language === 'en' ? 'English' : 'Українська'}</span>
-                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                  <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
                 <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {[{ value: 'en', label: 'English' }, { value: 'uk', label: 'Українська' }].map((lang) => (
@@ -179,7 +179,7 @@ export default function Settings() {
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
                           <span className={selected ? 'font-semibold text-white' : 'text-white'}>{lang.label}</span>
-                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                          {selected && <Check className="h-5 w-5 text-indigo-500" />}
                         </div>
                       )}
                     </Listbox.Option>
@@ -195,7 +195,7 @@ export default function Settings() {
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span>{CURRENCIES.find(c => c.code === (settingsData?.settings?.preferredCurrency || 'USD'))?.name || settingsData?.settings?.preferredCurrency || 'USD'}</span>
-                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                  <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
                 <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {CURRENCIES.map((curr) => (
@@ -207,7 +207,7 @@ export default function Settings() {
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
                           <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.symbol} {curr.code} - {curr.name}</span>
-                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                          {selected && <Check className="h-5 w-5 text-indigo-500" />}
                         </div>
                       )}
                     </Listbox.Option>
@@ -223,7 +223,7 @@ export default function Settings() {
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span>{(settingsData?.settings?.units || 'imperial') === 'imperial' ? t('settings.imperial') : t('settings.metric')}</span>
-                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                  <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
                 <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {[{ value: 'imperial', label: t('settings.imperial') }, { value: 'metric', label: t('settings.metric') }].map((unit) => (
@@ -235,7 +235,7 @@ export default function Settings() {
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
                           <span className={selected ? 'font-semibold text-white' : 'text-white'}>{unit.label}</span>
-                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                          {selected && <Check className="h-5 w-5 text-indigo-500" />}
                         </div>
                       )}
                     </Listbox.Option>
@@ -251,7 +251,7 @@ export default function Settings() {
               <div className="relative">
                 <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span>{settingsData?.settings?.dateFormat || 'MM/DD/YYYY'}</span>
-                  <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                  <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
                 <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'].map((format) => (
@@ -263,7 +263,7 @@ export default function Settings() {
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
                           <span className={selected ? 'font-semibold text-white' : 'text-white'}>{format}</span>
-                          {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                          {selected && <Check className="h-5 w-5 text-indigo-500" />}
                         </div>
                       )}
                     </Listbox.Option>
@@ -302,7 +302,7 @@ export default function Settings() {
                 }}
                 className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
               >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                <LogOut className="h-5 w-5" />
                 {t('navigation.logout')}
               </button>
             </div>

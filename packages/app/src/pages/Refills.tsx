@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, Menu, Listbox, Field, Label } from '@headlessui/react';
+import { Fuel, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, BeakerIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+import { useReminderStore } from '../stores/reminderStore';
 import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
 import { convertDistance, convertVolume, getDistanceUnit, getVolumeUnit } from '../lib/units';
 import { formatDate } from '../lib/date';
 import { exportToCSV, parseCSV } from '../lib/csv';
+import ReminderDialog from '../components/ReminderDialog';
 
 interface Refill {
   refillId: string;
@@ -34,6 +37,10 @@ export default function Refills() {
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
   const activeVehicleId = vehicleId || currentVehicleId;
+  const { setReminders, getOverdueReminders } = useReminderStore();
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [overdueReminders, setOverdueReminders] = useState<any[]>([]);
+  const [currentOdometerForReminder, setCurrentOdometerForReminder] = useState(0);
 
   const { data: vehiclesData } = useQuery({
     queryKey: ['vehicles'],
@@ -54,6 +61,25 @@ export default function Refills() {
     queryFn: () => api.vehicles.get(activeVehicleId!),
     enabled: !!activeVehicleId
   });
+
+  useQuery({
+    queryKey: ['reminders'],
+    queryFn: api.reminders.list
+  });
+
+  useEffect(() => {
+    const loadReminders = async () => {
+      try {
+        const data = await api.reminders.list();
+        if (data?.reminders) {
+          setReminders(data.reminders);
+        }
+      } catch (error) {
+        // Handle error silently
+      }
+    };
+    loadReminders();
+  }, [setReminders]);
 
   useEffect(() => {
     if (vehicleId) {
@@ -149,12 +175,47 @@ export default function Refills() {
     station: ''
   });
 
+  const updateFormField = (field: string, value: string) => {
+    const newData = { ...formData, [field]: value };
+    
+    const vol = parseFloat(newData.volume);
+    const price = parseFloat(newData.pricePerUnit);
+    const total = parseFloat(newData.totalCost);
+    
+    if (field === 'volume' && !isNaN(vol) && !isNaN(price)) {
+      newData.totalCost = (vol * price).toFixed(2);
+    } else if (field === 'pricePerUnit' && !isNaN(vol) && !isNaN(price)) {
+      newData.totalCost = (vol * price).toFixed(2);
+    } else if (field === 'volume' && !isNaN(vol) && !isNaN(total)) {
+      newData.pricePerUnit = (total / vol).toFixed(2);
+    } else if (field === 'totalCost' && !isNaN(vol) && !isNaN(total)) {
+      newData.pricePerUnit = (total / vol).toFixed(2);
+    } else if (field === 'pricePerUnit' && !isNaN(price) && !isNaN(total)) {
+      newData.volume = (total / price).toFixed(2);
+    } else if (field === 'totalCost' && !isNaN(price) && !isNaN(total)) {
+      newData.volume = (total / price).toFixed(2);
+    }
+    
+    setFormData(newData);
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => api.refills.create(activeVehicleId!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['refills-infinite', activeVehicleId] });
       setShowForm(false);
-      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
+      const latestOdometer = refills[0]?.odometer?.toString() || '';
+      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
+      
+      // Check for overdue reminders after adding refill
+      if (activeVehicleId && variables.odometer) {
+        const overdue = getOverdueReminders(activeVehicleId, variables.odometer);
+        if (overdue.length > 0) {
+          setOverdueReminders(overdue);
+          setCurrentOdometerForReminder(variables.odometer);
+          setShowReminderDialog(true);
+        }
+      }
     }
   });
 
@@ -162,17 +223,18 @@ export default function Refills() {
     mutationFn: ({ refillId, data }: { refillId: string; data: any }) => 
       api.refills.update(activeVehicleId!, refillId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+      queryClient.invalidateQueries({ queryKey: ['refills-infinite', activeVehicleId] });
       setShowForm(false);
       setEditingId(null);
-      setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
+      const latestOdometer = refills[0]?.odometer?.toString() || '';
+      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (refillId: string) => api.refills.delete(activeVehicleId!, refillId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['refills', activeVehicleId] });
+      queryClient.invalidateQueries({ queryKey: ['refills-infinite', activeVehicleId] });
       setShowDeleteDialog(false);
       setDeleteId(null);
     },
@@ -290,25 +352,27 @@ export default function Refills() {
       )}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <BeakerIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+          <Fuel className="h-8 w-8 text-indigo-500" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('refills.title')}</h1>
         </div>
         <div className="flex gap-2">
           <Menu as="div" className="relative">
             <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+              <MoreVertical className="h-5 w-5" />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={handleExport} disabled={refills.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50`}>
+                  <button onClick={handleExport} disabled={refills.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50 flex items-center gap-2`}>
+                    <Download className="h-4 w-4" />
                     {createMutation.isPending ? 'Exporting...' : 'Export CSV'}
                   </button>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg`}>
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg flex items-center gap-2`}>
+                    <Upload className="h-4 w-4" />
                     Import CSV
                   </button>
                 )}
@@ -320,18 +384,19 @@ export default function Refills() {
             onClick={() => { 
               setShowForm(!showForm); 
               setEditingId(null); 
-              setFormData({ odometer: '', volume: '', pricePerUnit: '', totalCost: '', currency: 'UAH', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' }); 
+              const latestOdometer = refills[0]?.odometer?.toString() || '';
+              setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' }); 
             }} 
             className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
           >
             {showForm ? (
               <>
-                <XMarkIcon className="h-5 w-5" />
+                <X className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
               </>
             ) : (
               <>
-                <PlusIcon className="h-5 w-5" />
+                <Plus className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('refills.add')}</span>
               </>
             )}
@@ -361,15 +426,15 @@ export default function Refills() {
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.volume')} (L)</Label>
-                  <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => setFormData({...formData, volume: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => updateFormField('volume', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.pricePerUnit')}</Label>
-                  <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => setFormData({...formData, pricePerUnit: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => updateFormField('pricePerUnit', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.totalCost')}</Label>
-                  <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => setFormData({...formData, totalCost: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => updateFormField('totalCost', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
@@ -377,7 +442,7 @@ export default function Refills() {
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <span>{formData.currency}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
                       </Listbox.Button>
                       <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                         {CURRENCIES.map((curr) => (
@@ -385,7 +450,7 @@ export default function Refills() {
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
                                 <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
                           </Listbox.Option>
@@ -400,7 +465,7 @@ export default function Refills() {
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <span>{formData.fuelType}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
                       </Listbox.Button>
                       <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                         {['Regular', 'Premium', 'Diesel'].map((fuel) => (
@@ -408,7 +473,7 @@ export default function Refills() {
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
                                 <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
                           </Listbox.Option>
@@ -442,6 +507,13 @@ export default function Refills() {
           </div>
         </Dialog>
       )}
+
+      <ReminderDialog 
+        isOpen={showReminderDialog}
+        onClose={() => setShowReminderDialog(false)}
+        reminders={overdueReminders}
+        currentOdometer={currentOdometerForReminder}
+      />
 
       {!isLoading && (
         <>
@@ -478,17 +550,23 @@ export default function Refills() {
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                              <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                              <MoreVertical className="h-5 w-5 text-slate-400" />
                             </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('common.edit')}</button>
+                                  <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                    <Pencil className="h-4 w-4" />
+                                    {t('common.edit')}
+                                  </button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
+                                  <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                    <Trash2 className="h-4 w-4" />
+                                    {t('common.delete')}
+                                  </button>
                                 )}
                               </Menu.Item>
                             </Menu.Items>
@@ -528,17 +606,23 @@ export default function Refills() {
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                          <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                          <MoreVertical className="h-5 w-5 text-slate-400" />
                         </Menu.Button>
-                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
                           <Menu.Item>
                             {({ active }) => (
-                              <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('common.edit')}</button>
+                              <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                <Pencil className="h-4 w-4" />
+                                {t('common.edit')}
+                              </button>
                             )}
                           </Menu.Item>
                           <Menu.Item>
                             {({ active }) => (
-                              <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
+                              <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                <Trash2 className="h-4 w-4" />
+                                {t('common.delete')}
+                              </button>
                             )}
                           </Menu.Item>
                         </Menu.Items>

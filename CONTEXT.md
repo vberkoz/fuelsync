@@ -773,11 +773,39 @@ packages/app/src/
 - ✅ PWA installable with offline support
 - ✅ Multi-language support (EN/UK)
 - ✅ Data migration from existing SQLite databases
-- ✅ In-app reminder notifications
-- ✅ Multi-currency support (USD/UAH)
-- ✅ CSV data export/import capabilities
+- ✅ In-app reminder n## ✅ Phase 1 MVP Complete
 
-### Phase 2: Future Enhancements
+Full-featured PWA with complete CRUD operations, analytics, internationalization, data migration capabilities, and overdue reminder notifications.
+
+## Features
+
+- **PWA Support**: Installable app with offline support and native experience
+- **Fuel Tracking**: Log refills with automatic consumption calculations and fuel type defaults
+- **Expense Management**: Track maintenance, repairs, and other vehicle costs with 15 categories
+- **Multi-Vehicle Support**: Manage multiple vehicles with dropdown selector and auto-selection
+- **Reminder Notifications**: Web Push + Email notifications for maintenance reminders
+- **Overdue Reminder Alerts**: Automatic alerts when odometer updates trigger overdue reminders
+- **Data Migration**: Import existing data from SQLite databases with category mapping
+- **Dark Theme UI**: Modern, responsive interface with HeadlessUI components
+- **Real-time Updates**: Optimistic UI updates with automatic rollback
+- **Infinite Scroll**: Load historical data by month with automatic pagination
+- **Session Management**: Automatic redirect to login when token expires
+- **Numeric Precision**: All monetary values with 2 decimal places and dot separator
+- **Analytics & Charts**: Statistics cards and Chart.js visualizations
+- **Internationalization**: English and Ukrainian language support
+- **Responsive Design**: Mobile-first approach with touch-friendly interface
+- **Multi-currency support (USD/UAH)**
+- **CSV data export/import capabilities**
+
+## Recent Updates
+
+### Overdue Reminder Alerts (Latest)
+- ✅ **Automatic Reminder Checks**: When adding refills or expenses with odometer updates, system automatically checks for overdue reminders
+- ✅ **Immediate Alert Display**: Shows overdue reminder dialog immediately after successful entry creation
+- ✅ **Accurate Odometer Display**: Dialog shows the exact submitted odometer value that triggered the alert
+- ✅ **Real-time List Updates**: Fixed query invalidation to ensure refill/expense lists update immediately after CRUD operations
+
+### Multi-Currency Support
 
 #### Potential Features for Phase 2
 1. **Advanced Analytics**

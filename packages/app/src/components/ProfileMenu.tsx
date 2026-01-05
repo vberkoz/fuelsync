@@ -1,6 +1,6 @@
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { UserCircle, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
@@ -16,7 +16,7 @@ export default function ProfileMenu() {
   return (
     <Menu as="div" className="relative">
       <Menu.Button className="text-gray-400 hover:text-white">
-        <UserCircleIcon className="h-6 w-6" />
+        <UserCircle className="h-6 w-6" />
       </Menu.Button>
 
       <Transition
@@ -38,7 +38,7 @@ export default function ProfileMenu() {
                     active ? 'bg-slate-700' : ''
                   } group flex w-full items-center rounded-md px-3 py-2 text-sm text-slate-300`}
                 >
-                  <UserCircleIcon className="mr-3 h-5 w-5" />
+                  <UserCircle className="mr-3 h-5 w-5" />
                   Profile
                 </button>
               )}
@@ -52,7 +52,7 @@ export default function ProfileMenu() {
                     active ? 'bg-slate-700' : ''
                   } group flex w-full items-center rounded-md px-3 py-2 text-sm text-slate-300`}
                 >
-                  <Cog6ToothIcon className="mr-3 h-5 w-5" />
+                  <Settings className="mr-3 h-5 w-5" />
                   Settings
                 </button>
               )}
@@ -68,7 +68,7 @@ export default function ProfileMenu() {
                     active ? 'bg-slate-700' : ''
                   } group flex w-full items-center rounded-md px-3 py-2 text-sm text-red-400`}
                 >
-                  <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
+                  <LogOut className="mr-3 h-5 w-5" />
                   Sign out
                 </button>
               )}

@@ -19,7 +19,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const body = JSON.parse(event.body || '{}');
     const refillId = randomUUID();
-    const timestamp = body.timestamp ? new Date(body.timestamp).toISOString() : new Date().toISOString();
+    const timestamp = body.timestamp || Date.now();
     const currency = body.currency || 'USD';
     
     const exchangeRate = await getExchangeRate(currency);
@@ -40,7 +40,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       baseAmount,
       fuelType: body.fuelType,
       station: body.station,
-      createdAt: timestamp
+      timestamp,
+      createdAt: new Date(timestamp).toISOString()
     };
 
     await docClient.send(new PutCommand({

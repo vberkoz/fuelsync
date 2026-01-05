@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChartBarIcon, CurrencyDollarIcon, FireIcon } from '@heroicons/react/24/outline';
+import { BarChart3, Fuel, Receipt, DollarSign, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
@@ -68,14 +68,14 @@ export default function Analytics() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
-        <ChartBarIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+        <BarChart3 className="h-8 w-8 text-indigo-500" />
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('analytics.title')}</h1>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch mb-6 sm:mb-8">
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <FireIcon className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
+            <Fuel className="h-8 w-8 text-orange-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.fuel')}</h2>
           </div>
           <div className="space-y-4 flex-1">
@@ -106,7 +106,7 @@ export default function Analytics() {
 
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <ChartBarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+            <Receipt className="h-8 w-8 text-blue-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.expenses')}</h2>
           </div>
           <div className="space-y-4 flex-1">
@@ -129,7 +129,7 @@ export default function Analytics() {
 
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <CurrencyDollarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+            <DollarSign className="h-8 w-8 text-green-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.total')}</h2>
           </div>
           <div className="flex-1">
@@ -143,7 +143,7 @@ export default function Analytics() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <FireIcon className="h-6 w-6 text-orange-500" />
+              <Fuel className="h-6 w-6 text-orange-500" />
               <h2 className="text-lg font-semibold text-white">{t('analytics.fuelConsumption')}</h2>
             </div>
             <div className="h-48 sm:h-64">
@@ -167,7 +167,7 @@ export default function Analytics() {
 
           <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <CurrencyDollarIcon className="h-6 w-6 text-green-500" />
+              <TrendingUp className="h-6 w-6 text-green-500" />
               <h2 className="text-lg font-semibold text-white">{t('analytics.costs')}</h2>
             </div>
             <div className="h-48 sm:h-64">

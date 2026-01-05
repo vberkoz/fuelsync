@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, Field, Label, Listbox } from '@headlessui/react';
-import { BellIcon, PlusIcon, XMarkIcon, ChevronUpDownIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Bell, Plus, X, Trash2, ChevronDown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
@@ -48,7 +48,7 @@ export default function Reminders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowForm(false);
-      setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: '', unit: 'km' });
+      setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' });
     }
   });
 
@@ -77,18 +77,18 @@ export default function Reminders() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <BellIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+          <Bell className="h-8 w-8 text-indigo-500" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('reminders.title')}</h1>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+        <button onClick={() => { setShowForm(!showForm); setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
           {showForm ? (
             <>
-              <XMarkIcon className="h-5 w-5" />
+              <X className="h-5 w-5" />
               <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
             </>
           ) : (
             <>
-              <PlusIcon className="h-5 w-5" />
+              <Plus className="h-5 w-5" />
               <span className="hidden min-[440px]:inline">{t('reminders.add')}</span>
             </>
           )}
@@ -119,7 +119,7 @@ export default function Reminders() {
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <span>{formData.type}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
                       </Listbox.Button>
                       <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                         {['Maintenance', 'Document', 'Inspection'].map((type) => (
@@ -131,7 +131,7 @@ export default function Reminders() {
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
                                 <span className={selected ? 'font-semibold text-white' : 'text-white'}>{type}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
                           </Listbox.Option>
@@ -158,7 +158,7 @@ export default function Reminders() {
                       <div className="relative">
                         <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                           <span>{formData.unit}</span>
-                          <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                          <ChevronDown className="h-5 w-5 text-slate-400" />
                         </Listbox.Button>
                         <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                           {['km', 'days', 'months'].map((unit) => (
@@ -170,7 +170,7 @@ export default function Reminders() {
                               {({ selected }) => (
                                 <div className="flex justify-between items-center">
                                   <span className={selected ? 'font-semibold text-white' : 'text-white'}>{unit}</span>
-                                  {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                  {selected && <span className="text-indigo-500 text-lg">✓</span>}
                                 </div>
                               )}
                             </Listbox.Option>
@@ -197,7 +197,7 @@ export default function Reminders() {
 
       {vehicleReminders.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
-          <BellIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
           <p>No reminders yet. Create one to get started!</p>
         </div>
       ) : (
@@ -232,7 +232,7 @@ export default function Reminders() {
                   onClick={() => setDeleteConfirm(reminder.reminderId)}
                   className="text-red-400 hover:text-red-300"
                 >
-                  <TrashIcon className="h-5 w-5" />
+                  <Trash2 className="h-5 w-5" />
                 </button>
               </div>
               

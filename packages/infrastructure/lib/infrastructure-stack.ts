@@ -451,6 +451,22 @@ export class InfrastructureStack extends cdk.Stack {
       bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
     });
 
+    const listCategories = new nodejs.NodejsFunction(this, 'ListCategories', {
+      entry: '../api/src/handlers/categories/list.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const createCategory = new nodejs.NodejsFunction(this, 'CreateCategory', {
+      entry: '../api/src/handlers/categories/create.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
     // Grant DynamoDB permissions
     table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
@@ -476,6 +492,8 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(createReminder);
     table.grantReadWriteData(deleteReminder);
     table.grantReadData(getBrands);
+    table.grantReadData(listCategories);
+    table.grantWriteData(createCategory);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -579,6 +597,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     const brands = api.root.addResource('brands');
     brands.addMethod('GET', new apigateway.LambdaIntegration(getBrands));
+
+    const categories = api.root.addResource('categories');
+    categories.addMethod('GET', new apigateway.LambdaIntegration(listCategories), { authorizer });
+    categories.addMethod('POST', new apigateway.LambdaIntegration(createCategory), { authorizer });
 
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';

@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react';
-import { BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bell, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Reminder } from '../stores/reminderStore';
 
@@ -20,13 +20,13 @@ export default function ReminderDialog({ isOpen, onClose, reminders, currentOdom
         <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
-              <BellIcon className="h-8 w-8 text-yellow-500" />
+              <Bell className="h-8 w-8 text-yellow-500" />
               <Dialog.Title className="text-xl font-bold text-white">
                 {t('reminders.overdue')}
               </Dialog.Title>
             </div>
             <button onClick={onClose} className="text-slate-400 hover:text-white">
-              <XMarkIcon className="h-6 w-6" />
+              <X className="h-6 w-6" />
             </button>
           </div>
 

@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Dialog, Menu, Listbox, Field, Label } from '@headlessui/react';
+import { Dialog, Menu, Listbox, Field, Label, Combobox } from '@headlessui/react';
+import { Receipt, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { EllipsisVerticalIcon, ChevronUpDownIcon, CheckIcon, BanknotesIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+import { useReminderStore } from '../stores/reminderStore';
 import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
 import { convertDistance, getDistanceUnit } from '../lib/units';
 import { formatDate } from '../lib/date';
 import { exportToCSV, parseCSV } from '../lib/csv';
+import ReminderDialog from '../components/ReminderDialog';
 
 interface Expense {
   expenseId: string;
@@ -24,24 +27,6 @@ interface Expense {
   createdAt: string;
 }
 
-const EXPENSE_CATEGORIES = [
-  'Other',
-  'Accessories',
-  'Parts',
-  'Loan',
-  'License',
-  'Parking',
-  'Registration',
-  'Service',
-  'Insurance',
-  'Fines',
-  'Wash',
-  'Tax',
-  'Maintenance',
-  'Repair',
-  'Tolls'
-];
-
 export default function Expenses() {
   const { t, i18n } = useTranslation();
   const { vehicleId } = useParams<{ vehicleId: string }>();
@@ -49,6 +34,10 @@ export default function Expenses() {
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
   const setCurrentVehicle = useVehicleStore((state) => state.setCurrentVehicle);
   const activeVehicleId = vehicleId || currentVehicleId;
+  const { setReminders, getOverdueReminders } = useReminderStore();
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [overdueReminders, setOverdueReminders] = useState<any[]>([]);
+  const [currentOdometerForReminder, setCurrentOdometerForReminder] = useState(0);
 
   const { data: vehiclesData } = useQuery({
     queryKey: ['vehicles'],
@@ -60,9 +49,40 @@ export default function Expenses() {
     queryFn: api.settings.get
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: api.categories.list
+  });
+
+  useQuery({
+    queryKey: ['reminders'],
+    queryFn: api.reminders.list
+  });
+
+  useEffect(() => {
+    const loadReminders = async () => {
+      try {
+        const data = await api.reminders.list();
+        if (data?.reminders) {
+          setReminders(data.reminders);
+        }
+      } catch (error) {
+        // Handle error silently
+      }
+    };
+    loadReminders();
+  }, [setReminders]);
+
+  const [categoryQuery, setCategoryQuery] = useState('');
+
   const preferredCurrency = settingsData?.settings?.preferredCurrency || 'USD';
   const units = settingsData?.settings?.units || 'metric';
   const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
+  const categories = categoriesData?.categories || [];
+  const filteredCategories = useMemo(() => {
+    if (categoryQuery === '') return categories;
+    return categories.filter((c: string) => c.toLowerCase().includes(categoryQuery.toLowerCase()));
+  }, [categories, categoryQuery]);
 
   const { data: currentVehicle } = useQuery({
     queryKey: ['vehicle', activeVehicleId],
@@ -158,10 +178,28 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.expenses.create(activeVehicleId!, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowForm(false);
-      setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
+      const latestOdometer = expenses[0]?.odometer?.toString() || '';
+      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' });
+      
+      // Check for overdue reminders after adding expense
+      if (activeVehicleId && variables.odometer) {
+        const overdue = getOverdueReminders(activeVehicleId, variables.odometer);
+        if (overdue.length > 0) {
+          setOverdueReminders(overdue);
+          setCurrentOdometerForReminder(variables.odometer);
+          setShowReminderDialog(true);
+        }
+      }
+    }
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: api.categories.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
     }
   });
 
@@ -172,7 +210,8 @@ export default function Expenses() {
       queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowForm(false);
       setEditingId(null);
-      setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' });
+      const latestOdometer = expenses[0]?.odometer?.toString() || '';
+      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' });
     }
   });
 
@@ -191,11 +230,16 @@ export default function Expenses() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!categories.includes(formData.category)) {
+      await createCategoryMutation.mutateAsync(formData.category);
+    }
+    
     const expenseData = { 
       category: formData.category,
       amount: parseFloat(formData.amount),
       currency: formData.currency,
-      odometer: formData.odometer ? parseFloat(formData.odometer) : undefined,
+      odometer: parseFloat(formData.odometer),
       description: formData.description
     };
     
@@ -289,25 +333,27 @@ export default function Expenses() {
       )}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <BanknotesIcon className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400" />
+          <Receipt className="h-8 w-8 text-indigo-500" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('expenses.title')}</h1>
         </div>
         <div className="flex gap-2">
           <Menu as="div" className="relative">
             <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+              <MoreVertical className="h-5 w-5" />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={handleExport} disabled={expenses.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50`}>
+                  <button onClick={handleExport} disabled={expenses.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50 flex items-center gap-2`}>
+                    <Download className="h-4 w-4" />
                     {createMutation.isPending ? 'Exporting...' : 'Export CSV'}
                   </button>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg`}>
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg flex items-center gap-2`}>
+                    <Upload className="h-4 w-4" />
                     Import CSV
                   </button>
                 )}
@@ -318,19 +364,20 @@ export default function Expenses() {
           <button 
             onClick={() => { 
               setShowForm(!showForm); 
-              setEditingId(null); 
-              setFormData({ category: 'Other', amount: '', currency: 'UAH', odometer: '', description: '' }); 
+              setEditingId(null);
+              const latestOdometer = expenses[0]?.odometer?.toString() || '';
+              setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' }); 
             }} 
             className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
           >
             {showForm ? (
               <>
-                <XMarkIcon className="h-5 w-5" />
+                <X className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('common.cancel')}</span>
               </>
             ) : (
               <>
-                <PlusIcon className="h-5 w-5" />
+                <Plus className="h-5 w-5" />
                 <span className="hidden min-[440px]:inline">{t('expenses.add')}</span>
               </>
             )}
@@ -356,26 +403,38 @@ export default function Expenses() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
-                  <Listbox value={formData.category} onChange={(value) => setFormData({...formData, category: value})}>
+                  <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
                     <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.category}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {EXPENSE_CATEGORIES.map((cat) => (
-                          <Listbox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
+                      <Combobox.Input 
+                        onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
+                        displayValue={(category: string) => category} 
+                        className="w-full px-4 py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                        required 
+                        placeholder="Type or select a category"
+                      />
+                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
+                      </Combobox.Button>
+                      <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {filteredCategories.length === 0 && categoryQuery !== '' ? (
+                          <div className="px-4 py-2 text-slate-400 text-sm">
+                            Press Enter to use "{categoryQuery}"
+                          </div>
+                        ) : (
+                          filteredCategories.map((cat: string) => (
+                            <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                              {({ selected }) => (
+                                <div className="flex justify-between items-center">
+                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
+                                  {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                                </div>
+                              )}
+                            </Combobox.Option>
+                          ))
+                        )}
+                      </Combobox.Options>
                     </div>
-                  </Listbox>
+                  </Combobox>
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
@@ -387,7 +446,7 @@ export default function Expenses() {
                     <div className="relative">
                       <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <span>{formData.currency}</span>
-                        <ChevronUpDownIcon className="h-5 w-5 text-slate-400" />
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
                       </Listbox.Button>
                       <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                         {CURRENCIES.map((curr) => (
@@ -395,7 +454,7 @@ export default function Expenses() {
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
                                 <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
-                                {selected && <CheckIcon className="h-5 w-5 text-indigo-500" />}
+                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
                           </Listbox.Option>
@@ -405,8 +464,8 @@ export default function Expenses() {
                   </Listbox>
                 </Field>
                 <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km) <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-                  <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                  <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </Field>
                 <Field>
                   <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
@@ -433,6 +492,13 @@ export default function Expenses() {
           </div>
         </Dialog>
       )}
+
+      <ReminderDialog 
+        isOpen={showReminderDialog}
+        onClose={() => setShowReminderDialog(false)}
+        reminders={overdueReminders}
+        currentOdometer={currentOdometerForReminder}
+      />
 
       {!isLoading && (
         <>
@@ -465,17 +531,23 @@ export default function Expenses() {
                         <td className="p-4 text-white">
                           <Menu as="div" className="relative">
                             <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                              <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                              <MoreVertical className="h-5 w-5 text-slate-400" />
                             </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('common.edit')}</button>
+                                  <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                    <Pencil className="h-4 w-4" />
+                                    {t('common.edit')}
+                                  </button>
                                 )}
                               </Menu.Item>
                               <Menu.Item>
                                 {({ active }) => (
-                                  <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
+                                  <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                    <Trash2 className="h-4 w-4" />
+                                    {t('common.delete')}
+                                  </button>
                                 )}
                               </Menu.Item>
                             </Menu.Items>
@@ -517,17 +589,23 @@ export default function Expenses() {
                       </div>
                       <Menu as="div" className="relative">
                         <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                          <EllipsisVerticalIcon className="h-6 w-6 text-slate-400" />
+                          <MoreVertical className="h-5 w-5 text-slate-400" />
                         </Menu.Button>
-                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-10">
+                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
                           <Menu.Item>
                             {({ active }) => (
-                              <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg`}>{t('common.edit')}</button>
+                              <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                <Pencil className="h-4 w-4" />
+                                {t('common.edit')}
+                              </button>
                             )}
                           </Menu.Item>
                           <Menu.Item>
                             {({ active }) => (
-                              <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg`}>{t('common.delete')}</button>
+                              <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                <Trash2 className="h-4 w-4" />
+                                {t('common.delete')}
+                              </button>
                             )}
                           </Menu.Item>
                         </Menu.Items>

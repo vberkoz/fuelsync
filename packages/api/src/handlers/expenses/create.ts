@@ -19,7 +19,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const body = JSON.parse(event.body || '{}');
     const expenseId = randomUUID();
-    const timestamp = body.timestamp ? new Date(body.timestamp).toISOString() : new Date().toISOString();
+    const timestamp = body.timestamp || Date.now();
     const currency = body.currency || 'USD';
     
     if (!body.odometer) {
@@ -43,7 +43,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       odometer: body.odometer,
       description: body.description,
       taxDeductible: body.taxDeductible || false,
-      createdAt: timestamp
+      timestamp,
+      createdAt: new Date(timestamp).toISOString()
     };
 
     await docClient.send(new PutCommand({
