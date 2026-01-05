@@ -8,7 +8,8 @@
     "test": "jest",
     "seed": "node seed.js",
     "seed-brands": "node seed-brands.js",
-    "download-logos": "node scripts/download-logos.js"
+    "download-logos": "node scripts/download-logos.js",
+    "auto-tag-refills": "node scripts/auto-tag-refills.js"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.700.0",

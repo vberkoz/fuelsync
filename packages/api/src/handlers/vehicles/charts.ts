@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient } from '../../utils/dynamodb';
 import { successResponse, errorResponse } from '../../utils/response';
+import { calculateEfficiency } from '../../utils/efficiency';
 
 const TABLE_NAME = process.env.TABLE_NAME!;
 
@@ -36,6 +37,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     ]);
 
     const monthlyData: Record<string, { fuel: number; expenses: number; volume: number }> = {};
+    const allRefills = refillsResult.Items || [];
+    const efficiency = calculateEfficiency(allRefills as any[]);
 
     refillsResult.Items?.forEach((item: any) => {
       const date = new Date(item.timestamp);
@@ -67,6 +70,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         labels,
         fuel: sortedMonths.map(m => monthlyData[m].fuel),
         expenses: sortedMonths.map(m => monthlyData[m].expenses)
+      },
+      efficiency: {
+        labels: labels.slice(-efficiency.trend.length),
+        data: efficiency.trend
       }
     });
   } catch (error) {

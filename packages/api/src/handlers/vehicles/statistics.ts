@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../../utils/dynamodb';
 import { response } from '../../utils/response';
+import { calculateEfficiency } from '../../utils/efficiency';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -46,6 +47,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const avgRefillCost = totalRefills > 0 ? totalFuelCost / totalRefills : 0;
     const avgExpenseCost = totalExpenses > 0 ? totalExpenseCost / totalExpenses : 0;
 
+    const efficiency = calculateEfficiency(refills as any[]);
+
     return response(200, {
       refills: {
         count: totalRefills,
@@ -61,7 +64,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       },
       totals: {
         allCosts: totalFuelCost + totalExpenseCost
-      }
+      },
+      efficiency
     });
   } catch (error) {
     console.error('Error fetching statistics:', error);

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, Fuel, Receipt, DollarSign, TrendingUp } from 'lucide-react';
+import { BarChart3, Fuel, Receipt, DollarSign, TrendingUp, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
@@ -72,7 +72,7 @@ export default function Analytics() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('analytics.title')}</h1>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch mb-6 sm:mb-8">
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Fuel className="h-8 w-8 text-orange-500" />
@@ -129,6 +129,79 @@ export default function Analytics() {
 
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <Gauge className="h-8 w-8 text-purple-500" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.efficiency')}</h2>
+          </div>
+          <div className="space-y-4 flex-1">
+            <div>
+              <div className="text-slate-400 text-sm mb-1">{t('analytics.currentEfficiency')}</div>
+              <div className="text-white font-mono text-2xl sm:text-3xl">
+                {stats?.efficiency?.current ? 
+                  units === 'metric' ? 
+                    `${(100 / stats.efficiency.current).toFixed(1)} L/100km` : 
+                    `${(stats.efficiency.current * 2.352).toFixed(1)} mpg` : 
+                  'N/A'
+                }
+              </div>
+            </div>
+            <div className="pt-4 border-t border-slate-700 space-y-3">
+              <div className="flex justify-between">
+                <span className="text-slate-400 text-sm">{t('analytics.averageEfficiency')}</span>
+                <span className="text-white font-mono">
+                  {stats?.efficiency?.average ? 
+                    units === 'metric' ? 
+                      `${(100 / stats.efficiency.average).toFixed(1)} L/100km` : 
+                      `${(stats.efficiency.average * 2.352).toFixed(1)} mpg` : 
+                    'N/A'
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 text-sm">{t('analytics.fullTankEfficiency')}</span>
+                <span className="text-white font-mono">
+                  {stats?.efficiency?.fullTankOnly ? 
+                    units === 'metric' ? 
+                      `${(100 / stats.efficiency.fullTankOnly).toFixed(1)} L/100km` : 
+                      `${(stats.efficiency.fullTankOnly * 2.352).toFixed(1)} mpg` : 
+                    'N/A'
+                  }
+                </span>
+              </div>
+              {(stats?.efficiency?.city || stats?.efficiency?.highway) && (
+                <>
+                  <div className="border-t border-slate-700 pt-3 mt-3">
+                    <div className="text-slate-400 text-xs mb-2">{t('analytics.byDrivingType')}</div>
+                  </div>
+                  {stats?.efficiency?.city && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 text-sm">{t('refills.city')}</span>
+                      <span className="text-white font-mono">
+                        {units === 'metric' ? 
+                          `${(100 / stats.efficiency.city).toFixed(1)} L/100km` : 
+                          `${(stats.efficiency.city * 2.352).toFixed(1)} mpg`
+                        }
+                      </span>
+                    </div>
+                  )}
+                  {stats?.efficiency?.highway && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 text-sm">{t('refills.highway')}</span>
+                      <span className="text-white font-mono">
+                        {units === 'metric' ? 
+                          `${(100 / stats.efficiency.highway).toFixed(1)} L/100km` : 
+                          `${(stats.efficiency.highway * 2.352).toFixed(1)} mpg`
+                        }
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <DollarSign className="h-8 w-8 text-green-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.total')}</h2>
           </div>
@@ -140,7 +213,7 @@ export default function Analytics() {
       </div>
 
       {chartsData && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <Fuel className="h-6 w-6 text-orange-500" />
@@ -197,6 +270,49 @@ export default function Analytics() {
               />
             </div>
           </div>
+
+          {chartsData.efficiency && (chartsData.efficiency.data.length > 0 || stats?.efficiency?.cityTrend?.length > 0 || stats?.efficiency?.highwayTrend?.length > 0) && (
+            <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                <Gauge className="h-6 w-6 text-purple-500" />
+                <h2 className="text-lg font-semibold text-white">{t('analytics.efficiencyTrend')}</h2>
+              </div>
+              <div className="h-48 sm:h-64">
+                <LineChart
+                  data={{
+                    labels: chartsData.efficiency.labels,
+                    datasets: [
+                      ...(chartsData.efficiency.data.length > 0 ? [{
+                        label: t('analytics.overall'),
+                        data: chartsData.efficiency.data.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
+                        borderColor: 'rgb(147, 51, 234)',
+                        backgroundColor: 'rgba(147, 51, 234, 0.1)'
+                      }] : []),
+                      ...(stats?.efficiency?.cityTrend?.length > 0 ? [{
+                        label: t('refills.city'),
+                        data: stats.efficiency.cityTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)'
+                      }] : []),
+                      ...(stats?.efficiency?.highwayTrend?.length > 0 ? [{
+                        label: t('refills.highway'),
+                        data: stats.efficiency.highwayTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)'
+                      }] : []),
+                      ...(stats?.efficiency?.mixedTrend?.length > 0 ? [{
+                        label: t('refills.mixed'),
+                        data: stats.efficiency.mixedTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
+                        borderColor: 'rgb(168, 85, 247)',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)'
+                      }] : [])
+                    ]
+                  }}
+                  yAxisLabel={units === 'metric' ? 'L/100km' : 'mpg'}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

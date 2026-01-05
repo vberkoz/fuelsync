@@ -1,46 +1,43 @@
-# How to Scrape Vehicle Brands from carlogos.org
+# Auto-Tag Refills Script
 
-## Quick Start
+This script analyzes existing refill data and automatically tags them with driving types (city/highway/mixed) based on heuristic analysis.
 
-### 1. Scrape brands from website
+## How It Works
+
+The script uses multiple heuristics to determine driving type:
+
+1. **Distance-based**: 
+   - >400km = highway
+   - <80km = city
+
+2. **Efficiency-based**:
+   - >15% above average = highway
+   - >15% below average = city
+
+3. **Time + Distance patterns**:
+   - Long time + long distance = highway
+   - Short time + short distance = city
+
+4. **Default**: Mixed driving
+
+## Usage
+
 ```bash
 cd packages/api
-node scripts/scrape-brands-clean.js > scripts/brands.json
+AWS_PROFILE=your-profile TABLE_NAME=FuelSyncTable node scripts/auto-tag-refills.js
 ```
 
-This will:
-- Fetch https://www.carlogos.org/car-brands-a-z/
-- Extract all vehicle brand names
-- Filter out categories (Europe, USA, etc.)
-- Decode HTML entities (ë, Š, &)
-- Save ~377 brands to `scripts/brands.json`
+## Safety Features
 
-### 2. Seed to DynamoDB
-```bash
-AWS_PROFILE=basil TABLE_NAME=FuelSyncTable npm run seed-brands
-```
+- **Non-destructive**: Only adds tags to untagged refills
+- **Skips existing**: Won't overwrite manually tagged refills
+- **Per-vehicle analysis**: Calculates efficiency baselines per vehicle
+- **Logging**: Shows progress and results
 
-## Files
+## Expected Results
 
-- `scripts/scrape-brands-clean.js` - Web scraper (Node.js)
-- `scripts/brands.json` - Scraped brands (377 brands)
-- `scripts/seed-brands.ts` - DynamoDB seeder (reads brands.json)
+- Highway trips: Long distances, high efficiency
+- City driving: Short distances, lower efficiency  
+- Mixed: Everything else
 
-## Update Brands
-
-To refresh the brand list:
-```bash
-cd packages/api
-node scripts/scrape-brands-clean.js > scripts/brands.json
-AWS_PROFILE=basil TABLE_NAME=FuelSyncTable npm run seed-brands
-```
-
-## Scraper Details
-
-**Source**: https://www.carlogos.org/car-brands-a-z/
-
-**Pattern**: Extracts from `<dd><a>Brand Name</a></dd>` tags
-
-**Filters**: Removes categories like "Europe", "USA", "Quizzes", etc.
-
-**HTML Entities**: Converts `&euml;` → `ë`, `&Scaron;` → `Š`, `&amp;` → `&`
+Run once after implementing the driving type feature to tag historical data.

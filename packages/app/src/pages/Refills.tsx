@@ -29,6 +29,7 @@ interface Refill {
   comment?: string;
   timestamp?: number;
   createdAt: string;
+  drivingType?: 'city' | 'highway' | 'mixed';
 }
 
 export default function Refills() {
@@ -173,7 +174,8 @@ export default function Refills() {
     totalCost: '', 
     currency: 'USD', 
     fuelType: 'Regular',
-    station: ''
+    station: '',
+    drivingType: 'mixed'
   });
 
   const updateFormField = (field: string, value: string) => {
@@ -206,7 +208,7 @@ export default function Refills() {
       queryClient.invalidateQueries({ queryKey: ['refills-infinite', activeVehicleId] });
       setShowForm(false);
       const latestOdometer = refills[0]?.odometer?.toString() || '';
-      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
+      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '', drivingType: '' });
       
       // Check for overdue reminders after adding refill
       if (activeVehicleId && variables.odometer) {
@@ -228,7 +230,7 @@ export default function Refills() {
       setShowForm(false);
       setEditingId(null);
       const latestOdometer = refills[0]?.odometer?.toString() || '';
-      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' });
+      setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '', drivingType: '' });
     }
   });
 
@@ -254,7 +256,8 @@ export default function Refills() {
       totalCost: parseFloat(formData.totalCost),
       currency: formData.currency,
       fuelType: formData.fuelType,
-      station: formData.station
+      station: formData.station,
+      ...(formData.drivingType && { drivingType: formData.drivingType })
     };
     
     if (editingId) {
@@ -272,7 +275,8 @@ export default function Refills() {
       totalCost: refill.totalCost.toString(),
       currency: refill.currency,
       fuelType: refill.fuelType,
-      station: refill.station || ''
+      station: refill.station || '',
+      drivingType: refill.drivingType || 'mixed'
     });
     setEditingId(refill.refillId);
     setShowForm(false);
@@ -386,7 +390,7 @@ export default function Refills() {
               setShowForm(!showForm); 
               setEditingId(null); 
               const latestOdometer = refills[0]?.odometer?.toString() || '';
-              setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '' }); 
+              setFormData({ odometer: latestOdometer, volume: '', pricePerUnit: '', totalCost: '', currency: 'USD', fuelType: currentVehicle?.vehicle?.fuelType || 'Regular', station: '', drivingType: '' }); 
             }} 
             className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
           >
@@ -480,10 +484,35 @@ export default function Refills() {
                 </Listbox>
               </Field>
             </div>
-            <Field>
-              <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-              <textarea rows={2} value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.drivingType')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+                <Listbox value={formData.drivingType} onChange={(value) => setFormData({...formData, drivingType: value})}>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <span>{formData.drivingType || t('refills.mixed')}</span>
+                      <ChevronDown className="h-5 w-5 text-slate-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {[{value: 'city', label: t('refills.city')}, {value: 'highway', label: t('refills.highway')}, {value: 'mixed', label: t('refills.mixed')}].map((type) => (
+                        <Listbox.Option key={type.value} value={type.value} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                          {({ selected }) => (
+                            <div className="flex justify-between items-center">
+                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{type.label}</span>
+                              {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                            </div>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+                <textarea rows={2} value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+              </Field>
+            </div>
             <div className="flex gap-2">
               <button 
                 type="submit" 
@@ -513,8 +542,8 @@ export default function Refills() {
 
       {!isLoading && (
         <>
-          {/* Desktop Table (≥1300px) */}
-          <div className="hidden xl:block">
+          {/* Desktop Table (≥1400px) */}
+          <div className="hidden min-[1400px]:block">
             {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4 capitalize">
@@ -528,6 +557,7 @@ export default function Refills() {
                       <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.pricePerUnit')}<br/>({preferredCurrency})</th>
                       <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.total')}<br/>({preferredCurrency})</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-24">{t('vehicles.fuelType')}</th>
+                      <th className="text-left p-4 text-slate-400 font-semibold w-24">{t('refills.drivingType')}</th>
                       <th className="text-left p-4 text-slate-400 font-semibold">{t('refills.station')}</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-48">{t('refills.date')}</th>
                       <th className="text-left p-4 text-slate-400 font-semibold w-16"></th>
@@ -542,6 +572,7 @@ export default function Refills() {
                           <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.pricePerUnit, r.currency, r.pricePerUnit / (r.exchangeRate || 1), preferredCurrency)}</td>
                           <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</td>
                           <td className="p-4 text-white">{r.fuelType}</td>
+                          <td className="p-4 text-white">{r.drivingType ? t(`refills.${r.drivingType}`) : ''}</td>
                           <td className="p-4 text-white">{r.station || r.comment}</td>
                           <td className="p-4 text-white font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</td>
                           <td className="p-4 text-white">
@@ -572,7 +603,7 @@ export default function Refills() {
                         </tr>
                         {editingId === r.refillId && (
                           <tr>
-                            <td colSpan={8} className="p-0">
+                            <td colSpan={9} className="p-0">
                               <div className="bg-slate-750 p-6 border-t border-slate-700">
                                 <h3 className="text-lg font-bold text-white mb-4">{t('refills.edit')}</h3>
                                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -683,8 +714,8 @@ export default function Refills() {
             </div>}
           </div>
 
-          {/* Mobile/Tablet Cards (<1300px) */}
-          <div className="xl:hidden">
+          {/* Mobile/Tablet Cards (<1400px) */}
+          <div className="min-[1400px]:hidden">
             {visibleGroupedRefills.map(([month, monthRefills]) => (
               <div key={month} className="mb-8">
                 <h2 className="text-xl font-semibold text-white mb-4 capitalize">
@@ -694,11 +725,41 @@ export default function Refills() {
                   {monthRefills.map((r: Refill) => (
                     <React.Fragment key={r.refillId}>
                       <div className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-bold text-white"><span className="font-mono">{convertVolume(r.volume, units).toFixed(2)}{getVolumeUnit(units)}</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
-                          <p className="text-slate-400">Odometer: <span className="font-mono">{Math.round(convertDistance(r.odometer, units))} {getDistanceUnit(units)}</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span></p>
-                          <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
-                          {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</p>}
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-white mb-2">
+                            <span className="font-mono">{convertVolume(r.volume, units).toFixed(2)}{getVolumeUnit(units)}</span> 
+                            <span className="text-slate-400 mx-2">@</span> 
+                            <span className="font-mono">{r.currency === 'UAH' ? '₴' : '$'}{Number(r.pricePerUnit).toFixed(2)}/L</span>
+                          </h3>
+                          <div className="space-y-1">
+                            <p className="text-slate-300">
+                              <span className="text-slate-400">Odometer:</span> 
+                              <span className="font-mono ml-1">{Math.round(convertDistance(r.odometer, units))} {getDistanceUnit(units)}</span> 
+                              <span className="text-slate-400 mx-2">•</span> 
+                              <span className="text-slate-400">Total:</span> 
+                              <span className="font-mono ml-1">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span>
+                            </p>
+                            <p className="text-slate-400 text-sm">
+                              {r.fuelType}
+                              {r.drivingType && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-300">
+                                    {t(`refills.${r.drivingType}`)}
+                                  </span>
+                                </>
+                              )}
+                              {(r.station || r.comment) && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  <span>{r.station || r.comment}</span>
+                                </>
+                              )}
+                            </p>
+                            {(r.timestamp || r.createdAt) && (
+                              <p className="text-slate-500 text-sm font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</p>
+                            )}
+                          </div>
                         </div>
                         <Menu as="div" className="relative">
                           <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">

@@ -823,7 +823,7 @@ Full-featured PWA with complete CRUD operations, analytics, internationalization
 
 #### Potential Features for Phase 2
 1. **Advanced Analytics**
-   - Fuel efficiency trends and predictions
+   - ✅ Fuel efficiency trends and predictions
    - Cost per mile/kilometer tracking
    - Maintenance schedule optimization
    - Comparative analysis across vehicles
@@ -909,7 +909,54 @@ ExchangeRate (new entity):
 - Add migration script to backfill currency fields
 - Frontend handles missing currency gracefully
 
-## Design Principles
+## Fuel Efficiency Calculations
+
+### Implementation Summary
+- ✅ **Multiple Calculation Methods**: Running average, current efficiency, and full-tank-only calculations
+- ✅ **City/Highway Tracking**: Optional driving type tagging for separate efficiency calculations
+- ✅ **Multi-Line Trend Charts**: Separate trend lines for city, highway, mixed, and overall efficiency
+- ✅ **Auto-Tagging Script**: Heuristic analysis to tag existing refills with driving types
+- ✅ **Handles Partial Fills**: Uses all refill data, not just full tanks
+- ✅ **Unit Conversion**: Supports both metric (L/100km) and imperial (mpg) units
+- ✅ **Trend Analysis**: Shows efficiency changes over time by driving type
+- ✅ **API Integration**: Extended statistics and charts endpoints
+- ✅ **Frontend Display**: Enhanced efficiency card and multi-line trend chart in Analytics
+- ✅ **UI Improvements**: Better visual hierarchy, currency symbols, driving type badges
+
+### Calculation Methods
+1. **Running Average**: Uses last 10 refills for smoothed efficiency
+2. **Current Efficiency**: Based on last 2 refills for recent performance
+3. **Full Tank Only**: Traditional method using only full tank refills
+4. **City Efficiency**: Separate calculation for city-tagged refills
+5. **Highway Efficiency**: Separate calculation for highway-tagged refills
+6. **Mixed Efficiency**: Calculation for mixed driving refills
+7. **Trend Analysis**: Rolling 5-refill segments for historical trends by driving type
+
+### Technical Implementation
+- **Backend**: `utils/efficiency.ts` with calculation logic including separate trend arrays
+- **API**: Extended `/vehicles/:id/statistics` and `/vehicles/:id/charts` with driving type data
+- **Frontend**: Enhanced efficiency card and multi-line trend chart in Analytics page
+- **Auto-Tagging**: `scripts/auto-tag-refills.js` for historical data analysis
+- **Units**: Automatic conversion between L/100km and mpg based on user settings
+- **UI/UX**: Improved visual hierarchy, currency symbols (₴, $), driving type badges
+- **Responsive**: Table view ≥1400px, card view <1400px
+- **Internationalization**: English and Ukrainian translations added
+
+### Data Requirements
+- Existing refill data with `odometer`, `volume`, `isFull`, and `timestamp`
+- Optional `drivingType` field ('city', 'highway', 'mixed') for separate efficiency tracking
+- Default driving type: 'mixed' for new refills
+- No schema changes required - works with current data structure
+
+### Auto-Tagging Features
+- **Heuristic Analysis**: Distance patterns, efficiency comparison, time-distance combinations
+- **User-Vehicle Verification**: Ensures data integrity across multi-tenant system
+- **Safe Operation**: Only tags untagged refills, preserves manual tags
+- **Comprehensive Logging**: Shows progress and results for each vehicle/user
+
+## Multi-Currency Support
+
+#### Overview
 - **Simplicity First**: Quick entry forms (3-tap refill entry)
 - **Mobile-First**: Touch-friendly, thumb-zone optimized
 - **Data Visualization**: Clear, colorful charts with trend indicators
@@ -950,6 +997,20 @@ cd packages/infrastructure
 npm install
 npx cdk deploy --all --profile basil
 ```
+
+### Auto-Tag Existing Refills
+
+Analyze and automatically tag existing refills with driving types:
+
+```bash
+cd packages/api
+AWS_PROFILE=basil TABLE_NAME=FuelSyncTable npm run auto-tag-refills
+```
+
+This one-time script uses heuristic analysis to tag historical refills as city/highway/mixed based on:
+- Distance patterns (>400km = highway, <80km = city)
+- Efficiency compared to vehicle average
+- Time and distance combinations
 
 ### Seed Test Data
 ```bash
