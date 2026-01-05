@@ -419,6 +419,30 @@ export class InfrastructureStack extends cdk.Stack {
       }
     });
 
+    const getProfile = new nodejs.NodejsFunction(this, 'GetProfile', {
+      entry: '../api/src/handlers/users/get-profile.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
+    const updateProfile = new nodejs.NodejsFunction(this, 'UpdateProfile', {
+      entry: '../api/src/handlers/users/update-profile.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false
+      }
+    });
+
     const listReminders = new nodejs.NodejsFunction(this, 'ListReminders', {
       entry: '../api/src/handlers/reminders/list.ts',
       handler: 'handler',
@@ -488,6 +512,8 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(getCharts);
     table.grantReadWriteData(getSettings);
     table.grantReadWriteData(updateSettings);
+    table.grantReadWriteData(getProfile);
+    table.grantReadWriteData(updateProfile);
     table.grantReadData(listReminders);
     table.grantWriteData(createReminder);
     table.grantReadWriteData(deleteReminder);
@@ -583,6 +609,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     // /users resource
     const users = api.root.addResource('users');
+    
+    const me = users.addResource('me');
+    me.addMethod('GET', new apigateway.LambdaIntegration(getProfile), { authorizer });
+    me.addMethod('PUT', new apigateway.LambdaIntegration(updateProfile), { authorizer });
     
     const settings = users.addResource('settings');
     settings.addMethod('GET', new apigateway.LambdaIntegration(getSettings), { authorizer });

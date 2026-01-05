@@ -811,6 +811,14 @@ Full-featured PWA with complete CRUD operations, analytics, internationalization
 - ✅ **Mobile UI**: Removed radio buttons from mobile vehicle cards for cleaner interface
 - ✅ **JSX Structure**: Fixed React.Fragment syntax errors in inline form implementations
 
+## Recent Updates
+- ✅ **User Profile Management**: Added settings section to edit firstName and lastName
+  - Form-based approach with save button (no auto-save on keystroke)
+  - Integrated with registration data (same names from signup)
+  - Success/error feedback and validation
+  - Fully internationalized (EN/UK)
+  - Consistent with existing UI patterns
+
 ### Multi-Currency Support
 
 #### Potential Features for Phase 2
@@ -1024,8 +1032,8 @@ DYNAMODB_TABLE_NAME=FuelSyncTable
 - `getCharts`: GET /vehicles/:vehicleId/charts - Get chart data for a vehicle (monthly fuel consumption and costs for last 6 months)
 
 **Users**:
-- `getProfile`: GET /users/me - Get user profile
-- `updateProfile`: PUT /users/me - Update user profile (name, currency)
+- `getProfile`: GET /users/me - Get user profile (firstName, lastName, email)
+- `updateProfile`: PUT /users/me - Update user profile (firstName, lastName)
 - `getSettings`: GET /users/settings - Get user settings
 - `updateSettings`: PUT /users/settings - Update user settings (units, dateFormat, notifications)
 

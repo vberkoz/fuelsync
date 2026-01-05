@@ -175,6 +175,22 @@ export const api = {
       return handleResponse(res);
     }
   },
+  profile: {
+    get: async () => {
+      const res = await safeFetch(`${API_URL}/users/me`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    update: async (data: any) => {
+      const res = await safeFetch(`${API_URL}/users/me`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    }
+  },
   auth: {
     changePassword: async (data: { oldPassword: string; newPassword: string }) => {
       const accessToken = useAuthStore.getState().accessToken;

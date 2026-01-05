@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Field, Label, Listbox, Switch } from '@headlessui/react';
 import { Settings as SettingsIcon, ChevronsUpDown, Check, LogOut } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,12 +12,29 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordError, setPasswordError] = useState('');
+  const [profileData, setProfileData] = useState({ firstName: '', lastName: '' });
 
   const { data: settingsData, isLoading, error } = useQuery({
     queryKey: ['settings'],
     queryFn: api.settings.get,
     retry: false
   });
+
+  const { data: profileResponse, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile'],
+    queryFn: api.profile.get,
+    retry: false
+  });
+
+  // Update local state when profile data changes
+  useEffect(() => {
+    if (profileResponse?.profile) {
+      setProfileData({
+        firstName: profileResponse.profile.firstName || '',
+        lastName: profileResponse.profile.lastName || ''
+      });
+    }
+  }, [profileResponse]);
 
   const changePasswordMutation = useMutation({
     mutationFn: api.auth.changePassword,
@@ -61,11 +78,29 @@ export default function Settings() {
     }
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: api.profile.update,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: (error: any) => {
+      console.error('Profile update error:', error);
+    }
+  });
+
   const handleChange = (field: string, value: any) => {
     updateMutation.mutate({ [field]: value });
   };
 
-  if (isLoading) {
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileData.firstName || !profileData.lastName) {
+      return;
+    }
+    updateProfileMutation.mutate(profileData);
+  };
+
+  if (isLoading || profileLoading) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="text-center py-12">
@@ -89,6 +124,67 @@ export default function Settings() {
       </div>
 
       <div className="max-w-4xl space-y-12">
+        {/* Profile Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2">{t('profile.profileInfo')}</h2>
+            <p className="text-slate-400 text-sm">{t('profile.profileInfoDesc')}</p>
+          </div>
+          <div>
+            {updateProfileMutation.isSuccess && (
+              <div className="mb-4 bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
+                {t('profile.profileSuccess')}
+              </div>
+            )}
+            {updateProfileMutation.isError && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                Failed to update profile
+              </div>
+            )}
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <Field>
+                <Label className="block text-sm font-medium text-white mb-2">{t('profile.firstName')}</Label>
+                <input
+                  type="text"
+                  value={profileData.firstName}
+                  onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                  required
+                  className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder={t('profile.firstName')}
+                />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-medium text-white mb-2">{t('profile.lastName')}</Label>
+                <input
+                  type="text"
+                  value={profileData.lastName}
+                  onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                  required
+                  className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder={t('profile.lastName')}
+                />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-medium text-white mb-2">{t('profile.email')}</Label>
+                <input
+                  type="email"
+                  value={profileResponse?.profile?.email || ''}
+                  disabled
+                  className="w-full px-4 py-2.5 bg-slate-600 border border-slate-500 rounded-lg text-slate-300 cursor-not-allowed"
+                />
+              </Field>
+              <button
+                type="submit"
+                disabled={updateProfileMutation.isPending || !profileData.firstName || !profileData.lastName}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+              >
+                {updateProfileMutation.isPending ? t('common.saving') : t('common.save')}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div className="-mr-4 sm:-mr-6 lg:-mr-8 border-b border-slate-700" />
         {/* Change Password Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
             <div>

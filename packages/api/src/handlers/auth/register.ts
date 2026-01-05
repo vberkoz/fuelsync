@@ -35,6 +35,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           PK: `USER#${result.UserSub}`,
           SK: 'PROFILE',
           email,
+          firstName: givenName || '',
+          lastName: familyName || '',
           name: givenName && familyName ? `${givenName} ${familyName}` : givenName || '',
           currency: 'USD',
           createdAt: Date.now(),

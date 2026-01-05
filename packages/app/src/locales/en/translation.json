@@ -129,9 +129,14 @@
     "title": "Profile",
     "email": "Email",
     "name": "Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
     "currency": "Currency",
     "saveChanges": "Save Changes",
-    "loading": "Loading profile..."
+    "loading": "Loading profile...",
+    "profileInfo": "Profile Information",
+    "profileInfoDesc": "Update your personal information and account details.",
+    "profileSuccess": "Profile updated successfully"
   },
   "settings": {
     "title": "Settings",
