@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, Menu, Listbox, Field, Label } from '@headlessui/react';
 import { Fuel, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import React from 'react';
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -274,7 +275,7 @@ export default function Refills() {
       station: refill.station || ''
     });
     setEditingId(refill.refillId);
-    setShowForm(true);
+    setShowForm(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -411,101 +412,96 @@ export default function Refills() {
         </div>
       )}
 
-      {!isLoading && showForm && (
-        <Dialog open={showForm} onClose={() => { setShowForm(false); setEditingId(null); }} className="relative z-50">
-          <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold text-white mb-4">
-                {editingId ? t('refills.edit') : t('refills.add')}
-              </Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
-                  <input type="number" step="0.01" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.volume')} (L)</Label>
-                  <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => updateFormField('volume', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.pricePerUnit')}</Label>
-                  <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => updateFormField('pricePerUnit', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.totalCost')}</Label>
-                  <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => updateFormField('totalCost', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
-                  <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
-                    <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.currency}</span>
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {CURRENCIES.map((curr) => (
-                          <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
-                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
-                  <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
-                    <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.fuelType}</span>
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {['Regular', 'Premium', 'Diesel'].map((fuel) => (
-                          <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
-                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-                  <textarea rows={3} value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-                </Field>
-                <div className="flex gap-2">
-                  <button 
-                    type="submit" 
-                    disabled={createMutation.isPending || updateMutation.isPending} 
-                    className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
-                  >
-                    {createMutation.isPending || updateMutation.isPending ? t('common.saving') : editingId ? t('common.save') : t('common.add')}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => { setShowForm(false); setEditingId(null); }} 
-                    className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              </form>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
+      {!isLoading && showForm && !editingId && (
+        <div className="mb-6 bg-slate-800 rounded-lg p-6 border border-slate-700">
+          <h2 className="text-xl font-bold text-white mb-4">{t('refills.add')}</h2>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                <input type="number" step="0.01" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.volume')} (L)</Label>
+                <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => updateFormField('volume', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.pricePerUnit')}</Label>
+                <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => updateFormField('pricePerUnit', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.totalCost')}</Label>
+                <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => updateFormField('totalCost', e.target.value.replace(',', '.'))} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <span>{formData.currency}</span>
+                      <ChevronDown className="h-5 w-5 text-slate-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {CURRENCIES.map((curr) => (
+                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                          {({ selected }) => (
+                            <div className="flex justify-between items-center">
+                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
+                              {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                            </div>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <span>{formData.fuelType}</span>
+                      <ChevronDown className="h-5 w-5 text-slate-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                        <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                          {({ selected }) => (
+                            <div className="flex justify-between items-center">
+                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                              {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                            </div>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
+              </Field>
+            </div>
+            <Field>
+              <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+              <textarea rows={2} value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            </Field>
+            <div className="flex gap-2">
+              <button 
+                type="submit" 
+                disabled={createMutation.isPending} 
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+              >
+                {createMutation.isPending ? t('common.saving') : t('common.add')}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setShowForm(false); setEditingId(null); }} 
+                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       <ReminderDialog 
@@ -539,40 +535,139 @@ export default function Refills() {
                   </thead>
                   <tbody>
                     {monthRefills.map(r => (
-                      <tr key={r.refillId} className="border-b border-slate-800 hover:bg-slate-800">
-                        <td className="p-4 text-white font-mono text-right">{Math.round(convertDistance(r.odometer, units))}</td>
-                        <td className="p-4 text-white font-mono text-right">{convertVolume(r.volume, units).toFixed(2)}</td>
-                        <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.pricePerUnit, r.currency, r.pricePerUnit / (r.exchangeRate || 1), preferredCurrency)}</td>
-                        <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</td>
-                        <td className="p-4 text-white">{r.fuelType}</td>
-                        <td className="p-4 text-white">{r.station || r.comment}</td>
-                        <td className="p-4 text-white font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</td>
-                        <td className="p-4 text-white">
-                          <Menu as="div" className="relative">
-                            <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                              <MoreVertical className="h-5 w-5 text-slate-400" />
-                            </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                    <Pencil className="h-4 w-4" />
-                                    {t('common.edit')}
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {t('common.delete')}
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            </Menu.Items>
-                          </Menu>
-                        </td>
-                      </tr>
+                      <React.Fragment key={r.refillId}>
+                        <tr className="border-b border-slate-800 hover:bg-slate-800">
+                          <td className="p-4 text-white font-mono text-right">{Math.round(convertDistance(r.odometer, units))}</td>
+                          <td className="p-4 text-white font-mono text-right">{convertVolume(r.volume, units).toFixed(2)}</td>
+                          <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.pricePerUnit, r.currency, r.pricePerUnit / (r.exchangeRate || 1), preferredCurrency)}</td>
+                          <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</td>
+                          <td className="p-4 text-white">{r.fuelType}</td>
+                          <td className="p-4 text-white">{r.station || r.comment}</td>
+                          <td className="p-4 text-white font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</td>
+                          <td className="p-4 text-white">
+                            <Menu as="div" className="relative">
+                              <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                                <MoreVertical className="h-5 w-5 text-slate-400" />
+                              </Menu.Button>
+                              <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                      <Pencil className="h-4 w-4" />
+                                      {t('common.edit')}
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                      <Trash2 className="h-4 w-4" />
+                                      {t('common.delete')}
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              </Menu.Items>
+                            </Menu>
+                          </td>
+                        </tr>
+                        {editingId === r.refillId && (
+                          <tr>
+                            <td colSpan={8} className="p-0">
+                              <div className="bg-slate-750 p-6 border-t border-slate-700">
+                                <h3 className="text-lg font-bold text-white mb-4">{t('refills.edit')}</h3>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                                      <input type="number" step="0.01" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.volume')} (L)</Label>
+                                      <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => updateFormField('volume', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.pricePerUnit')}</Label>
+                                      <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => updateFormField('pricePerUnit', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.totalCost')}</Label>
+                                      <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => updateFormField('totalCost', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                                      <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                                        <div className="relative">
+                                          <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <span>{formData.currency}</span>
+                                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                                          </Listbox.Button>
+                                          <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                            {CURRENCIES.map((curr) => (
+                                              <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                                {({ selected }) => (
+                                                  <div className="flex justify-between items-center">
+                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
+                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                                  </div>
+                                                )}
+                                              </Listbox.Option>
+                                            ))}
+                                          </Listbox.Options>
+                                        </div>
+                                      </Listbox>
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+                                      <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                                        <div className="relative">
+                                          <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <span>{formData.fuelType}</span>
+                                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                                          </Listbox.Button>
+                                          <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                            {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                                              <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                                {({ selected }) => (
+                                                  <div className="flex justify-between items-center">
+                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                                  </div>
+                                                )}
+                                              </Listbox.Option>
+                                            ))}
+                                          </Listbox.Options>
+                                        </div>
+                                      </Listbox>
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')}</Label>
+                                      <input type="text" value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      type="submit" 
+                                      disabled={updateMutation.isPending} 
+                                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                                    >
+                                      {updateMutation.isPending ? t('common.saving') : t('common.save')}
+                                    </button>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => { setEditingId(null); setShowForm(false); }} 
+                                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                                    >
+                                      {t('common.cancel')}
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -597,37 +692,130 @@ export default function Refills() {
                 </h2>
                 <div className="grid gap-4">
                   {monthRefills.map((r: Refill) => (
-                    <div key={r.refillId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-bold text-white"><span className="font-mono">{convertVolume(r.volume, units).toFixed(2)}{getVolumeUnit(units)}</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
-                        <p className="text-slate-400">Odometer: <span className="font-mono">{Math.round(convertDistance(r.odometer, units))} {getDistanceUnit(units)}</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span></p>
-                        <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
-                        {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</p>}
+                    <React.Fragment key={r.refillId}>
+                      <div className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
+                        <div>
+                          <h3 className="text-xl font-bold text-white"><span className="font-mono">{convertVolume(r.volume, units).toFixed(2)}{getVolumeUnit(units)}</span> @ <span className="font-mono">{Number(r.pricePerUnit).toFixed(2)} {r.currency}/L</span></h3>
+                          <p className="text-slate-400">Odometer: <span className="font-mono">{Math.round(convertDistance(r.odometer, units))} {getDistanceUnit(units)}</span> • Total: <span className="font-mono">{formatWithBaseAmount(r.totalCost, r.currency, r.baseAmount, preferredCurrency)}</span></p>
+                          <p className="text-slate-500 text-sm">{r.fuelType} {(r.station || r.comment) ? `• ${r.station || r.comment}` : ''}</p>
+                          {(r.timestamp || r.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(r.timestamp || r.createdAt, dateFormat)}</p>}
+                        </div>
+                        <Menu as="div" className="relative">
+                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                            <MoreVertical className="h-5 w-5 text-slate-400" />
+                          </Menu.Button>
+                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                  <Pencil className="h-4 w-4" />
+                                  {t('common.edit')}
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                  <Trash2 className="h-4 w-4" />
+                                  {t('common.delete')}
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </Menu.Items>
+                        </Menu>
                       </div>
-                      <Menu as="div" className="relative">
-                        <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                          <MoreVertical className="h-5 w-5 text-slate-400" />
-                        </Menu.Button>
-                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button onClick={() => handleEdit(r)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                <Pencil className="h-4 w-4" />
-                                {t('common.edit')}
+                      {editingId === r.refillId && (
+                        <div className="bg-slate-750 p-4 rounded-lg border border-slate-700">
+                          <h3 className="text-lg font-bold text-white mb-4">{t('refills.edit')}</h3>
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                                <input type="number" step="0.01" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.volume')} (L)</Label>
+                                <input type="text" inputMode="decimal" value={formData.volume} onChange={(e) => updateFormField('volume', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.pricePerUnit')}</Label>
+                                <input type="text" inputMode="decimal" value={formData.pricePerUnit} onChange={(e) => updateFormField('pricePerUnit', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.totalCost')}</Label>
+                                <input type="text" inputMode="decimal" value={formData.totalCost} onChange={(e) => updateFormField('totalCost', e.target.value.replace(',', '.'))} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                                  <div className="relative">
+                                    <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                      <span>{formData.currency}</span>
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Listbox.Button>
+                                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {CURRENCIES.map((curr) => (
+                                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Listbox.Option>
+                                      ))}
+                                    </Listbox.Options>
+                                  </div>
+                                </Listbox>
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+                                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                                  <div className="relative">
+                                    <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                      <span>{formData.fuelType}</span>
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Listbox.Button>
+                                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                                        <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Listbox.Option>
+                                      ))}
+                                    </Listbox.Options>
+                                  </div>
+                                </Listbox>
+                              </Field>
+                            </div>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.station')}</Label>
+                              <input type="text" value={formData.station} onChange={(e) => setFormData({...formData, station: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </Field>
+                            <div className="flex gap-2">
+                              <button 
+                                type="submit" 
+                                disabled={updateMutation.isPending} 
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                              >
+                                {updateMutation.isPending ? t('common.saving') : t('common.save')}
                               </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button onClick={() => { setDeleteId(r.refillId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                <Trash2 className="h-4 w-4" />
-                                {t('common.delete')}
+                              <button 
+                                type="button" 
+                                onClick={() => { setEditingId(null); setShowForm(false); }} 
+                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                              >
+                                {t('common.cancel')}
                               </button>
-                            )}
-                          </Menu.Item>
-                        </Menu.Items>
-                      </Menu>
-                    </div>
+                            </div>
+                          </form>
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>

@@ -12,6 +12,11 @@ export default {
       screens: {
         'xl': '1300px',
       },
+      colors: {
+        slate: {
+          750: '#334155',
+        },
+      },
     },
   },
   plugins: [],

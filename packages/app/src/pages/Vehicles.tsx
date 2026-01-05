@@ -140,7 +140,7 @@ export default function Vehicles() {
       fuelType: vehicle.fuelType || 'Regular'
     });
     setEditingId(vehicle.vehicleId);
-    setShowForm(true);
+    setShowForm(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -237,105 +237,102 @@ export default function Vehicles() {
         </div>
       )}
 
-      {!isLoading && showForm && (
-        <Dialog open={showForm} onClose={() => { setShowForm(false); setEditingId(null); }} className="relative z-50">
-          <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold text-white mb-4">{editingId ? t('vehicles.edit') : t('vehicles.add')}</Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
-                  <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || makeQuery})}>
+      {!isLoading && showForm && !editingId && (
+        <div className="mb-6 bg-slate-800 rounded-lg p-6 border border-slate-700">
+          <h2 className="text-xl font-bold text-white mb-4">{t('vehicles.add')}</h2>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
+                <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || makeQuery})}>
+                  <div className="relative">
                     <div className="relative">
-                      <div className="relative">
-                        {formData.make && (
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            {logoError.has(formData.make) ? (
-                              <Car className="h-5 w-5 text-slate-400" />
-                            ) : (
-                              <img src={getVehicleLogo(formData.make).value} alt={formData.make} className="h-5 w-5 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(formData.make)); e.currentTarget.style.display = 'none'; }} />
-                            )}
-                          </div>
-                        )}
-                        <Combobox.Input onChange={(e) => { setMakeQuery(e.target.value); setFormData({...formData, make: e.target.value}); }} displayValue={(make: string) => make} className={`w-full py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-10' : 'pl-4'}`} required placeholder="Type or select a brand" />
-                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <ChevronDown className="h-5 w-5 text-slate-400" />
-                        </Combobox.Button>
-                      </div>
-                      <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {filteredBrands.length === 0 && makeQuery !== '' ? (
-                          <div className="px-4 py-2 text-slate-400 text-sm">
-                            Press Enter to use "{makeQuery}"
-                          </div>
-                        ) : (
-                          filteredBrands.map((brand: any) => (
-                            <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                              {({ selected }) => (
-                                <div className="flex justify-between items-center">
-                                  <div className="flex items-center gap-2">
-                                    {brand.logo && <img src={brand.logo} alt={brand.name} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
-                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
-                                  </div>
-                                  {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                                </div>
-                              )}
-                            </Combobox.Option>
-                          ))
-                        )}
-                      </Combobox.Options>
-                    </div>
-                  </Combobox>
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
-                  <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.year')}</Label>
-                  <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.licensePlate')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-                  <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
-                  <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
-                    <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.fuelType}</span>
+                      {formData.make && (
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          {logoError.has(formData.make) ? (
+                            <Car className="h-5 w-5 text-slate-400" />
+                          ) : (
+                            <img src={getVehicleLogo(formData.make).value} alt={formData.make} className="h-5 w-5 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(formData.make)); e.currentTarget.style.display = 'none'; }} />
+                          )}
+                        </div>
+                      )}
+                      <Combobox.Input onChange={(e) => { setMakeQuery(e.target.value); setFormData({...formData, make: e.target.value}); }} displayValue={(make: string) => make} className={`w-full py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-10' : 'pl-4'}`} required placeholder="Type or select a brand" />
+                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
                         <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {['Regular', 'Premium', 'Diesel'].map((fuel) => (
-                          <Listbox.Option
-                            key={fuel}
-                            value={fuel}
-                            className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                          >
+                      </Combobox.Button>
+                    </div>
+                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {filteredBrands.length === 0 && makeQuery !== '' ? (
+                        <div className="px-4 py-2 text-slate-400 text-sm">
+                          Press Enter to use "{makeQuery}"
+                        </div>
+                      ) : (
+                        filteredBrands.map((brand: any) => (
+                          <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                <div className="flex items-center gap-2">
+                                  {brand.logo && <img src={brand.logo} alt={brand.name} className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                                </div>
                                 {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </Field>
-                <div className="flex gap-2">
-                  <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
-                    {createMutation.isPending || updateMutation.isPending ? t('common.saving') : editingId ? t('common.save') : t('common.add')}
-                  </button>
-                  <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">{t('common.cancel')}</button>
+                          </Combobox.Option>
+                        ))
+                      )}
+                    </Combobox.Options>
+                  </div>
+                </Combobox>
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
+                <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.year')}</Label>
+                <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.licensePlate')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+                <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+            </div>
+            <Field>
+              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+              <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                <div className="relative">
+                  <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <span>{formData.fuelType}</span>
+                    <ChevronDown className="h-5 w-5 text-slate-400" />
+                  </Listbox.Button>
+                  <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                      <Listbox.Option
+                        key={fuel}
+                        value={fuel}
+                        className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                      >
+                        {({ selected }) => (
+                          <div className="flex justify-between items-center">
+                            <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                            {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                          </div>
+                        )}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
                 </div>
-              </form>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
+              </Listbox>
+            </Field>
+            <div className="flex gap-2">
+              <button type="submit" disabled={createMutation.isPending} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                {createMutation.isPending ? t('common.saving') : t('common.add')}
+              </button>
+              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">{t('common.cancel')}</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {!isLoading && (
@@ -415,6 +412,99 @@ export default function Vehicles() {
                     )}
                   </RadioGroup.Option>
                 ))}
+                {vehicles.map((v: Vehicle) => (
+                  editingId === v.vehicleId && (
+                    <tr key={`edit-${v.vehicleId}`}>
+                      <td colSpan={9} className="p-0">
+                        <div className="bg-slate-750 p-6 border-t border-slate-700">
+                          <h3 className="text-lg font-bold text-white mb-4">{t('vehicles.edit')}</h3>
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
+                                <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || makeQuery})}>
+                                  <div className="relative">
+                                    <div className="relative">
+                                      {formData.make && (
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                          {logoError.has(formData.make) ? (
+                                            <Car className="h-4 w-4 text-slate-400" />
+                                          ) : (
+                                            <img src={getVehicleLogo(formData.make).value} alt={formData.make} className="h-4 w-4 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(formData.make)); e.currentTarget.style.display = 'none'; }} />
+                                          )}
+                                        </div>
+                                      )}
+                                      <Combobox.Input onChange={(e) => { setMakeQuery(e.target.value); setFormData({...formData, make: e.target.value}); }} displayValue={(make: string) => make} className={`w-full py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-8' : 'pl-3'}`} required />
+                                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                                      </Combobox.Button>
+                                    </div>
+                                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {filteredBrands.map((brand: any) => (
+                                        <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <div className="flex items-center gap-2">
+                                                {brand.logo && <img src={brand.logo} alt={brand.name} className="h-4 w-4 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                                              </div>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Combobox.Option>
+                                      ))}
+                                    </Combobox.Options>
+                                  </div>
+                                </Combobox>
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
+                                <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.year')}</Label>
+                                <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.licensePlate')}</Label>
+                                <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+                                <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                                  <div className="relative">
+                                    <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                      <span>{formData.fuelType}</span>
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Listbox.Button>
+                                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                                        <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Listbox.Option>
+                                      ))}
+                                    </Listbox.Options>
+                                  </div>
+                                </Listbox>
+                              </Field>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="submit" disabled={updateMutation.isPending} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                                {updateMutation.isPending ? t('common.saving') : t('common.save')}
+                              </button>
+                              <button type="button" onClick={() => { setEditingId(null); setShowForm(false); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">{t('common.cancel')}</button>
+                            </div>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                ))}
               </tbody>
             </table>
             {vehicles.length === 0 && !showForm && (
@@ -443,11 +533,6 @@ export default function Vehicles() {
                           ) : (
                             <img src={getVehicleLogo(v.make).value} alt={v.make} className="h-12 w-12 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(v.make)); e.currentTarget.style.display = 'none'; }} />
                           )}
-                          <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-800 flex items-center justify-center ${
-                            checked ? 'bg-indigo-500' : 'bg-slate-600'
-                          }`}>
-                            {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                          </div>
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-white leading-tight">
@@ -507,6 +592,93 @@ export default function Vehicles() {
                         )}
                       </div>
                     </div>
+                    {editingId === v.vehicleId && (
+                      <div className="mx-4 mb-4 bg-slate-750 p-4 rounded-lg border border-slate-700">
+                        <h3 className="text-lg font-bold text-white mb-4">{t('vehicles.edit')}</h3>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.make')}</Label>
+                              <Combobox value={formData.make} onChange={(value) => setFormData({...formData, make: value || makeQuery})}>
+                                <div className="relative">
+                                  <div className="relative">
+                                    {formData.make && (
+                                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        {logoError.has(formData.make) ? (
+                                          <Car className="h-4 w-4 text-slate-400" />
+                                        ) : (
+                                          <img src={getVehicleLogo(formData.make).value} alt={formData.make} className="h-4 w-4 object-contain" onError={(e) => { setLogoError(prev => new Set(prev).add(formData.make)); e.currentTarget.style.display = 'none'; }} />
+                                        )}
+                                      </div>
+                                    )}
+                                    <Combobox.Input onChange={(e) => { setMakeQuery(e.target.value); setFormData({...formData, make: e.target.value}); }} displayValue={(make: string) => make} className={`w-full py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.make ? 'pl-8' : 'pl-3'}`} required />
+                                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Combobox.Button>
+                                  </div>
+                                  <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                    {filteredBrands.map((brand: any) => (
+                                      <Combobox.Option key={brand.name} value={brand.name} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                        {({ selected }) => (
+                                          <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                              {brand.logo && <img src={brand.logo} alt={brand.name} className="h-4 w-4 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{brand.name}</span>
+                                            </div>
+                                            {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                          </div>
+                                        )}
+                                      </Combobox.Option>
+                                    ))}
+                                  </Combobox.Options>
+                                </div>
+                              </Combobox>
+                            </Field>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.model')}</Label>
+                              <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </Field>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.year')}</Label>
+                              <input type="number" value={formData.year} onChange={(e) => setFormData({...formData, year: e.target.value})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </Field>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.licensePlate')}</Label>
+                              <input type="text" value={formData.licensePlate} onChange={(e) => setFormData({...formData, licensePlate: e.target.value.toUpperCase()})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </Field>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('vehicles.fuelType')}</Label>
+                              <Listbox value={formData.fuelType} onChange={(value) => setFormData({...formData, fuelType: value})}>
+                                <div className="relative">
+                                  <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <span>{formData.fuelType}</span>
+                                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                                  </Listbox.Button>
+                                  <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                    {['Regular', 'Premium', 'Diesel'].map((fuel) => (
+                                      <Listbox.Option key={fuel} value={fuel} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                        {({ selected }) => (
+                                          <div className="flex justify-between items-center">
+                                            <span className={selected ? 'font-semibold text-white' : 'text-white'}>{fuel}</span>
+                                            {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                          </div>
+                                        )}
+                                      </Listbox.Option>
+                                    ))}
+                                  </Listbox.Options>
+                                </div>
+                              </Listbox>
+                            </Field>
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="submit" disabled={updateMutation.isPending} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                              {updateMutation.isPending ? t('common.saving') : t('common.save')}
+                            </button>
+                            <button type="button" onClick={() => { setEditingId(null); setShowForm(false); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">{t('common.cancel')}</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
                   </div>
                 )}
               </RadioGroup.Option>

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, Menu, Listbox, Field, Label, Combobox } from '@headlessui/react';
 import { Receipt, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import React from 'react';
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -259,7 +260,7 @@ export default function Expenses() {
       description: expense.description || ''
     });
     setEditingId(expense.expenseId);
-    setShowForm(true);
+    setShowForm(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -392,105 +393,100 @@ export default function Expenses() {
         </div>
       )}
 
-      {!isLoading && showForm && (
-        <Dialog open={showForm} onClose={() => { setShowForm(false); setEditingId(null); }} className="relative z-50">
-          <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold text-white mb-4">
-                {editingId ? t('expenses.edit') : t('expenses.add')}
-              </Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
-                  <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
-                    <div className="relative">
-                      <Combobox.Input 
-                        onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
-                        displayValue={(category: string) => category} 
-                        className="w-full px-4 py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                        required 
-                        placeholder="Type or select a category"
-                      />
-                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Combobox.Button>
-                      <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {filteredCategories.length === 0 && categoryQuery !== '' ? (
-                          <div className="px-4 py-2 text-slate-400 text-sm">
-                            Press Enter to use "{categoryQuery}"
-                          </div>
-                        ) : (
-                          filteredCategories.map((cat: string) => (
-                            <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                              {({ selected }) => (
-                                <div className="flex justify-between items-center">
-                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                                  {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                                </div>
-                              )}
-                            </Combobox.Option>
-                          ))
-                        )}
-                      </Combobox.Options>
-                    </div>
-                  </Combobox>
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
-                  <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
-                  <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
-                    <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.currency}</span>
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {CURRENCIES.map((curr) => (
-                          <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+      {!isLoading && showForm && !editingId && (
+        <div className="mb-6 bg-slate-800 rounded-lg p-6 border border-slate-700">
+          <h2 className="text-xl font-bold text-white mb-4">{t('expenses.add')}</h2>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
+                <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
+                  <div className="relative">
+                    <Combobox.Input 
+                      onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
+                      displayValue={(category: string) => category} 
+                      className="w-full px-4 py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      required 
+                      placeholder="Type or select a category"
+                    />
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronDown className="h-5 w-5 text-slate-400" />
+                    </Combobox.Button>
+                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {filteredCategories.length === 0 && categoryQuery !== '' ? (
+                        <div className="px-4 py-2 text-slate-400 text-sm">
+                          Press Enter to use "{categoryQuery}"
+                        </div>
+                      ) : (
+                        filteredCategories.map((cat: string) => (
+                          <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
                             {({ selected }) => (
                               <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
+                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
                                 {selected && <Check className="h-5 w-5 text-indigo-500" />}
                               </div>
                             )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
-                  <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </Field>
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-                  <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-                </Field>
-                <div className="flex gap-2">
-                  <button 
-                    type="submit" 
-                    disabled={createMutation.isPending || updateMutation.isPending} 
-                    className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
-                  >
-                    {createMutation.isPending || updateMutation.isPending ? t('common.saving') : editingId ? t('common.save') : t('common.add')}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => { setShowForm(false); setEditingId(null); }} 
-                    className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              </form>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
+                          </Combobox.Option>
+                        ))
+                      )}
+                    </Combobox.Options>
+                  </div>
+                </Combobox>
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
+                <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <span>{formData.currency}</span>
+                      <ChevronDown className="h-5 w-5 text-slate-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {CURRENCIES.map((curr) => (
+                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                          {({ selected }) => (
+                            <div className="flex justify-between items-center">
+                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
+                              {selected && <Check className="h-5 w-5 text-indigo-500" />}
+                            </div>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
+              </Field>
+              <Field>
+                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </Field>
+            </div>
+            <Field>
+              <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
+              <textarea rows={2} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            </Field>
+            <div className="flex gap-2">
+              <button 
+                type="submit" 
+                disabled={createMutation.isPending} 
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+              >
+                {createMutation.isPending ? t('common.saving') : t('common.add')}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setShowForm(false); setEditingId(null); }} 
+                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       <ReminderDialog 
@@ -522,38 +518,132 @@ export default function Expenses() {
                   </thead>
                   <tbody>
                     {monthExpenses.map(e => (
-                      <tr key={e.expenseId} className="border-b border-slate-800 hover:bg-slate-800">
-                        <td className="p-4 text-white">{e.category}</td>
-                        <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</td>
-                        <td className="p-4 text-white font-mono text-right">{e.odometer ? Math.round(convertDistance(e.odometer, units)) : ''}</td>
-                        <td className="p-4 text-white">{e.description}</td>
-                        <td className="p-4 text-white font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</td>
-                        <td className="p-4 text-white">
-                          <Menu as="div" className="relative">
-                            <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                              <MoreVertical className="h-5 w-5 text-slate-400" />
-                            </Menu.Button>
-                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                    <Pencil className="h-4 w-4" />
-                                    {t('common.edit')}
-                                  </button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {t('common.delete')}
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            </Menu.Items>
-                          </Menu>
-                        </td>
-                      </tr>
+                      <React.Fragment key={e.expenseId}>
+                        <tr className="border-b border-slate-800 hover:bg-slate-800">
+                          <td className="p-4 text-white">{e.category}</td>
+                          <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</td>
+                          <td className="p-4 text-white font-mono text-right">{e.odometer ? Math.round(convertDistance(e.odometer, units)) : ''}</td>
+                          <td className="p-4 text-white">{e.description}</td>
+                          <td className="p-4 text-white font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</td>
+                          <td className="p-4 text-white">
+                            <Menu as="div" className="relative">
+                              <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                                <MoreVertical className="h-5 w-5 text-slate-400" />
+                              </Menu.Button>
+                              <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                      <Pencil className="h-4 w-4" />
+                                      {t('common.edit')}
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                      <Trash2 className="h-4 w-4" />
+                                      {t('common.delete')}
+                                    </button>
+                                  )}
+                                </Menu.Item>
+                              </Menu.Items>
+                            </Menu>
+                          </td>
+                        </tr>
+                        {editingId === e.expenseId && (
+                          <tr>
+                            <td colSpan={6} className="p-0">
+                              <div className="bg-slate-750 p-6 border-t border-slate-700">
+                                <h3 className="text-lg font-bold text-white mb-4">{t('expenses.edit')}</h3>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
+                                      <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
+                                        <div className="relative">
+                                          <Combobox.Input 
+                                            onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
+                                            displayValue={(category: string) => category} 
+                                            className="w-full px-3 py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                                            required 
+                                          />
+                                          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                                          </Combobox.Button>
+                                          <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                            {filteredCategories.map((cat: string) => (
+                                              <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                                {({ selected }) => (
+                                                  <div className="flex justify-between items-center">
+                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
+                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                                  </div>
+                                                )}
+                                              </Combobox.Option>
+                                            ))}
+                                          </Combobox.Options>
+                                        </div>
+                                      </Combobox>
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
+                                      <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                                      <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                                        <div className="relative">
+                                          <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <span>{formData.currency}</span>
+                                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                                          </Listbox.Button>
+                                          <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                            {CURRENCIES.map((curr) => (
+                                              <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                                {({ selected }) => (
+                                                  <div className="flex justify-between items-center">
+                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
+                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                                  </div>
+                                                )}
+                                              </Listbox.Option>
+                                            ))}
+                                          </Listbox.Options>
+                                        </div>
+                                      </Listbox>
+                                    </Field>
+                                    <Field>
+                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                                      <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    </Field>
+                                  </div>
+                                  <Field>
+                                    <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')}</Label>
+                                    <input type="text" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                  </Field>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      type="submit" 
+                                      disabled={updateMutation.isPending} 
+                                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                                    >
+                                      {updateMutation.isPending ? t('common.saving') : t('common.save')}
+                                    </button>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => { setEditingId(null); setShowForm(false); }} 
+                                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                                    >
+                                      {t('common.cancel')}
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -578,39 +668,129 @@ export default function Expenses() {
                 </h2>
                 <div className="grid gap-4">
                   {monthExpenses.map((e: Expense) => (
-                    <div key={e.expenseId} className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</span></h3>
-                        <p className="text-slate-400">
-                          {e.odometer && <span className="font-mono">Odometer: {Math.round(convertDistance(e.odometer, units))} {getDistanceUnit(units)}</span>}
-                        </p>
-                        {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
-                        {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</p>}
+                    <React.Fragment key={e.expenseId}>
+                      <div className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
+                        <div>
+                          <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</span></h3>
+                          <p className="text-slate-400">
+                            {e.odometer && <span className="font-mono">Odometer: {Math.round(convertDistance(e.odometer, units))} {getDistanceUnit(units)}</span>}
+                          </p>
+                          {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
+                          {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</p>}
+                        </div>
+                        <Menu as="div" className="relative">
+                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
+                            <MoreVertical className="h-5 w-5 text-slate-400" />
+                          </Menu.Button>
+                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
+                                  <Pencil className="h-4 w-4" />
+                                  {t('common.edit')}
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
+                                  <Trash2 className="h-4 w-4" />
+                                  {t('common.delete')}
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </Menu.Items>
+                        </Menu>
                       </div>
-                      <Menu as="div" className="relative">
-                        <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                          <MoreVertical className="h-5 w-5 text-slate-400" />
-                        </Menu.Button>
-                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                <Pencil className="h-4 w-4" />
-                                {t('common.edit')}
+                      {editingId === e.expenseId && (
+                        <div className="bg-slate-750 p-4 rounded-lg border border-slate-700">
+                          <h3 className="text-lg font-bold text-white mb-4">{t('expenses.edit')}</h3>
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
+                                <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
+                                  <div className="relative">
+                                    <Combobox.Input 
+                                      onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
+                                      displayValue={(category: string) => category} 
+                                      className="w-full px-3 py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                                      required 
+                                    />
+                                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Combobox.Button>
+                                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {filteredCategories.map((cat: string) => (
+                                        <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Combobox.Option>
+                                      ))}
+                                    </Combobox.Options>
+                                  </div>
+                                </Combobox>
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
+                                <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
+                                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
+                                  <div className="relative">
+                                    <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                      <span>{formData.currency}</span>
+                                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                                    </Listbox.Button>
+                                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                      {CURRENCIES.map((curr) => (
+                                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
+                                          {({ selected }) => (
+                                            <div className="flex justify-between items-center">
+                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
+                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
+                                            </div>
+                                          )}
+                                        </Listbox.Option>
+                                      ))}
+                                    </Listbox.Options>
+                                  </div>
+                                </Listbox>
+                              </Field>
+                              <Field>
+                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
+                                <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                              </Field>
+                            </div>
+                            <Field>
+                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')}</Label>
+                              <input type="text" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </Field>
+                            <div className="flex gap-2">
+                              <button 
+                                type="submit" 
+                                disabled={updateMutation.isPending} 
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                              >
+                                {updateMutation.isPending ? t('common.saving') : t('common.save')}
                               </button>
-                            )}
-                          </Menu.Item>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                <Trash2 className="h-4 w-4" />
-                                {t('common.delete')}
+                              <button 
+                                type="button" 
+                                onClick={() => { setEditingId(null); setShowForm(false); }} 
+                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
+                              >
+                                {t('common.cancel')}
                               </button>
-                            )}
-                          </Menu.Item>
-                        </Menu.Items>
-                      </Menu>
-                    </div>
+                            </div>
+                          </form>
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>

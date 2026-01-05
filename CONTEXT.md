@@ -805,6 +805,12 @@ Full-featured PWA with complete CRUD operations, analytics, internationalization
 - ✅ **Accurate Odometer Display**: Dialog shows the exact submitted odometer value that triggered the alert
 - ✅ **Real-time List Updates**: Fixed query invalidation to ensure refill/expense lists update immediately after CRUD operations
 
+### Recent Updates (Latest)
+- ✅ **Inline Forms**: Replaced modal dialogs with inline forms for better mobile experience
+- ✅ **Date Format**: Removed time display from dates (shows only date without ", 00:00:00")
+- ✅ **Mobile UI**: Removed radio buttons from mobile vehicle cards for cleaner interface
+- ✅ **JSX Structure**: Fixed React.Fragment syntax errors in inline form implementations
+
 ### Multi-Currency Support
 
 #### Potential Features for Phase 2
