@@ -4,13 +4,15 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
 import { Construct } from 'constructs';
 
 export class InfrastructureStack extends cdk.Stack {
@@ -491,6 +493,14 @@ export class InfrastructureStack extends cdk.Stack {
       bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
     });
 
+    const dailyExchangeRates = new nodejs.NodejsFunction(this, 'DailyExchangeRates', {
+      entry: '../api/src/handlers/scheduled/daily-exchange-rates.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
     // Grant DynamoDB permissions
     table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
@@ -520,6 +530,7 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(getBrands);
     table.grantReadData(listCategories);
     table.grantWriteData(createCategory);
+    table.grantWriteData(dailyExchangeRates);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -632,6 +643,12 @@ export class InfrastructureStack extends cdk.Stack {
     categories.addMethod('GET', new apigateway.LambdaIntegration(listCategories), { authorizer });
     categories.addMethod('POST', new apigateway.LambdaIntegration(createCategory), { authorizer });
 
+    // Daily exchange rate schedule
+    new events.Rule(this, 'DailyExchangeRateRule', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '9' }),
+      targets: [new eventsTargets.LambdaFunction(dailyExchangeRates)]
+    });
+
     const domainName = 'fuelsync.vberkoz.com';
     const appDomainName = 'app.fuelsync.vberkoz.com';
     const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
@@ -689,13 +706,13 @@ export class InfrastructureStack extends cdk.Stack {
     new route53.ARecord(this, 'LandingRecord', {
       zone: hostedZone,
       recordName: 'fuelsync',
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(landingDistribution))
+      target: route53.RecordTarget.fromAlias(new route53Targets.CloudFrontTarget(landingDistribution))
     });
 
     new route53.ARecord(this, 'AppRecord', {
       zone: hostedZone,
       recordName: 'app.fuelsync',
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(appDistribution))
+      target: route53.RecordTarget.fromAlias(new route53Targets.CloudFrontTarget(appDistribution))
     });
 
     new s3deploy.BucketDeployment(this, 'LandingDeployment', {

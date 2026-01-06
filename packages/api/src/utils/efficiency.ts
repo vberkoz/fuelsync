@@ -28,7 +28,7 @@ export function calculateEfficiency(refills: Refill[]): EfficiencyMetrics {
   // Running average (last 10 refills)
   const recent = sorted.slice(-10);
   const totalDistance = recent[recent.length - 1].odometer - recent[0].odometer;
-  const totalFuel = recent.reduce((sum, r) => sum + r.volume, 0);
+  const totalFuel = recent.slice(1).reduce((sum, r) => sum + r.volume, 0); // Exclude first refill
   const average = totalDistance > 0 && totalFuel > 0 ? totalDistance / totalFuel : null;
 
   // Current efficiency (last 2 refills)
@@ -66,13 +66,13 @@ export function calculateEfficiency(refills: Refill[]): EfficiencyMetrics {
   
   if (cityRefills.length >= 2) {
     const cityDistance = cityRefills[cityRefills.length - 1].odometer - cityRefills[0].odometer;
-    const cityFuel = cityRefills.slice(1).reduce((sum, r) => sum + r.volume, 0);
+    const cityFuel = cityRefills.slice(1).reduce((sum, r) => sum + r.volume, 0); // Correctly excludes first refill
     city = cityDistance > 0 && cityFuel > 0 ? cityDistance / cityFuel : null;
   }
   
   if (highwayRefills.length >= 2) {
     const highwayDistance = highwayRefills[highwayRefills.length - 1].odometer - highwayRefills[0].odometer;
-    const highwayFuel = highwayRefills.slice(1).reduce((sum, r) => sum + r.volume, 0);
+    const highwayFuel = highwayRefills.slice(1).reduce((sum, r) => sum + r.volume, 0); // Correctly excludes first refill
     highway = highwayDistance > 0 && highwayFuel > 0 ? highwayDistance / highwayFuel : null;
   }
 

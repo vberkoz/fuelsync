@@ -66,14 +66,14 @@ export default function Analytics() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
         <BarChart3 className="h-8 w-8 text-indigo-500" />
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('analytics.title')}</h1>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch mb-6 sm:mb-8">
-        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-6 sm:mb-8">
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col min-h-[280px]">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Fuel className="h-8 w-8 text-orange-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.fuel')}</h2>
@@ -104,7 +104,7 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col min-h-[280px]">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Receipt className="h-8 w-8 text-blue-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.expenses')}</h2>
@@ -127,7 +127,7 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col min-h-[280px]">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Gauge className="h-8 w-8 text-purple-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.efficiency')}</h2>
@@ -200,7 +200,7 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col h-full">
+        <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col min-h-[280px]">
           <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <DollarSign className="h-8 w-8 text-green-500" />
             <h2 className="text-lg sm:text-xl font-semibold text-white">{t('analytics.total')}</h2>
@@ -213,13 +213,13 @@ export default function Analytics() {
       </div>
 
       {chartsData && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:gap-6">
           <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
               <Fuel className="h-6 w-6 text-orange-500" />
               <h2 className="text-lg font-semibold text-white">{t('analytics.fuelConsumption')}</h2>
             </div>
-            <div className="h-48 sm:h-64">
+            <div className="h-64 lg:h-80">
               <LineChart
                 data={{
                   labels: chartsData.fuelConsumption.labels.map((label: string) => {
@@ -243,7 +243,7 @@ export default function Analytics() {
               <TrendingUp className="h-6 w-6 text-green-500" />
               <h2 className="text-lg font-semibold text-white">{t('analytics.costs')}</h2>
             </div>
-            <div className="h-48 sm:h-64">
+            <div className="h-64 lg:h-80">
               <LineChart
                 data={{
                   labels: chartsData.costs.labels.map((label: string) => {
@@ -271,42 +271,22 @@ export default function Analytics() {
             </div>
           </div>
 
-          {chartsData.efficiency && (chartsData.efficiency.data.length > 0 || stats?.efficiency?.cityTrend?.length > 0 || stats?.efficiency?.highwayTrend?.length > 0) && (
+          {chartsData.efficiency && chartsData.efficiency.data.length > 0 && (
             <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
                 <Gauge className="h-6 w-6 text-purple-500" />
                 <h2 className="text-lg font-semibold text-white">{t('analytics.efficiencyTrend')}</h2>
               </div>
-              <div className="h-48 sm:h-64">
+              <div className="h-64 lg:h-80">
                 <LineChart
                   data={{
                     labels: chartsData.efficiency.labels,
-                    datasets: [
-                      ...(chartsData.efficiency.data.length > 0 ? [{
-                        label: t('analytics.overall'),
-                        data: chartsData.efficiency.data.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
-                        borderColor: 'rgb(147, 51, 234)',
-                        backgroundColor: 'rgba(147, 51, 234, 0.1)'
-                      }] : []),
-                      ...(stats?.efficiency?.cityTrend?.length > 0 ? [{
-                        label: t('refills.city'),
-                        data: stats.efficiency.cityTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
-                        borderColor: 'rgb(239, 68, 68)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)'
-                      }] : []),
-                      ...(stats?.efficiency?.highwayTrend?.length > 0 ? [{
-                        label: t('refills.highway'),
-                        data: stats.efficiency.highwayTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
-                        borderColor: 'rgb(34, 197, 94)',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)'
-                      }] : []),
-                      ...(stats?.efficiency?.mixedTrend?.length > 0 ? [{
-                        label: t('refills.mixed'),
-                        data: stats.efficiency.mixedTrend.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
-                        borderColor: 'rgb(168, 85, 247)',
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)'
-                      }] : [])
-                    ]
+                    datasets: [{
+                      label: t('analytics.overall'),
+                      data: chartsData.efficiency.data.map((v: number) => units === 'metric' ? 100 / v : v * 2.352),
+                      borderColor: 'rgb(147, 51, 234)',
+                      backgroundColor: 'rgba(147, 51, 234, 0.1)'
+                    }]
                   }}
                   yAxisLabel={units === 'metric' ? 'L/100km' : 'mpg'}
                 />
