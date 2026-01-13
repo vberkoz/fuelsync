@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Dialog, Menu, Listbox, Field, Label, Combobox } from '@headlessui/react';
-import { Receipt, Plus, X, MoreVertical, ChevronDown, Check, Download, Upload, Pencil, Trash2 } from 'lucide-react';
+import { Dialog, Menu } from '@headlessui/react';
+import { Receipt, Plus, X, MoreVertical, Download, Upload } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import React from 'react';
 
@@ -9,11 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
 import { useReminderStore } from '../stores/reminderStore';
-import { CURRENCIES, formatWithBaseAmount } from '../lib/currency';
-import { convertDistance, getDistanceUnit } from '../lib/units';
-import { formatDate } from '../lib/date';
+
 import { exportToCSV, parseCSV } from '../lib/csv';
 import ReminderDialog from '../components/ReminderDialog';
+import ExpenseForm from '../components/expenses/ExpenseForm';
+import ExpenseList from '../components/expenses/ExpenseList';
 
 interface Expense {
   expenseId: string;
@@ -26,10 +26,13 @@ interface Expense {
   description?: string;
   timestamp?: number;
   createdAt: string;
+  odometerImageKey?: string;
+  receiptImageKey?: string;
+  media?: Array<{ key: string; type: string; label: string }>;
 }
 
 export default function Expenses() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { vehicleId } = useParams<{ vehicleId: string }>();
   const queryClient = useQueryClient();
   const currentVehicleId = useVehicleStore((state) => state.currentVehicleId);
@@ -74,16 +77,10 @@ export default function Expenses() {
     loadReminders();
   }, [setReminders]);
 
-  const [categoryQuery, setCategoryQuery] = useState('');
-
   const preferredCurrency = settingsData?.settings?.preferredCurrency || 'USD';
   const units = settingsData?.settings?.units || 'metric';
   const dateFormat = settingsData?.settings?.dateFormat || 'MM/DD/YYYY';
   const categories = categoriesData?.categories || [];
-  const filteredCategories = useMemo(() => {
-    if (categoryQuery === '') return categories;
-    return categories.filter((c: string) => c.toLowerCase().includes(categoryQuery.toLowerCase()));
-  }, [categories, categoryQuery]);
 
   const { data: currentVehicle } = useQuery({
     queryKey: ['vehicle', activeVehicleId],
@@ -123,8 +120,6 @@ export default function Expenses() {
   );
 
   const [visibleMonths, setVisibleMonths] = useState(12);
-  const observerTarget = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
@@ -144,37 +139,27 @@ export default function Expenses() {
 
   const hasMoreMonths = visibleMonths < groupedExpenses.length;
 
-  useEffect(() => {
-    const mainElement = document.querySelector('main');
-    if (!mainElement) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = mainElement;
-      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-      
-      if (scrollPercentage > 0.8) {
-        if (hasMoreMonths) {
-          setVisibleMonths(prev => prev + 6);
-        } else if (hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      }
-    };
-
-    mainElement.addEventListener('scroll', handleScroll);
-    return () => mainElement.removeEventListener('scroll', handleScroll);
-  }, [hasMoreMonths, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handleScroll = () => {
+    if (hasMoreMonths) {
+      setVisibleMonths(prev => prev + 6);
+    } else if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ 
     category: 'Other',
     amount: '',
     currency: 'USD',
     odometer: '',
-    description: ''
+    description: '',
+    odometerImageKey: undefined as string | undefined,
+    media: [] as Array<{ key: string; type: string; label: string }>
   });
 
   const createMutation = useMutation({
@@ -183,7 +168,7 @@ export default function Expenses() {
       queryClient.invalidateQueries({ queryKey: ['expenses', activeVehicleId] });
       setShowForm(false);
       const latestOdometer = expenses[0]?.odometer?.toString() || '';
-      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' });
+      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '', odometerImageKey: undefined, media: [] });
       
       // Check for overdue reminders after adding expense
       if (activeVehicleId && variables.odometer) {
@@ -212,7 +197,7 @@ export default function Expenses() {
       setShowForm(false);
       setEditingId(null);
       const latestOdometer = expenses[0]?.odometer?.toString() || '';
-      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' });
+      setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '', odometerImageKey: undefined, media: [] });
     }
   });
 
@@ -232,17 +217,30 @@ export default function Expenses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('SUBMIT - editingId:', editingId);
+    console.log('SUBMIT - formData:', formData);
+    
     if (!categories.includes(formData.category)) {
       await createCategoryMutation.mutateAsync(formData.category);
     }
     
-    const expenseData = { 
+    const expenseData: any = { 
       category: formData.category,
       amount: parseFloat(formData.amount),
       currency: formData.currency,
       odometer: parseFloat(formData.odometer),
       description: formData.description
     };
+    
+    if (formData.odometerImageKey) {
+      expenseData.odometerImageKey = formData.odometerImageKey;
+    }
+    
+    if (formData.media && formData.media.length > 0) {
+      expenseData.media = formData.media;
+    }
+    
+    console.log('Submitting expense:', expenseData);
     
     if (editingId) {
       updateMutation.mutate({ expenseId: editingId, data: expenseData });
@@ -257,10 +255,17 @@ export default function Expenses() {
       amount: expense.amount.toString(),
       currency: expense.currency,
       odometer: expense.odometer?.toString() || '',
-      description: expense.description || ''
+      description: expense.description || '',
+      odometerImageKey: undefined,
+      media: expense.media || []
     });
     setEditingId(expense.expenseId);
     setShowForm(false);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteDialog(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -339,13 +344,13 @@ export default function Expenses() {
         </div>
         <div className="flex gap-2">
           <Menu as="div" className="relative">
-            <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px]">
+            <Menu.Button className="flex items-center justify-center px-3 py-2 sm:px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg h-[38px] sm:h-[42px] focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <MoreVertical className="h-5 w-5" />
             </Menu.Button>
             <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={handleExport} disabled={expenses.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50 flex items-center gap-2`}>
+                  <button onClick={handleExport} disabled={expenses.length === 0 || createMutation.isPending} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg disabled:opacity-50 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
                     <Download className="h-4 w-4" />
                     {createMutation.isPending ? 'Exporting...' : 'Export CSV'}
                   </button>
@@ -353,7 +358,7 @@ export default function Expenses() {
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg flex items-center gap-2`}>
+                  <button onClick={() => fileInputRef.current?.click()} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-b-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
                     <Upload className="h-4 w-4" />
                     Import CSV
                   </button>
@@ -367,9 +372,9 @@ export default function Expenses() {
               setShowForm(!showForm); 
               setEditingId(null);
               const latestOdometer = expenses[0]?.odometer?.toString() || '';
-              setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '' }); 
+              setFormData({ category: 'Other', amount: '', currency: 'USD', odometer: latestOdometer, description: '', odometerImageKey: undefined, media: [] }); 
             }} 
-            className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+            className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {showForm ? (
               <>
@@ -394,99 +399,16 @@ export default function Expenses() {
       )}
 
       {!isLoading && showForm && !editingId && (
-        <div className="mb-6 bg-slate-800 rounded-lg p-6 border border-slate-700">
-          <h2 className="text-xl font-bold text-white mb-4">{t('expenses.add')}</h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field>
-                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
-                <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
-                  <div className="relative">
-                    <Combobox.Input 
-                      onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
-                      displayValue={(category: string) => category} 
-                      className="w-full px-4 py-2.5 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                      required 
-                      placeholder="Type or select a category"
-                    />
-                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <ChevronDown className="h-5 w-5 text-slate-400" />
-                    </Combobox.Button>
-                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {filteredCategories.length === 0 && categoryQuery !== '' ? (
-                        <div className="px-4 py-2 text-slate-400 text-sm">
-                          Press Enter to use "{categoryQuery}"
-                        </div>
-                      ) : (
-                        filteredCategories.map((cat: string) => (
-                          <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Combobox.Option>
-                        ))
-                      )}
-                    </Combobox.Options>
-                  </div>
-                </Combobox>
-              </Field>
-              <Field>
-                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
-                <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-              </Field>
-              <Field>
-                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
-                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
-                  <div className="relative">
-                    <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      <span>{formData.currency}</span>
-                      <ChevronDown className="h-5 w-5 text-slate-400" />
-                    </Listbox.Button>
-                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {CURRENCIES.map((curr) => (
-                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                          {({ selected }) => (
-                            <div className="flex justify-between items-center">
-                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code} - {curr.name}</span>
-                              {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                            </div>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </div>
-                </Listbox>
-              </Field>
-              <Field>
-                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
-                <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-              </Field>
-            </div>
-            <Field>
-              <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')} <span className="text-xs font-normal text-slate-400">({t('vehicles.optional')})</span></Label>
-              <textarea rows={2} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-            </Field>
-            <div className="flex gap-2">
-              <button 
-                type="submit" 
-                disabled={createMutation.isPending} 
-                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
-              >
-                {createMutation.isPending ? t('common.saving') : t('common.add')}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => { setShowForm(false); setEditingId(null); }} 
-                className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-          </form>
-        </div>
+        <ExpenseForm
+          formData={formData}
+          categories={categories}
+          isSubmitting={createMutation.isPending}
+          isEditing={false}
+          lastOdometer={expenses[0]?.odometer || currentVehicle?.vehicle?.odometer || 0}
+          onSubmit={handleSubmit}
+          onChange={setFormData}
+          onCancel={() => { setShowForm(false); setEditingId(null); }}
+        />
       )}
 
       <ReminderDialog 
@@ -496,315 +418,34 @@ export default function Expenses() {
         currentOdometer={currentOdometerForReminder}
       />
 
-      {!isLoading && (
-        <>
-          {/* Desktop Table (≥1300px) */}
-          <div className="hidden xl:block">
-            {visibleGroupedExpenses.map(([month, monthExpenses]) => (
-              <div key={month} className="mb-8">
-                <h2 className="text-xl font-semibold text-white mb-4 capitalize">
-                  {new Date(month + '-01').toLocaleDateString(i18n.language, { year: 'numeric', month: 'long' }).replace(' р.', '')}
-                </h2>
-                <table className="w-full table-fixed">
-                  <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left p-4 text-slate-400 font-semibold w-32">{t('expenses.category')}</th>
-                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('expenses.amount')}<br/>({preferredCurrency})</th>
-                      <th className="text-right p-4 text-slate-400 font-semibold w-32">{t('refills.odometer')}<br/>({getDistanceUnit(units)})</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold">{t('expenses.description')}</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold w-48">{t('refills.date')}</th>
-                      <th className="text-left p-4 text-slate-400 font-semibold w-16"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthExpenses.map(e => (
-                      <React.Fragment key={e.expenseId}>
-                        <tr className="border-b border-slate-800 hover:bg-slate-800">
-                          <td className="p-4 text-white">{e.category}</td>
-                          <td className="p-4 text-white font-mono text-right">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</td>
-                          <td className="p-4 text-white font-mono text-right">{e.odometer ? Math.round(convertDistance(e.odometer, units)) : ''}</td>
-                          <td className="p-4 text-white">{e.description}</td>
-                          <td className="p-4 text-white font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</td>
-                          <td className="p-4 text-white">
-                            <Menu as="div" className="relative">
-                              <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                                <MoreVertical className="h-5 w-5 text-slate-400" />
-                              </Menu.Button>
-                              <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                      <Pencil className="h-4 w-4" />
-                                      {t('common.edit')}
-                                    </button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                      <Trash2 className="h-4 w-4" />
-                                      {t('common.delete')}
-                                    </button>
-                                  )}
-                                </Menu.Item>
-                              </Menu.Items>
-                            </Menu>
-                          </td>
-                        </tr>
-                        {editingId === e.expenseId && (
-                          <tr>
-                            <td colSpan={6} className="p-0">
-                              <div className="bg-slate-750 p-6 border-t border-slate-700">
-                                <h3 className="text-lg font-bold text-white mb-4">{t('expenses.edit')}</h3>
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <Field>
-                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
-                                      <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
-                                        <div className="relative">
-                                          <Combobox.Input 
-                                            onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
-                                            displayValue={(category: string) => category} 
-                                            className="w-full px-3 py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                                            required 
-                                          />
-                                          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                            <ChevronDown className="h-4 w-4 text-slate-400" />
-                                          </Combobox.Button>
-                                          <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                            {filteredCategories.map((cat: string) => (
-                                              <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                                                {({ selected }) => (
-                                                  <div className="flex justify-between items-center">
-                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
-                                                  </div>
-                                                )}
-                                              </Combobox.Option>
-                                            ))}
-                                          </Combobox.Options>
-                                        </div>
-                                      </Combobox>
-                                    </Field>
-                                    <Field>
-                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
-                                      <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                    </Field>
-                                    <Field>
-                                      <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
-                                      <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
-                                        <div className="relative">
-                                          <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                            <span>{formData.currency}</span>
-                                            <ChevronDown className="h-4 w-4 text-slate-400" />
-                                          </Listbox.Button>
-                                          <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                            {CURRENCIES.map((curr) => (
-                                              <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                                                {({ selected }) => (
-                                                  <div className="flex justify-between items-center">
-                                                    <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
-                                                    {selected && <Check className="h-4 w-4 text-indigo-500" />}
-                                                  </div>
-                                                )}
-                                              </Listbox.Option>
-                                            ))}
-                                          </Listbox.Options>
-                                        </div>
-                                      </Listbox>
-                                    </Field>
-                                    <Field>
-                                      <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
-                                      <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                    </Field>
-                                  </div>
-                                  <Field>
-                                    <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')}</Label>
-                                    <input type="text" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                  </Field>
-                                  <div className="flex gap-2">
-                                    <button 
-                                      type="submit" 
-                                      disabled={updateMutation.isPending} 
-                                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
-                                    >
-                                      {updateMutation.isPending ? t('common.saving') : t('common.save')}
-                                    </button>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => { setEditingId(null); setShowForm(false); }} 
-                                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                                    >
-                                      {t('common.cancel')}
-                                    </button>
-                                  </div>
-                                </form>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-            {expenses.length === 0 && !showForm && (
-              <div className="text-center py-12 text-slate-400">
-                <p>{t('expenses.noExpenses')}</p>
-              </div>
-            )}
-            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
-              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
-            </div>}
-          </div>
+      {!isLoading && expenses.length > 0 && (
+        <ExpenseList
+          groupedExpenses={visibleGroupedExpenses}
+          editingId={editingId}
+          formData={formData}
+          categories={categories}
+          preferredCurrency={preferredCurrency}
+          units={units}
+          dateFormat={dateFormat}
+          isSubmitting={updateMutation.isPending}
+          isFetchingNextPage={isFetchingNextPage}
+          hasMoreMonths={hasMoreMonths}
+          hasNextPage={!!hasNextPage}
+          lastOdometer={expenses[0]?.odometer || currentVehicle?.vehicle?.odometer || 0}
+          vehicleId={activeVehicleId || ''}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+          onSubmit={handleSubmit}
+          onFormChange={setFormData}
+          onCancelEdit={() => { setEditingId(null); setShowForm(false); }}
+          onScroll={handleScroll}
+        />
+      )}
 
-          {/* Mobile/Tablet Cards (<1300px) */}
-          <div className="xl:hidden">
-            {visibleGroupedExpenses.map(([month, monthExpenses]) => (
-              <div key={month} className="mb-8">
-                <h2 className="text-xl font-semibold text-white mb-4 capitalize">
-                  {new Date(month + '-01').toLocaleDateString(i18n.language, { year: 'numeric', month: 'long' }).replace(' р.', '')}
-                </h2>
-                <div className="grid gap-4">
-                  {monthExpenses.map((e: Expense) => (
-                    <React.Fragment key={e.expenseId}>
-                      <div className="bg-slate-800 p-6 rounded-lg flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-bold text-white">{e.category} - <span className="font-mono">{formatWithBaseAmount(e.amount, e.currency, e.baseAmount, preferredCurrency)}</span></h3>
-                          <p className="text-slate-400">
-                            {e.odometer && <span className="font-mono">Odometer: {Math.round(convertDistance(e.odometer, units))} {getDistanceUnit(units)}</span>}
-                          </p>
-                          {e.description && <p className="text-slate-500 text-sm">{e.description}</p>}
-                          {(e.timestamp || e.createdAt) && <p className="text-slate-500 text-sm font-mono">{formatDate(e.timestamp || e.createdAt, dateFormat)}</p>}
-                        </div>
-                        <Menu as="div" className="relative">
-                          <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg">
-                            <MoreVertical className="h-5 w-5 text-slate-400" />
-                          </Menu.Button>
-                          <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg border border-slate-600 focus:outline-none z-[100]">
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button onClick={() => handleEdit(e)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2`}>
-                                  <Pencil className="h-4 w-4" />
-                                  {t('common.edit')}
-                                </button>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button onClick={() => { setDeleteId(e.expenseId); setShowDeleteDialog(true); }} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2`}>
-                                  <Trash2 className="h-4 w-4" />
-                                  {t('common.delete')}
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </Menu.Items>
-                        </Menu>
-                      </div>
-                      {editingId === e.expenseId && (
-                        <div className="bg-slate-750 p-4 rounded-lg border border-slate-700">
-                          <h3 className="text-lg font-bold text-white mb-4">{t('expenses.edit')}</h3>
-                          <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <Field>
-                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.category')}</Label>
-                                <Combobox value={formData.category} onChange={(value) => setFormData({...formData, category: value || categoryQuery})}>
-                                  <div className="relative">
-                                    <Combobox.Input 
-                                      onChange={(e) => { setCategoryQuery(e.target.value); setFormData({...formData, category: e.target.value}); }} 
-                                      displayValue={(category: string) => category} 
-                                      className="w-full px-3 py-2 pr-8 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                                      required 
-                                    />
-                                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                      <ChevronDown className="h-4 w-4 text-slate-400" />
-                                    </Combobox.Button>
-                                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                      {filteredCategories.map((cat: string) => (
-                                        <Combobox.Option key={cat} value={cat} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                                          {({ selected }) => (
-                                            <div className="flex justify-between items-center">
-                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{cat}</span>
-                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
-                                            </div>
-                                          )}
-                                        </Combobox.Option>
-                                      ))}
-                                    </Combobox.Options>
-                                  </div>
-                                </Combobox>
-                              </Field>
-                              <Field>
-                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.amount')}</Label>
-                                <input type="text" inputMode="decimal" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                              </Field>
-                              <Field>
-                                <Label className="block text-sm font-semibold text-white mb-1.5">Currency</Label>
-                                <Listbox value={formData.currency} onChange={(value) => setFormData({...formData, currency: value})}>
-                                  <div className="relative">
-                                    <Listbox.Button className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                      <span>{formData.currency}</span>
-                                      <ChevronDown className="h-4 w-4 text-slate-400" />
-                                    </Listbox.Button>
-                                    <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                      {CURRENCIES.map((curr) => (
-                                        <Listbox.Option key={curr.code} value={curr.code} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}>
-                                          {({ selected }) => (
-                                            <div className="flex justify-between items-center">
-                                              <span className={selected ? 'font-semibold text-white' : 'text-white'}>{curr.code}</span>
-                                              {selected && <Check className="h-4 w-4 text-indigo-500" />}
-                                            </div>
-                                          )}
-                                        </Listbox.Option>
-                                      ))}
-                                    </Listbox.Options>
-                                  </div>
-                                </Listbox>
-                              </Field>
-                              <Field>
-                                <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
-                                <input type="text" inputMode="decimal" value={formData.odometer} onChange={(e) => setFormData({...formData, odometer: e.target.value.replace(',', '.')})} required className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                              </Field>
-                            </div>
-                            <Field>
-                              <Label className="block text-sm font-semibold text-white mb-1.5">{t('expenses.description')}</Label>
-                              <input type="text" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                            </Field>
-                            <div className="flex gap-2">
-                              <button 
-                                type="submit" 
-                                disabled={updateMutation.isPending} 
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
-                              >
-                                {updateMutation.isPending ? t('common.saving') : t('common.save')}
-                              </button>
-                              <button 
-                                type="button" 
-                                onClick={() => { setEditingId(null); setShowForm(false); }} 
-                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"
-                              >
-                                {t('common.cancel')}
-                              </button>
-                            </div>
-                          </form>
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {expenses.length === 0 && !showForm && (
-              <div className="text-center py-12 text-slate-400">
-                <p>{t('expenses.noExpenses')}</p>
-              </div>
-            )}
-            {(hasMoreMonths || hasNextPage) && <div ref={observerTarget} className="h-20 flex items-center justify-center">
-              {isFetchingNextPage && <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>}
-            </div>}
-          </div>
-        </>
+      {!isLoading && expenses.length === 0 && !showForm && (
+        <div className="text-center py-12 text-slate-400">
+          <p>{t('expenses.noExpenses')}</p>
+        </div>
       )}
 
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} className="relative z-50">

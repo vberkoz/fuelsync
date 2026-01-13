@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Dialog, Field, Label, Listbox } from '@headlessui/react';
-import { Bell, Plus, X, Trash2, ChevronDown, Check } from 'lucide-react';
+import { Dialog, Menu } from '@headlessui/react';
+import { Bell, Plus, X, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useVehicleStore } from '../stores/vehicleStore';
+
+import { ReminderForm } from '../components/reminders/ReminderForm';
 
 export default function Reminders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const currentVehicleId = useVehicleStore(state => state.currentVehicleId);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
     vehicleId: currentVehicleId || '', 
@@ -52,6 +55,15 @@ export default function Reminders() {
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ reminderId, data }: { reminderId: string; data: any }) => api.reminders.update(reminderId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setEditingId(null);
+      setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' });
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: api.reminders.delete,
     onSuccess: () => {
@@ -67,7 +79,31 @@ export default function Reminders() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.threshold) return;
-    createMutation.mutate(formData);
+    if (editingId) {
+      updateMutation.mutate({ reminderId: editingId, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (reminder: any) => {
+    setEditingId(reminder.reminderId);
+    setFormData({
+      vehicleId: reminder.vehicleId,
+      title: reminder.title,
+      type: reminder.type,
+      threshold: reminder.threshold.toString(),
+      unit: reminder.unit
+    });
+  };
+
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' });
   };
 
   const reminders = remindersData?.reminders || [];
@@ -80,7 +116,7 @@ export default function Reminders() {
           <Bell className="h-8 w-8 text-indigo-500" />
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('reminders.title')}</h1>
         </div>
-        <button onClick={() => { setShowForm(!showForm); setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+        <button onClick={() => { setShowForm(!showForm); setFormData({ vehicleId: currentVehicleId || '', title: '', type: 'Maintenance', threshold: currentOdometer.toString(), unit: 'km' }); }} className="flex items-center gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
           {showForm ? (
             <>
               <X className="h-5 w-5" />
@@ -96,103 +132,16 @@ export default function Reminders() {
       </div>
 
       {showForm && (
-        <Dialog open={showForm} onClose={() => setShowForm(false)} className="relative z-50">
-          <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold text-white mb-4">{t('reminders.add')}</Dialog.Title>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('reminders.reminderTitle')}</Label>
-                  <input 
-                    type="text" 
-                    value={formData.title} 
-                    onChange={(e) => setFormData({...formData, title: e.target.value})} 
-                    placeholder="Oil Change" 
-                    className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                  />
-                </Field>
-
-                <Field>
-                  <Label className="block text-sm font-semibold text-white mb-1.5">{t('reminders.type')}</Label>
-                  <Listbox value={formData.type} onChange={(value) => setFormData({...formData, type: value})}>
-                    <div className="relative">
-                      <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span>{formData.type}</span>
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                        {['Maintenance', 'Document', 'Inspection'].map((type) => (
-                          <Listbox.Option
-                            key={type}
-                            value={type}
-                            className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                          >
-                            {({ selected }) => (
-                              <div className="flex justify-between items-center">
-                                <span className={selected ? 'font-semibold text-white' : 'text-white'}>{type}</span>
-                                {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                              </div>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </Field>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">{t('reminders.threshold')}</Label>
-                    <input 
-                      type="number" 
-                      value={formData.threshold} 
-                      onChange={(e) => setFormData({...formData, threshold: e.target.value})} 
-                      className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                    />
-                  </Field>
-
-                  <Field>
-                    <Label className="block text-sm font-semibold text-white mb-1.5">{t('reminders.unit')}</Label>
-                    <Listbox value={formData.unit} onChange={(value) => setFormData({...formData, unit: value})}>
-                      <div className="relative">
-                        <Listbox.Button className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                          <span>{formData.unit}</span>
-                          <ChevronDown className="h-5 w-5 text-slate-400" />
-                        </Listbox.Button>
-                        <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
-                          {['km', 'days', 'months'].map((unit) => (
-                            <Listbox.Option
-                              key={unit}
-                              value={unit}
-                              className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
-                            >
-                              {({ selected }) => (
-                                <div className="flex justify-between items-center">
-                                  <span className={selected ? 'font-semibold text-white' : 'text-white'}>{unit}</span>
-                                  {selected && <span className="text-indigo-500 text-lg">✓</span>}
-                                </div>
-                              )}
-                            </Listbox.Option>
-                          ))}
-                        </Listbox.Options>
-                      </div>
-                    </Listbox>
-                  </Field>
-                </div>
-
-                <div className="flex gap-2">
-                  <button type="submit" className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                    {t('common.add')}
-                  </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              </form>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
+        <div className="bg-slate-800 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-white mb-4">{t('reminders.add')}</h2>
+          <ReminderForm
+            formData={formData}
+            onFieldChange={handleFieldChange}
+            onSubmit={handleSubmit}
+            onCancel={() => setShowForm(false)}
+            isSubmitting={createMutation.isPending}
+          />
+        </div>
       )}
 
       {vehicleReminders.length === 0 ? (
@@ -205,7 +154,7 @@ export default function Reminders() {
           <div className="mb-4 text-sm text-slate-400">
             Current odometer: <span className="font-mono text-white">{currentOdometer} km</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid gap-4 sm:gap-6">
           {vehicleReminders.map((reminder: any) => {
             let isOverdue = false;
             
@@ -224,16 +173,31 @@ export default function Reminders() {
             return (
             <div key={reminder.reminderId} className={`bg-slate-800 p-6 rounded-lg border-2 ${isOverdue ? 'border-red-500' : 'border-transparent'}`}>
               <div className="flex justify-between items-start mb-4">
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-bold text-white">{reminder.title}</h3>
                   <p className="text-slate-400 text-sm">{reminder.type}</p>
                 </div>
-                <button 
-                  onClick={() => setDeleteConfirm(reminder.reminderId)}
-                  className="text-red-400 hover:text-red-300"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
+                <Menu as="div" className="relative">
+                  <Menu.Button className="p-2 hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <MoreVertical className="h-5 w-5 text-slate-400" />
+                  </Menu.Button>
+                  <Menu.Items className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-xl border border-slate-600 focus:outline-none z-[100]">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button onClick={() => handleEdit(reminder)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-white rounded-t-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
+                          <Pencil className="h-4 w-4" /> {t('common.edit')}
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button onClick={() => setDeleteConfirm(reminder.reminderId)} className={`${active ? 'bg-slate-600' : ''} w-full text-left px-4 py-2 text-red-400 rounded-b-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
+                          <Trash2 className="h-4 w-4" /> {t('common.delete')}
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </Menu.Items>
+                </Menu>
               </div>
               
               <div className="space-y-2">
@@ -247,6 +211,18 @@ export default function Reminders() {
                   </div>
                 )}
               </div>
+              {editingId === reminder.reminderId && (
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                  <h3 className="text-lg font-bold text-white mb-4">{t('reminders.edit')}</h3>
+                  <ReminderForm
+                    formData={formData}
+                    onFieldChange={handleFieldChange}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCancelEdit}
+                    isSubmitting={updateMutation.isPending}
+                  />
+                </div>
+              )}
             </div>
             );
           })}
