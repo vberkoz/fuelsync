@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Car, Fuel, Receipt, BarChart3, Bell, Settings, ChevronsUpDown, Check } from 'lucide-react'
-import { Listbox } from '@headlessui/react'
+import { Car, Fuel, Receipt, BarChart3, Bell, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useVehicleStore } from '../stores/vehicleStore'
 import { useReminderStore } from '../stores/reminderStore'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import ReminderDialog from './ReminderDialog'
+import VehicleSelector from './VehicleSelector'
 
 const navigation = [
   { name: 'navigation.refills', icon: Fuel, href: '/' },
@@ -122,6 +122,10 @@ export default function Layout({ children }: LayoutProps) {
     setCurrentVehicle(vehicleWithOdometer);
   }, [currentVehicleId, vehicles, refillsData]);
 
+  const handleLogoError = useCallback((make: string) => {
+    setLogoError(prev => new Set(prev).add(make));
+  }, []);
+
   const handleNavClick = () => {
     window.scrollTo(0, 0)
   }
@@ -131,53 +135,14 @@ export default function Layout({ children }: LayoutProps) {
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex w-72 flex-col bg-slate-900/95 backdrop-blur-sm border-r border-slate-700">
         <div className="flex h-16 items-center px-3 border-b border-slate-700">
-          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
-            <div className="relative w-full">
-              <Listbox.Button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-slate-800/50">
-                {currentVehicle && (
-                  logoError.has(currentVehicle.make) ? (
-                    <Car className="h-6 w-6 text-slate-400" />
-                  ) : (
-                    <img src={getVehicleLogo(currentVehicle.make)} alt={currentVehicle.make} className="h-6 w-6 object-contain" onError={() => setLogoError(prev => new Set(prev).add(currentVehicle.make))} />
-                  )
-                )}
-                {currentVehicle ? (
-                  <div className="text-sm text-white">
-                    {currentVehicle.year} {currentVehicle.make} {currentVehicle.model}
-                  </div>
-                ) : (
-                  <div className="text-sm text-slate-400">Select vehicle</div>
-                )}
-                <ChevronsUpDown className="h-5 w-5 text-slate-400 ml-auto" />
-              </Listbox.Button>
-              <Listbox.Options className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
-                {vehicles.map((v: Vehicle) => (
-                  <Listbox.Option
-                    key={v.vehicleId}
-                    value={v.vehicleId}
-                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
-                  >
-                    {({ selected }) => (
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          {logoError.has(v.make) ? (
-                            <Car className="h-5 w-5 text-slate-400" />
-                          ) : (
-                            <img src={getVehicleLogo(v.make)} alt={v.make} className="h-5 w-5 object-contain" onError={() => setLogoError(prev => new Set(prev).add(v.make))} />
-                          )}
-                          <div className="text-sm">
-                            <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
-                            <div className="text-xs text-slate-400">{v.model}</div>
-                          </div>
-                        </div>
-                        {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                      </div>
-                    )}
-                  </Listbox.Option>
-                ))}
-              </Listbox.Options>
-            </div>
-          </Listbox>
+          <VehicleSelector
+            vehicles={vehicles}
+            currentVehicleId={currentVehicleId}
+            onVehicleChange={setCurrentVehicleId}
+            logoError={logoError}
+            onLogoError={handleLogoError}
+            getVehicleLogo={getVehicleLogo}
+          />
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
@@ -190,7 +155,7 @@ export default function Layout({ children }: LayoutProps) {
                 key={item.name}
                 to={item.href}
                 onClick={handleNavClick}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                   location.pathname === item.href ? 'bg-slate-800/50' : ''
                 }`}
               >
@@ -210,7 +175,7 @@ export default function Layout({ children }: LayoutProps) {
           <Link
             to="/settings"
             onClick={handleNavClick}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               location.pathname === '/settings' ? 'bg-slate-800/50' : ''
             }`}
           >
@@ -223,54 +188,17 @@ export default function Layout({ children }: LayoutProps) {
       <main className="flex-1 overflow-auto pb-28 lg:pb-0 overflow-x-visible">
         {/* Mobile header */}
         <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-700 bg-slate-900/95 backdrop-blur-sm px-4 lg:hidden">
-          <Listbox value={currentVehicleId || undefined} onChange={setCurrentVehicleId}>
-            <div className="relative">
-              <Listbox.Button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50">
-                {currentVehicle && (
-                  logoError.has(currentVehicle.make) ? (
-                    <Car className="h-6 w-6 text-slate-400" />
-                  ) : (
-                    <img src={getVehicleLogo(currentVehicle.make)} alt={currentVehicle.make} className="h-6 w-6 object-contain" onError={() => setLogoError(prev => new Set(prev).add(currentVehicle.make))} />
-                  )
-                )}
-                {currentVehicle ? (
-                  <div className="text-sm text-white">
-                    {currentVehicle.year} {currentVehicle.make} {currentVehicle.model}
-                  </div>
-                ) : (
-                  <div className="text-sm text-slate-400">Select vehicle</div>
-                )}
-                <ChevronsUpDown className="h-5 w-5 text-slate-400" />
-              </Listbox.Button>
-              <Listbox.Options className="absolute top-full left-0 mt-2 w-64 bg-slate-800 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto z-50">
-                {vehicles.map((v: Vehicle) => (
-                  <Listbox.Option
-                    key={v.vehicleId}
-                    value={v.vehicleId}
-                    className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-700' : ''}`}
-                  >
-                    {({ selected }) => (
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          {logoError.has(v.make) ? (
-                            <Car className="h-5 w-5 text-slate-400" />
-                          ) : (
-                            <img src={getVehicleLogo(v.make)} alt={v.make} className="h-5 w-5 object-contain" onError={() => setLogoError(prev => new Set(prev).add(v.make))} />
-                          )}
-                          <div className="text-sm">
-                            <div className={selected ? 'font-semibold text-white' : 'text-white'}>{v.year} {v.make}</div>
-                            <div className="text-xs text-slate-400">{v.model}</div>
-                          </div>
-                        </div>
-                        {selected && <Check className="h-5 w-5 text-indigo-500" />}
-                      </div>
-                    )}
-                  </Listbox.Option>
-                ))}
-              </Listbox.Options>
-            </div>
-          </Listbox>
-          <Link to="/settings" className="p-2 rounded-lg hover:bg-slate-800/50">
+          <div className="flex-1">
+            <VehicleSelector
+              vehicles={vehicles}
+              currentVehicleId={currentVehicleId}
+              onVehicleChange={setCurrentVehicleId}
+              logoError={logoError}
+              onLogoError={handleLogoError}
+              getVehicleLogo={getVehicleLogo}
+            />
+          </div>
+          <Link to="/settings" className="p-2 rounded-lg hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <Settings className={`h-6 w-6 ${location.pathname === '/settings' ? 'text-indigo-400' : 'text-slate-400'}`} />
           </Link>
         </div>
@@ -289,7 +217,7 @@ export default function Layout({ children }: LayoutProps) {
               key={item.name}
               to={item.href}
               onClick={handleNavClick}
-              className={`flex flex-col items-center justify-center flex-1 h-full ${
+              className={`flex flex-col items-center justify-center flex-1 h-full focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 isActive ? 'text-indigo-400' : 'text-slate-400'
               }`}
             >
