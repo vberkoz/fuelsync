@@ -10,31 +10,29 @@ const getAuthHeaders = () => {
   };
 };
 
+const handleAuthError = () => {
+  useAuthStore.getState().clearAuth();
+  window.location.replace('/login');
+};
+
 const safeFetch = async (url: string, options?: RequestInit) => {
   try {
     const res = await fetch(url, options);
     if (res.status === 401) {
-      useAuthStore.getState().clearAuth();
-      window.location.replace('/login');
+      handleAuthError();
       throw new Error('Session expired');
     }
     return res;
   } catch (error: any) {
     if (error.message === 'Session expired') throw error;
     if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
-      useAuthStore.getState().clearAuth();
-      window.location.replace('/login');
+      handleAuthError();
     }
     throw error;
   }
 };
 
 const handleResponse = async (res: Response) => {
-  if (res.status === 401) {
-    useAuthStore.getState().clearAuth();
-    window.location.replace('/login');
-    return Promise.reject(new Error('Session expired'));
-  }
   if (!res.ok) throw new Error(`Error: ${res.status}`);
   return res.json();
 };
@@ -108,6 +106,17 @@ export const api = {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
+    },
+    getPhoto: async (vehicleId: string, refillId: string, photoType: 'odometer' | 'pump' | 'receipt' = 'odometer') => {
+      console.log('API getPhoto called with:', { vehicleId, refillId, photoType });
+      const url = new URL(`${API_URL}/vehicles/${vehicleId}/refills/${refillId}/photo`);
+      url.searchParams.set('type', photoType);
+      console.log('Photo API URL:', url.toString());
+      const res = await safeFetch(url.toString(), {
+        headers: getAuthHeaders()
+      });
+      console.log('Photo API response status:', res.status);
+      return handleResponse(res);
     }
   },
   expenses: {
@@ -138,6 +147,14 @@ export const api = {
     delete: async (vehicleId: string, expenseId: string) => {
       const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    },
+    getPhoto: async (vehicleId: string, expenseId: string, photoType: 'odometer' | 'receipt' = 'receipt') => {
+      const url = new URL(`${API_URL}/vehicles/${vehicleId}/expenses/${expenseId}/photo`);
+      url.searchParams.set('type', photoType);
+      const res = await safeFetch(url.toString(), {
         headers: getAuthHeaders()
       });
       return handleResponse(res);
@@ -224,6 +241,14 @@ export const api = {
       });
       return handleResponse(res);
     },
+    update: async (reminderId: string, data: any) => {
+      const res = await safeFetch(`${API_URL}/reminders/${reminderId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    },
     delete: async (reminderId: string) => {
       const res = await safeFetch(`${API_URL}/reminders/${reminderId}`, {
         method: 'DELETE',
@@ -250,6 +275,43 @@ export const api = {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ name })
+      });
+      return handleResponse(res);
+    }
+  },
+  ocr: {
+    extract: async (image: string, scanType: string, lastOdometer?: number) => {
+      const res = await safeFetch(`${API_URL}/ocr/extract`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ image, scanType, lastOdometer })
+      });
+      return handleResponse(res);
+    }
+  },
+  uploads: {
+    createPresigned: async (fileType: string, mediaType: string) => {
+      const res = await safeFetch(`${API_URL}/uploads/presigned`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ fileType, mediaType })
+      });
+      return handleResponse(res);
+    },
+    uploadFile: async (file: File, mediaType: string) => {
+      const { uploadUrl, key } = await api.uploads.createPresigned(file.type, mediaType);
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      });
+      return key;
+    },
+    getUrl: async (key: string) => {
+      const res = await safeFetch(`${API_URL}/uploads/get-url`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ key })
       });
       return handleResponse(res);
     }
