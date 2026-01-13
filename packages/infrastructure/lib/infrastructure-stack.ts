@@ -11,6 +11,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
 import { Construct } from 'constructs';
@@ -501,6 +502,59 @@ export class InfrastructureStack extends cdk.Stack {
       bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
     });
 
+    const ocrExtract = new nodejs.NodejsFunction(this, 'OCRExtract', {
+      entry: '../api/src/handlers/ocr/extract.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    ocrExtract.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['textract:AnalyzeDocument', 'bedrock:InvokeModel'],
+      resources: ['*']
+    }));
+    
+    uploadsBucket.grantWrite(ocrExtract);
+
+    const getUploadUrl = new nodejs.NodejsFunction(this, 'GetUploadUrl', {
+      entry: '../api/src/handlers/uploads/get-url.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const createPresignedUrl = new nodejs.NodejsFunction(this, 'CreatePresignedUrl', {
+      entry: '../api/src/handlers/uploads/create-presigned.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const getRefillPhoto = new nodejs.NodejsFunction(this, 'GetRefillPhoto', {
+      entry: '../api/src/handlers/refills/get-photo.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: { ...lambdaEnvironment, UPLOADS_BUCKET: uploadsBucket.bucketName },
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    const getExpensePhoto = new nodejs.NodejsFunction(this, 'GetExpensePhoto', {
+      entry: '../api/src/handlers/expenses/get-photo.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: { ...lambdaEnvironment, UPLOADS_BUCKET: uploadsBucket.bucketName },
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    uploadsBucket.grantRead(getUploadUrl);
+    uploadsBucket.grantWrite(createPresignedUrl);
+    uploadsBucket.grantRead(getRefillPhoto);
+    uploadsBucket.grantRead(getExpensePhoto);
+
     // Grant DynamoDB permissions
     table.grantWriteData(registerUser);
     table.grantReadData(listVehicles);
@@ -531,6 +585,8 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantReadData(listCategories);
     table.grantWriteData(createCategory);
     table.grantWriteData(dailyExchangeRates);
+    table.grantReadData(getRefillPhoto);
+    table.grantReadData(getExpensePhoto);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -598,6 +654,10 @@ export class InfrastructureStack extends cdk.Stack {
     refillId.addMethod('GET', new apigateway.LambdaIntegration(getRefill), { authorizer });
     refillId.addMethod('PUT', new apigateway.LambdaIntegration(updateRefill), { authorizer });
     refillId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteRefill), { authorizer });
+    
+    // /vehicles/{id}/refills/{refillId}/photo resource
+    const refillPhoto = refillId.addResource('photo');
+    refillPhoto.addMethod('GET', new apigateway.LambdaIntegration(getRefillPhoto), { authorizer });
 
     // /vehicles/{id}/expenses resource
     const expenses = vehicleId.addResource('expenses');
@@ -609,6 +669,10 @@ export class InfrastructureStack extends cdk.Stack {
     expenseId.addMethod('GET', new apigateway.LambdaIntegration(getExpense), { authorizer });
     expenseId.addMethod('PUT', new apigateway.LambdaIntegration(updateExpense), { authorizer });
     expenseId.addMethod('DELETE', new apigateway.LambdaIntegration(deleteExpense), { authorizer });
+    
+    // /vehicles/{id}/expenses/{expenseId}/photo resource
+    const expensePhoto = expenseId.addResource('photo');
+    expensePhoto.addMethod('GET', new apigateway.LambdaIntegration(getExpensePhoto), { authorizer });
 
     // /vehicles/{id}/statistics resource
     const statistics = vehicleId.addResource('statistics');
@@ -642,6 +706,16 @@ export class InfrastructureStack extends cdk.Stack {
     const categories = api.root.addResource('categories');
     categories.addMethod('GET', new apigateway.LambdaIntegration(listCategories), { authorizer });
     categories.addMethod('POST', new apigateway.LambdaIntegration(createCategory), { authorizer });
+
+    const ocr = api.root.addResource('ocr');
+    const extract = ocr.addResource('extract');
+    extract.addMethod('POST', new apigateway.LambdaIntegration(ocrExtract), { authorizer });
+
+    const uploads = api.root.addResource('uploads');
+    const getUrl = uploads.addResource('get-url');
+    getUrl.addMethod('POST', new apigateway.LambdaIntegration(getUploadUrl), { authorizer });
+    const presigned = uploads.addResource('presigned');
+    presigned.addMethod('POST', new apigateway.LambdaIntegration(createPresignedUrl), { authorizer });
 
     // Daily exchange rate schedule
     new events.Rule(this, 'DailyExchangeRateRule', {
