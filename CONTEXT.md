@@ -585,6 +585,205 @@ packages/app/src/
 
 ## Recent Changes
 
+### Major Refactoring & OCR Feature (Latest - Uncommitted)
+
+#### Component Architecture Refactoring
+- **Component Extraction**: Separated page logic into reusable components
+  - `RefillForm.tsx`, `RefillCard.tsx`, `RefillTable.tsx` - Refills UI components
+  - `ExpenseForm.tsx`, `ExpenseItem.tsx`, `ExpenseList.tsx` - Expenses UI components
+  - `ReminderForm.tsx`, `ReminderTable.tsx` - Reminders UI components
+  - `VehicleSelector.tsx`, `VehicleLogo.tsx` - Vehicle selection and branding
+  - `MediaGrid.tsx`, `MediaUploadField.tsx`, `CameraCapture.tsx` - Media handling
+  - `ConfirmDialog.tsx`, `ErrorAlert.tsx`, `LoadingSpinner.tsx` - Shared UI utilities
+
+- **Custom Hooks**: Extracted business logic into reusable hooks
+  - `useRefillsData.ts` - Infinite scroll and data fetching for refills
+  - `useRefillForm.ts` - Form state and validation for refills
+  - `useRefillImportExport.ts` - CSV import/export logic
+  - `useExpenses.ts` - Expense data fetching and mutations
+  - `useExpenseForm.ts` - Form state and validation for expenses
+  - `useVehicleMutations.ts` - Vehicle CRUD operations
+  - `useMediaUpload.ts` - File upload handling
+  - `useMediaDisplay.ts` - Media display and loading
+  - `usePhotoLoader.ts` - Photo fetching from S3
+
+- **Type Definitions**: Centralized TypeScript interfaces in `types/index.ts`
+  - Vehicle, Refill, Expense, Settings interfaces
+  - Consistent type usage across components
+
+- **Code Reduction**: Significantly reduced page component sizes
+  - Refills.tsx: 867 lines → ~300 lines (65% reduction)
+  - Expenses.tsx: 533 lines → ~200 lines (62% reduction)
+  - Vehicles.tsx: 697 lines → ~400 lines (43% reduction)
+  - Reminders.tsx: 194 lines → ~100 lines (48% reduction)
+
+#### OCR & Media Features
+- **AWS Textract Integration**: OCR extraction of odometer readings from photos
+  - `POST /ocr/extract` - Extract text from images with Textract
+  - Supports odometer, pump display, and receipt scanning
+  - 30-second Lambda timeout for processing
+
+- **Bedrock Nova Micro**: Intelligent text parsing and validation
+  - Context-aware prompts for accurate extraction
+  - JSON-structured responses with extracted values
+  - Fallback to regex parsing if Bedrock fails
+  - Temperature: 0 for deterministic results
+
+- **Smart Odometer Validation**: 
+  - Compares recognized value with last odometer reading
+  - Auto-corrects if recognized value ≤ last reading
+  - Returns validation warning in response
+  - Prevents invalid odometer entries
+
+- **S3 Media Storage**: 
+  - Photos saved to uploads bucket: `ocr/{userId}/{scanType}/{uuid}.jpg`
+  - Organized folder structure by user and scan type
+  - Returns S3 key in OCR response for future reference
+
+- **Photo Retrieval Endpoints**:
+  - `GET /vehicles/{id}/refills/{refillId}/photo` - Get refill photo
+  - `GET /vehicles/{id}/expenses/{expenseId}/photo` - Get expense photo
+  - Returns presigned S3 URLs for secure access
+
+- **Upload Management**:
+  - `POST /uploads/get-url` - Get presigned URL for file download
+  - `POST /uploads/presigned` - Create presigned URL for upload
+  - S3 bucket permissions for read/write operations
+
+- **Camera Integration**:
+  - CameraCapture component with mobile optimization
+  - Uses device camera with `capture="environment"` attribute
+  - Base64 image encoding for API transmission
+  - Integrated into RefillForm and ExpenseForm
+
+- **Vehicle Branding**:
+  - Vehicle logo display using car manufacturer logos
+  - Custom slug mapping for special characters (Citroën, Škoda, etc.)
+  - Fallback to generic icon if logo not found
+  - Logo path: `/logos/{make-slug}.png`
+
+#### Backend Changes
+- **New Lambda Functions**:
+  - `ocrExtract` - OCR text extraction with Textract + Bedrock
+  - `getRefillPhoto` - Retrieve refill photos from S3
+  - `getExpensePhoto` - Retrieve expense photos from S3
+  - `getUploadUrl` - Generate presigned URLs for downloads
+  - `createPresignedUrl` - Generate presigned URLs for uploads
+
+- **IAM Permissions**:
+  - Textract: `textract:AnalyzeDocument` for OCR
+  - Bedrock: `bedrock:InvokeModel` for Nova Micro
+  - S3: Read/write permissions for uploads bucket
+
+- **API Dependencies**:
+  - Added `@aws-sdk/client-textract` for OCR
+  - Added `@aws-sdk/client-bedrock-runtime` for AI parsing
+  - Added `@aws-sdk/client-s3` for storage
+  - Added `@aws-sdk/s3-request-presigner` for signed URLs
+
+- **Handler Updates**:
+  - Refill/Expense create/update: Support for media attachments
+  - Vehicle create/update: Support for vehicle photos
+  - All handlers: Consistent error handling and response format
+
+#### Frontend Changes
+- **Layout Improvements**:
+  - Removed ProfileMenu component (merged into Layout)
+  - Simplified navigation structure
+  - Consistent header styling across pages
+
+- **Authentication Enhancements**:
+  - Improved token refresh logic in authStore
+  - Better session expiry handling
+  - Automatic redirect on 401 responses
+  - Protected route improvements
+
+- **API Client Updates**:
+  - Added OCR endpoints (extractOdometer, extractPump, extractReceipt)
+  - Added upload endpoints (uploadFile, getFileUrl, createPresignedUrl)
+  - Added photo retrieval endpoints (getRefillPhoto, getExpensePhoto)
+  - Improved error handling and type safety
+
+- **Translation Updates**:
+  - Added OCR-related translations (EN/UK)
+  - Added media upload translations
+  - Added vehicle logo translations
+
+- **State Management**:
+  - Enhanced vehicleStore with better vehicle selection logic
+  - Improved authStore with token management
+  - Consistent state updates across components
+
+#### Code Quality Improvements
+- **Deleted Files**:
+  - `OCR_SKILLS.md` - Moved content to CONTEXT.md
+  - `ProfileMenu.tsx` - Merged into Layout component
+
+- **Consistent Patterns**:
+  - Uniform error handling across all components
+  - Consistent loading states and spinners
+  - Standardized form validation
+  - Unified API response handling
+
+- **Performance Optimizations**:
+  - Reduced bundle size through component splitting
+  - Better code reusability with custom hooks
+  - Optimized re-renders with proper memoization
+
+#### Infrastructure Updates
+- **API Gateway Routes**:
+  - `/ocr/extract` - POST endpoint for OCR processing
+  - `/uploads/get-url` - POST endpoint for download URLs
+  - `/uploads/presigned` - POST endpoint for upload URLs
+  - `/vehicles/{id}/refills/{refillId}/photo` - GET endpoint
+  - `/vehicles/{id}/expenses/{expenseId}/photo` - GET endpoint
+
+- **Lambda Configuration**:
+  - OCR Lambda: 30-second timeout for processing
+  - All Lambdas: Node.js 20.x runtime
+  - Environment variables: UPLOADS_BUCKET_NAME added
+
+- **S3 Bucket Setup**:
+  - CORS configuration for browser uploads
+  - Lifecycle rules for cost optimization
+  - Encryption at rest with S3-managed keys
+
+#### Files Modified (26 files)
+- **API Package** (10 files):
+  - `package.json`, `package-lock.json` - New dependencies
+  - `handlers/expenses/create.ts`, `update.ts` - Media support
+  - `handlers/refills/create.ts`, `update.ts` - Media support
+  - `handlers/vehicles/create.ts`, `update.ts` - Photo support
+  - New: `handlers/ocr/extract.ts`, `parsers.ts`
+  - New: `handlers/uploads/get-url.ts`, `create-presigned.ts`
+  - New: `handlers/refills/get-photo.ts`, `handlers/expenses/get-photo.ts`
+
+- **App Package** (14 files):
+  - `components/Layout.tsx` - Merged ProfileMenu
+  - `components/ProtectedRoute.tsx` - Enhanced auth checks
+  - `lib/api.ts` - New OCR and upload endpoints
+  - `locales/en/translation.json`, `uk/translation.json` - New translations
+  - `pages/Expenses.tsx`, `Refills.tsx`, `Vehicles.tsx` - Refactored with components
+  - `pages/Login.tsx`, `Register.tsx`, `Settings.tsx` - UI improvements
+  - `pages/Reminders.tsx` - Component extraction
+  - `stores/authStore.ts`, `vehicleStore.ts` - Enhanced state management
+  - Deleted: `components/ProfileMenu.tsx`
+  - New: 20+ component and hook files
+
+- **Infrastructure Package** (1 file):
+  - `lib/infrastructure-stack.ts` - OCR Lambdas, upload endpoints, IAM permissions
+
+- **Documentation** (1 file):
+  - Deleted: `OCR_SKILLS.md` - Content moved to CONTEXT.md
+
+#### Summary Statistics
+- **Lines Changed**: +1,621 insertions, -2,104 deletions (net -483 lines)
+- **New Components**: 13 reusable UI components
+- **New Hooks**: 9 custom hooks for business logic
+- **New Lambda Functions**: 5 new handlers
+- **New API Endpoints**: 5 new routes
+- **Code Reduction**: ~50% reduction in page component sizes
+
 ### Reminder System Implementation (Latest)
 - **In-App Notifications**: Simple reminder system without push notifications
 - **Reminder Storage**: DynamoDB with user-specific reminders
