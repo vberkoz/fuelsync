@@ -66,6 +66,9 @@ export default function Register() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
+              name="given-name"
+              id="given-name"
+              autoComplete="given-name"
               placeholder="First name"
               value={givenName}
               onChange={(e) => setGivenName(e.target.value)}
@@ -73,6 +76,9 @@ export default function Register() {
             />
             <input
               type="text"
+              name="family-name"
+              id="family-name"
+              autoComplete="family-name"
               placeholder="Last name"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
@@ -82,6 +88,9 @@ export default function Register() {
 
           <input
             type="email"
+            name="email"
+            id="email"
+            autoComplete="email"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -91,6 +100,9 @@ export default function Register() {
 
           <input
             type="password"
+            name="password"
+            id="password"
+            autoComplete="new-password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

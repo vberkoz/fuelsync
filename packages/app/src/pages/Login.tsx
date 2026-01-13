@@ -13,26 +13,42 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    console.log('[LOGIN] Starting login attempt', { email });
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL}/auth/login`;
+      console.log('[LOGIN] API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
+      console.log('[LOGIN] Response status:', response.status);
+
       const data = await response.json();
+      console.log('[LOGIN] Response data:', { ...data, accessToken: data.accessToken ? '***' : undefined });
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
+      console.log('[LOGIN] Storing tokens in localStorage');
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('idToken', data.idToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('userEmail', email);
       
+      // Sync with authStore
+      const { useAuthStore } = await import('../stores/authStore');
+      useAuthStore.getState().setTokens(data.idToken, data.accessToken, data.refreshToken);
+      useAuthStore.getState().setUserEmail(email);
+      
+      console.log('[LOGIN] Redirecting to /');
       window.location.href = '/';
     } catch (err: any) {
+      console.error('[LOGIN] Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -60,6 +76,9 @@ export default function Login() {
 
           <input
             type="email"
+            name="email"
+            id="email"
+            autoComplete="email"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -69,6 +88,9 @@ export default function Login() {
 
           <input
             type="password"
+            name="password"
+            id="password"
+            autoComplete="current-password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

@@ -176,7 +176,7 @@ export default function Settings() {
               <button
                 type="submit"
                 disabled={updateProfileMutation.isPending || !profileData.firstName || !profileData.lastName}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {updateProfileMutation.isPending ? t('common.saving') : t('common.save')}
               </button>
@@ -236,7 +236,7 @@ export default function Settings() {
                 <button
                   type="submit"
                   disabled={changePasswordMutation.isPending}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {changePasswordMutation.isPending ? t('common.saving') : t('common.save')}
                 </button>
@@ -265,12 +265,12 @@ export default function Settings() {
                   <span>{i18n.language === 'en' ? 'English' : 'Українська'}</span>
                   <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
-                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
                   {[{ value: 'en', label: 'English' }, { value: 'uk', label: 'Українська' }].map((lang) => (
                     <Listbox.Option
                       key={lang.value}
                       value={lang.value}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''} focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                     >
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
@@ -293,12 +293,12 @@ export default function Settings() {
                   <span>{CURRENCIES.find(c => c.code === (settingsData?.settings?.preferredCurrency || 'USD'))?.name || settingsData?.settings?.preferredCurrency || 'USD'}</span>
                   <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
-                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
                   {CURRENCIES.map((curr) => (
                     <Listbox.Option
                       key={curr.code}
                       value={curr.code}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''} focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                     >
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
@@ -321,12 +321,12 @@ export default function Settings() {
                   <span>{(settingsData?.settings?.units || 'imperial') === 'imperial' ? t('settings.imperial') : t('settings.metric')}</span>
                   <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
-                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
                   {[{ value: 'imperial', label: t('settings.imperial') }, { value: 'metric', label: t('settings.metric') }].map((unit) => (
                     <Listbox.Option
                       key={unit.value}
                       value={unit.value}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''} focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                     >
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
@@ -349,12 +349,12 @@ export default function Settings() {
                   <span>{settingsData?.settings?.dateFormat || 'MM/DD/YYYY'}</span>
                   <ChevronsUpDown className="h-5 w-5 text-slate-400" />
                 </Listbox.Button>
-                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <Listbox.Options className="absolute z-10 mt-1 w-full bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
                   {['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'].map((format) => (
                     <Listbox.Option
                       key={format}
                       value={format}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''}`}
+                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-slate-600' : ''} focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                     >
                       {({ selected }) => (
                         <div className="flex justify-between items-center">
@@ -396,7 +396,7 @@ export default function Settings() {
                   useAuthStore.getState().clearAuth();
                   window.location.href = '/login';
                 }}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <LogOut className="h-5 w-5" />
                 {t('navigation.logout')}

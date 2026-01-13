@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface VehicleState {
   currentVehicleId: string | null;
@@ -6,17 +7,20 @@ interface VehicleState {
   clearCurrentVehicle: () => void;
 }
 
-export const useVehicleStore = create<VehicleState>((set) => ({
-  currentVehicleId: localStorage.getItem('currentVehicleId'),
-  
-  setCurrentVehicle: (vehicleId) => {
-    localStorage.setItem('currentVehicleId', vehicleId);
-    set({ currentVehicleId: vehicleId });
-    window.dispatchEvent(new Event('currentVehicleChanged'));
-  },
-  
-  clearCurrentVehicle: () => {
-    localStorage.removeItem('currentVehicleId');
-    set({ currentVehicleId: null });
+export const useVehicleStore = create<VehicleState>()(persist(
+  (set) => ({
+    currentVehicleId: null,
+    
+    setCurrentVehicle: (vehicleId) => {
+      set({ currentVehicleId: vehicleId });
+      window.dispatchEvent(new Event('currentVehicleChanged'));
+    },
+    
+    clearCurrentVehicle: () => {
+      set({ currentVehicleId: null });
+    }
+  }),
+  {
+    name: 'vehicle-storage'
   }
-}));
+));
