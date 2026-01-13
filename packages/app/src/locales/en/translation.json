@@ -11,7 +11,9 @@
     "search": "Search",
     "filter": "Filter",
     "close": "Close",
-    "confirmDelete": "Confirm Delete"
+    "confirmDelete": "Confirm Delete",
+    "processing": "Processing...",
+    "capture": "Capture"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -87,7 +89,17 @@
     "mixed": "Mixed",
     "deleteConfirm": "Are you sure you want to delete this refill? This action cannot be undone.",
     "noRefills": "No refills yet. Add your first refill to get started!",
-    "loading": "Loading refills..."
+    "loading": "Loading refills...",
+    "scanOdometer": "Scan Odometer",
+    "scanPump": "Scan Pump",
+    "scanReceipt": "Scan Receipt",
+    "scanSuccess": "Scan successful! Please verify values.",
+    "scanLowConfidence": "Low confidence scan. Please verify values.",
+    "scanError": "Scan failed. Please try again or enter manually.",
+    "cameraError": "Camera access is required for scanning",
+    "positionFrame": "Position {{type}} within the frame",
+    "highAccuracy": "High Accuracy Mode",
+    "offlineMode": "Offline Mode"
   },
   "expenses": {
     "title": "Expenses",
