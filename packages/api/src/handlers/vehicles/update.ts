@@ -22,7 +22,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, any> = {};
 
-    const updatableFields = ['make', 'model', 'year', 'vin', 'licensePlate', 'fuelType', 'tankCapacity'];
+    const updatableFields = ['make', 'model', 'year', 'vin', 'licensePlate', 'fuelType', 'tankCapacity', 'media'];
     
     updatableFields.forEach(field => {
       if (body[field] !== undefined) {

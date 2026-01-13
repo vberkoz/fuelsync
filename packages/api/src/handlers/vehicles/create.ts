@@ -27,6 +27,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       licensePlate: body.licensePlate,
       fuelType: body.fuelType,
       tankCapacity: body.tankCapacity,
+      ...(body.media && body.media.length > 0 && { media: body.media }),
       createdAt: timestamp,
       updatedAt: timestamp
     };

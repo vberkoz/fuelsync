@@ -43,6 +43,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       odometer: body.odometer,
       description: body.description,
       taxDeductible: body.taxDeductible || false,
+      ...(body.odometerImageKey && { odometerImageKey: body.odometerImageKey }),
+      ...(body.receiptImageKey && { receiptImageKey: body.receiptImageKey }),
+      ...(body.media && body.media.length > 0 && { media: body.media }),
       timestamp,
       createdAt: new Date(timestamp).toISOString()
     };

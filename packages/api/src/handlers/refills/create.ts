@@ -40,6 +40,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       baseAmount,
       fuelType: body.fuelType,
       station: body.station,
+      odometerImageKey: body.odometerImageKey,
+      pumpImageKey: body.pumpImageKey,
+      receiptImageKey: body.receiptImageKey,
+      ...(body.media && body.media.length > 0 && { media: body.media }),
       timestamp,
       createdAt: new Date(timestamp).toISOString()
     };

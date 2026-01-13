@@ -28,19 +28,51 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // First, find the exact SK
     const queryResult = await docClient.send(new QueryCommand({
       TableName: TABLE_NAME,
-      KeyConditionExpression: 'PK = :pk AND contains(SK, :refillId)',
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
       ExpressionAttributeValues: {
         ':pk': `VEHICLE#${vehicleId}`,
-        ':refillId': refillId
-      },
-      Limit: 1
+        ':sk': 'REFILL#'
+      }
     }));
 
-    if (!queryResult.Items || queryResult.Items.length === 0) {
+    const refill = queryResult.Items?.find(item => item.refillId === refillId);
+
+    if (!refill) {
       return response(404, { error: 'Refill not found' });
     }
 
-    const existingSK = queryResult.Items[0].SK;
+    const existingSK = refill.SK;
+
+    const updateExpressionParts = [
+      'odometer = :odometer',
+      'volume = :volume',
+      'pricePerUnit = :pricePerUnit',
+      'totalCost = :totalCost',
+      'currency = :currency',
+      'exchangeRate = :exchangeRate',
+      'baseAmount = :baseAmount',
+      'fuelType = :fuelType',
+      'station = :station',
+      'updatedAt = :updatedAt'
+    ];
+    
+    const expressionAttributeValues: any = {
+      ':odometer': body.odometer,
+      ':volume': body.volume,
+      ':pricePerUnit': body.pricePerUnit,
+      ':totalCost': body.totalCost,
+      ':currency': currency,
+      ':exchangeRate': exchangeRate,
+      ':baseAmount': baseAmount,
+      ':fuelType': body.fuelType,
+      ':station': body.station,
+      ':updatedAt': timestamp
+    };
+    
+    if (body.media !== undefined) {
+      updateExpressionParts.push('media = :media');
+      expressionAttributeValues[':media'] = body.media;
+    }
 
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
@@ -48,19 +80,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         PK: `VEHICLE#${vehicleId}`,
         SK: existingSK
       },
-      UpdateExpression: 'SET odometer = :odometer, volume = :volume, pricePerUnit = :pricePerUnit, totalCost = :totalCost, currency = :currency, exchangeRate = :exchangeRate, baseAmount = :baseAmount, fuelType = :fuelType, station = :station, updatedAt = :updatedAt',
-      ExpressionAttributeValues: {
-        ':odometer': body.odometer,
-        ':volume': body.volume,
-        ':pricePerUnit': body.pricePerUnit,
-        ':totalCost': body.totalCost,
-        ':currency': currency,
-        ':exchangeRate': exchangeRate,
-        ':baseAmount': baseAmount,
-        ':fuelType': body.fuelType,
-        ':station': body.station,
-        ':updatedAt': timestamp
-      },
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: 'ALL_NEW'
     }));
 
