@@ -583,9 +583,77 @@ packages/app/src/
 - ✅ Responsive grid layout for cards
 - ✅ Visual progress indicators with color coding
 
+## Implementation Details
+
+### AI Insights Currency Conversion Flow
+1. **Fetch User Settings**: Get preferredCurrency and units from DynamoDB
+2. **Convert Refills**: For each refill, convert totalCost and pricePerUnit from stored currency to target currency using historical exchange rate for that date
+3. **Convert Expenses**: For each expense, convert amount from stored currency to target currency using historical exchange rate
+4. **Convert Volumes**: Convert all volumes from liters to gallons if user prefers imperial units
+5. **Calculate Statistics**: Aggregate converted values for totalFuelCost, totalExpenses, avgVolume
+6. **Send to AI**: Pass converted refills, expenses, and statistics with explicit unit instructions
+7. **AI Response**: Receives data already in correct currency/units, generates accurate summaries
+
+### Exchange Rate System
+- **Storage**: DynamoDB with PK: `EXCHANGE_RATE#{date}`, SK: `RATES`
+- **Format**: `{ rates: { UAH: 40.5, EUR: 0.92, ... }, lastUpdated: timestamp }`
+- **Base Currency**: USD (rate always 1.0)
+- **Historical Rates**: Imported from CSV for past dates
+- **Current Rates**: Fetched from open.er-api.com for today
+- **Lookup**: `getExchangeRate(currency, date)` returns rate for specific date
+- **Conversion Logic**: 
+  - USD → target: multiply by target rate
+  - source → USD: divide by source rate
+  - source → target: divide by source rate, multiply by target rate
+
 ## Recent Changes
 
-### Major Refactoring & OCR Feature (Latest - Uncommitted)
+### AI Integration with Bedrock Nova Micro (Latest)
+- **Monthly Summary Reports**: AI-generated insights from vehicle data
+  - Analyzes last 30 days of refills and expenses
+  - Provides key metrics, trends, and actionable recommendations
+  - Predicts next month's performance
+  - Bilingual output: Generates both English and Ukrainian summaries simultaneously
+- **Cost-Effective AI**: Nova Micro for structured data analysis (~$0.35/1M input tokens, ~$1.40/1M output tokens)
+- **Smart Caching**: Cache invalidation based on data changes (refill/expense count hash)
+  - Cache key includes data hash to invalidate only when data changes
+  - Returns cached response if data hasn't changed
+  - Stored in DynamoDB with user-specific keys
+- **Currency & Unit Conversion**: 
+  - Fetches user settings for preferred currency and units
+  - Converts all refills and expenses to user's preferred currency using historical exchange rates from DynamoDB
+  - Converts volumes to user's preferred units (liters/gallons)
+  - Sends fully converted data to AI with explicit unit instructions
+  - Exchange rates stored in DynamoDB: `EXCHANGE_RATE#{date}` with rates object
+  - Conversion logic: USD as base, converts source → USD → target currency
+  - Volume conversion: 1 liter = 0.264172 gallons
+- **Multilingual Support**: AI insights in English and Ukrainian
+  - AI generates JSON with `{en: "...", uk: "..."}` structure
+  - Frontend selects based on i18n.language
+  - Markdown formatting: bold (**), headers (##), numbered lists
+- **Error Handling**: Graceful fallbacks with error boundary component
+  - 3-second delay before redirecting to login on auth errors
+  - Error boundary catches AI failures without breaking page
+- **API Endpoint**: `GET /vehicles/:id/insights/monthly-summary`
+- **Backend Components**:
+  - `utils/bedrock.ts` - Bedrock client wrapper for Nova Micro invocation
+  - `utils/ai-prompts.ts` - Prompt templates requesting bilingual JSON output
+  - `utils/currency-converter.ts` - Currency conversion using DynamoDB exchange rates
+  - `utils/exchange-rate.ts` - Fetch historical rates from DynamoDB or API
+  - `handlers/insights/monthly-summary.ts` - Lambda handler with smart caching and conversion
+- **Frontend Components**:
+  - `AIInsights.tsx` - Display AI summaries with markdown parsing and language switching
+  - `AIErrorBoundary.tsx` - Error handling for AI features
+  - Integrated into Analytics page
+- **Infrastructure**:
+  - Lambda function with Bedrock IAM permissions
+  - 30-second timeout for AI processing
+  - 512MB memory allocation
+- **Translation Keys**: Added `ai.*` keys for EN/UK locales (insights, generateSummary, generating, error, placeholder, cached)
+- **Documentation**: Created AI_FEATURES.md and PROMPT.md for implementation guidance
+- **Cost Estimate**: ~$0.0005 per summary, ~$0.46/month for 500 users (2 summaries each)
+
+### Major Refactoring & OCR Feature
 
 #### Component Architecture Refactoring
 - **Component Extraction**: Separated page logic into reusable components
