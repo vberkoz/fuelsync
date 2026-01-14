@@ -137,6 +137,14 @@
     "efficiencyTrend": "Efficiency Trend",
     "loading": "Loading statistics..."
   },
+  "ai": {
+    "insights": "AI Insights",
+    "generateSummary": "Generate Summary",
+    "generating": "Generating...",
+    "error": "Failed to generate insights. Please try again.",
+    "placeholder": "Click \"Generate Summary\" to get AI-powered insights about your vehicle's performance.",
+    "cached": "Cached result from last 24 hours"
+  },
   "reminders": {
     "title": "Reminders",
     "add": "Add Reminder",
