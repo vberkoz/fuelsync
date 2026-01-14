@@ -550,6 +550,22 @@ export class InfrastructureStack extends cdk.Stack {
       bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
     });
 
+    const monthlySummary = new nodejs.NodejsFunction(this, 'MonthlySummary', {
+      entry: '../api/src/handlers/insights/monthly-summary.ts',
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment: lambdaEnvironment,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      bundling: { minify: true, sourceMap: false, forceDockerBundling: false }
+    });
+
+    monthlySummary.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['bedrock:InvokeModel'],
+      resources: ['arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0']
+    }));
+
     uploadsBucket.grantRead(getUploadUrl);
     uploadsBucket.grantWrite(createPresignedUrl);
     uploadsBucket.grantRead(getRefillPhoto);
@@ -587,6 +603,7 @@ export class InfrastructureStack extends cdk.Stack {
     table.grantWriteData(dailyExchangeRates);
     table.grantReadData(getRefillPhoto);
     table.grantReadData(getExpensePhoto);
+    table.grantReadWriteData(monthlySummary);
 
     // Grant S3 read permissions to all Lambda functions
     uploadsBucket.grantRead(listVehicles);
@@ -681,6 +698,11 @@ export class InfrastructureStack extends cdk.Stack {
     // /vehicles/{id}/charts resource
     const charts = vehicleId.addResource('charts');
     charts.addMethod('GET', new apigateway.LambdaIntegration(getCharts), { authorizer });
+
+    // /vehicles/{id}/insights resource
+    const insights = vehicleId.addResource('insights');
+    const monthlySummaryResource = insights.addResource('monthly-summary');
+    monthlySummaryResource.addMethod('GET', new apigateway.LambdaIntegration(monthlySummary), { authorizer });
 
     // /users resource
     const users = api.root.addResource('users');
