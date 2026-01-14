@@ -10,7 +10,8 @@ const getAuthHeaders = () => {
   };
 };
 
-const handleAuthError = () => {
+const handleAuthError = async () => {
+  await new Promise(resolve => setTimeout(resolve, 3000));
   useAuthStore.getState().clearAuth();
   window.location.replace('/login');
 };
@@ -19,14 +20,16 @@ const safeFetch = async (url: string, options?: RequestInit) => {
   try {
     const res = await fetch(url, options);
     if (res.status === 401) {
-      handleAuthError();
+      console.error('Authentication error - redirecting to login in 3 seconds');
+      await handleAuthError();
       throw new Error('Session expired');
     }
     return res;
   } catch (error: any) {
     if (error.message === 'Session expired') throw error;
     if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
-      handleAuthError();
+      console.error('Network error - redirecting to login in 3 seconds');
+      await handleAuthError();
     }
     throw error;
   }
@@ -171,6 +174,14 @@ export const api = {
   charts: {
     get: async (vehicleId: string) => {
       const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/charts`, {
+        headers: getAuthHeaders()
+      });
+      return handleResponse(res);
+    }
+  },
+  insights: {
+    getMonthlySummary: async (vehicleId: string) => {
+      const res = await safeFetch(`${API_URL}/vehicles/${vehicleId}/insights/monthly-summary`, {
         headers: getAuthHeaders()
       });
       return handleResponse(res);

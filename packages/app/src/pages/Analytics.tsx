@@ -7,6 +7,8 @@ import { useVehicleStore } from '../stores/vehicleStore';
 import LineChart from '../components/LineChart';
 import { formatCurrency } from '../lib/currency';
 import { convertVolume, getVolumeUnit } from '../lib/units';
+import { AIInsights } from '../components/AIInsights';
+import { AIErrorBoundary } from '../components/AIErrorBoundary';
 
 export default function Analytics() {
   const { t, i18n } = useTranslation();
@@ -71,6 +73,14 @@ export default function Analytics() {
         <BarChart3 className="h-8 w-8 text-indigo-500" />
         <h1 className="text-2xl sm:text-3xl font-bold text-white">{t('analytics.title')}</h1>
       </div>
+
+      {currentVehicleId && (
+        <div className="mb-6 sm:mb-8">
+          <AIErrorBoundary>
+            <AIInsights vehicleId={currentVehicleId} />
+          </AIErrorBoundary>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-6 sm:mb-8">
         <div className="bg-slate-800 rounded-lg p-4 sm:p-6 flex flex-col min-h-[280px]">
