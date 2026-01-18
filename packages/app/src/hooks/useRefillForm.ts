@@ -18,7 +18,7 @@ export function useRefillForm(initialData: FormData) {
   const [formData, setFormData] = useState(initialData);
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrValidationWarning, setOcrValidationWarning] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   const updateFormField = (field: string, value: string) => {
     const newData = { ...formData, [field]: value };
@@ -44,8 +44,8 @@ export function useRefillForm(initialData: FormData) {
     setFormData(newData);
   };
 
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
+  const handleLibraryClick = () => {
+    libraryInputRef.current?.click();
   };
 
   const handleImageCapture = async (e: React.ChangeEvent<HTMLInputElement>, lastOdometer: number) => {
@@ -96,11 +96,11 @@ export function useRefillForm(initialData: FormData) {
     formData,
     setFormData,
     updateFormField,
-    handleCameraClick,
+    handleLibraryClick,
     handleImageCapture,
     isProcessingOCR,
     ocrValidationWarning,
-    fileInputRef,
+    libraryInputRef,
     resetForm
   };
 }

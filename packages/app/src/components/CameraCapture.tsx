@@ -23,7 +23,6 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
       ref={fileInputRef}
       type="file"
       accept="image/*"
-      capture="environment"
       onChange={handleFileChange}
       className="hidden"
     />

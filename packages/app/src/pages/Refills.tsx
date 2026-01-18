@@ -130,11 +130,11 @@ export default function Refills() {
     formData,
     setFormData,
     updateFormField,
-    handleCameraClick,
+    handleLibraryClick,
     handleImageCapture,
     isProcessingOCR,
     ocrValidationWarning,
-    fileInputRef: ocrFileInputRef,
+    libraryInputRef: ocrLibraryInputRef,
     resetForm
   } = useRefillForm(getInitialFormData());
 
@@ -283,15 +283,14 @@ export default function Refills() {
             onCancel={() => { setShowForm(false); setEditingId(null); resetForm(getInitialFormData()); }}
             isSubmitting={createMutation.isPending}
             isEditing={false}
-            onCameraClick={handleCameraClick}
+            onLibraryClick={handleLibraryClick}
             isProcessingOCR={isProcessingOCR}
             ocrValidationWarning={ocrValidationWarning}
           />
           <input
-            ref={ocrFileInputRef}
+            ref={ocrLibraryInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={(e) => handleImageCapture(e, refills[0]?.odometer || currentVehicle?.vehicle?.odometer || 0)}
             className="hidden"
           />
@@ -334,7 +333,7 @@ export default function Refills() {
                           onCancel={() => { setEditingId(null); setShowForm(false); resetForm(getInitialFormData()); }}
                           isSubmitting={updateMutation.isPending}
                           isEditing={true}
-                          onCameraClick={handleCameraClick}
+                          onLibraryClick={handleLibraryClick}
                           isProcessingOCR={isProcessingOCR}
                           ocrValidationWarning={ocrValidationWarning}
                         />

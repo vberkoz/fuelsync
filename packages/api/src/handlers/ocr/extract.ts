@@ -13,8 +13,8 @@ const s3 = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
 const enhanceWithNova = async (rawText: string, scanType: string, lastOdometer?: number) => {
   const prompts: Record<string, string> = {
     odometer: lastOdometer 
-      ? `Find the odometer reading in this text. It should be a number greater than ${lastOdometer}. Return JSON with {"odometer": number}.`
-      : 'Extract the odometer reading (5-6 digit number) from this text. Return JSON with {"odometer": number}.',
+      ? `Find the TOTAL odometer reading (not trip distance) in this text. It should be a 5-6 digit number greater than ${lastOdometer}. Ignore smaller numbers (trip distance). Return JSON with {"odometer": number}.`
+      : 'Extract the TOTAL odometer reading (5-6 digit number, not trip distance) from this text. Ignore smaller 2-3 digit numbers. Return JSON with {"odometer": number}.',
     pump: 'Extract volume (number), pricePerUnit (number), and totalCost (number) from this fuel pump display',
     receipt: 'Extract date, volume, totalCost, and stationName from this receipt'
   };

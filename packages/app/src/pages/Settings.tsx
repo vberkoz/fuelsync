@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Field, Label, Listbox, Switch } from '@headlessui/react';
-import { Settings as SettingsIcon, ChevronsUpDown, Check, LogOut } from 'lucide-react';
+import { Settings as SettingsIcon, ChevronsUpDown, Check, LogOut, Download } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { CURRENCIES } from '../lib/currency';
 import { useAuthStore } from '../stores/authStore';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -13,6 +14,7 @@ export default function Settings() {
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordError, setPasswordError] = useState('');
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '' });
+  const { isInstallable, install, canShowButton } = usePWAInstall();
 
   const { data: settingsData, isLoading, error } = useQuery({
     queryKey: ['settings'],
@@ -383,6 +385,30 @@ export default function Settings() {
         </div>
 
         <div className="-mr-4 sm:-mr-6 lg:-mr-8 border-b border-slate-700" />
+
+        {/* Install App Section */}
+        {canShowButton && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-2">Install App</h2>
+                <p className="text-slate-400 text-sm">
+                  {isInstallable ? 'Install FuelSync as a standalone app on your device' : 'Use your browser menu to add FuelSync to home screen'}
+                </p>
+              </div>
+              <div>
+                <button
+                  onClick={isInstallable ? install : undefined}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <Download className="h-5 w-5" />
+                  {isInstallable ? 'Install App' : 'Add to Home Screen'}
+                </button>
+              </div>
+            </div>
+            <div className="-mr-4 sm:-mr-6 lg:-mr-8 border-b border-slate-700" />
+          </>
+        )}
 
         {/* Logout Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-12">

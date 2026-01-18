@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -7,6 +9,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { isInstallable, install, canShowButton } = usePWAInstall();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +131,17 @@ export default function Login() {
             Start a 14-day free trial
           </Link>
         </p>
+
+        {canShowButton && (
+          <button
+            onClick={isInstallable ? install : undefined}
+            className="mt-4 w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 flex items-center justify-center gap-2"
+            title={isInstallable ? 'Install app' : 'Use browser menu to install'}
+          >
+            <Download className="h-5 w-5" />
+            {isInstallable ? 'Install App' : 'Add to Home Screen'}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      injectRegister: null,
       manifest: {
         name: 'FuelSync',
         short_name: 'FuelSync',

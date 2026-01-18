@@ -1,5 +1,5 @@
 import { Listbox, Field, Label } from '@headlessui/react';
-import { ChevronDown, Check, Camera, AlertCircle, Upload, X } from 'lucide-react';
+import { ChevronDown, Check, AlertCircle, Upload, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CURRENCIES } from '../../lib/currency';
 import { useRef, useState } from 'react';
@@ -23,12 +23,12 @@ interface RefillFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
   isEditing: boolean;
-  onCameraClick?: () => void;
+  onLibraryClick?: () => void;
   isProcessingOCR?: boolean;
   ocrValidationWarning?: string | null;
 }
 
-export function RefillForm({ formData, onFieldChange, onFormDataChange, onSubmit, onCancel, isSubmitting, isEditing, onCameraClick, isProcessingOCR, ocrValidationWarning }: RefillFormProps) {
+export function RefillForm({ formData, onFieldChange, onFormDataChange, onSubmit, onCancel, isSubmitting, isEditing, onLibraryClick, isProcessingOCR, ocrValidationWarning }: RefillFormProps) {
   const { t } = useTranslation();
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
@@ -67,9 +67,9 @@ export function RefillForm({ formData, onFieldChange, onFormDataChange, onSubmit
           <Label className="block text-sm font-semibold text-white mb-1.5">{t('refills.odometer')} (km)</Label>
           <div className="flex gap-2">
             <input type="number" step="0.01" value={formData.odometer} onChange={(e) => onFieldChange('odometer', e.target.value)} required className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            {onCameraClick && (
-              <button type="button" onClick={onCameraClick} disabled={isProcessingOCR} className="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <Camera className="h-5 w-5" />
+            {onLibraryClick && (
+              <button type="button" onClick={onLibraryClick} disabled={isProcessingOCR} className="px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Choose from library">
+                <Upload className="h-5 w-5" />
               </button>
             )}
           </div>
